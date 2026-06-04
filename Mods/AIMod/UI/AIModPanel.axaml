@@ -1,0 +1,436 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
+             x:Class="AIMod.UI.AIModPanel"
+             Background="#141414">
+
+    <Grid Margin="20" ColumnDefinitions="*, 340" RowDefinitions="Auto, *">
+
+        <!-- ═══════ Header ═══════ -->
+        <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
+              ColumnDefinitions="*, Auto" Margin="0,0,0,20">
+            <StackPanel VerticalAlignment="Center" Spacing="2">
+                <TextBlock Text="AI Mod"
+                           FontSize="22"
+                           FontWeight="SemiBold"
+                           FontFamily="{StaticResource BoldEnglishFontFamily}"
+                           Foreground="#e8e8e8"/>
+                <TextBlock Text="Configure AI provider, model, and runtime mode"
+                           FontSize="11"
+                           Foreground="#777777"/>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                <TextBlock Text="Mode" VerticalAlignment="Center" Foreground="#888888" FontSize="12" Margin="0,0,4,0"/>
+                <ComboBox Name="ModeSelectionComboBox"
+                          Background="#1e1e1e"
+                          BorderBrush="#333333"
+                          BorderThickness="1"
+                          CornerRadius="4"
+                          Padding="10,6"
+                          Foreground="#e0e0e0"
+                          FontSize="12"
+                          Width="140">
+                    <ComboBoxItem>Prefix</ComboBoxItem>
+                    <ComboBoxItem>InterceptAll</ComboBoxItem>
+                    <ComboBoxItem>TRPGPlayer</ComboBoxItem>
+                </ComboBox>
+            </StackPanel>
+        </Grid>
+
+        <!-- ═══════ Left Column: Configuration ═══════ -->
+        <ScrollViewer Grid.Row="1" Grid.Column="0" Margin="0,0,16,0">
+            <StackPanel Spacing="12">
+
+                <!-- Model + System Prompt -->
+                <Grid ColumnDefinitions="220, *" ColumnSpacing="12">
+                    <Border Background="#1e1e1e"
+                            BorderBrush="#2a2a2a"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="12,10">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="AI Provider" FontSize="11" Foreground="#999999"/>
+                            <ComboBox Name="ModelSelectionComboBox"
+                                      Background="#141414"
+                                      BorderBrush="#333333"
+                                      BorderThickness="1"
+                                      CornerRadius="4"
+                                      Padding="8,5"
+                                      Foreground="#e0e0e0"
+                                      FontSize="12">
+                                <ComboBoxItem>Gemini</ComboBoxItem>
+                                <ComboBoxItem>ZhipuAI</ComboBoxItem>
+                                <ComboBoxItem>SiliconFlow</ComboBoxItem>
+                                <ComboBoxItem>DeepSeek</ComboBoxItem>
+                            </ComboBox>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Name="SystemPromptBorder"
+                            Grid.Column="1"
+                            Background="#1e1e1e"
+                            BorderBrush="#2a2a2a"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="12,10">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="System Prompt" FontSize="11" Foreground="#999999"/>
+                            <TextBox Name="SystemPromptTextBox"
+                                     Watermark="Enter system prompt..."
+                                     AcceptsReturn="True"
+                                     Height="58"
+                                     TextWrapping="Wrap"
+                                     Background="#141414"
+                                     BorderBrush="#333333"
+                                     BorderThickness="1"
+                                     CornerRadius="4"
+                                     Padding="8,5"
+                                     Foreground="#e0e0e0"
+                                     FontSize="11"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Model Config: single card, left-aligned -->
+                <StackPanel Spacing="0">
+                    <!-- Gemini -->
+                    <Border Name="GeminiConfigBorder"
+                            Background="#1e1e1e"
+                            BorderBrush="#2a2a2a"
+                            BorderThickness="1"
+                            CornerRadius="6">
+                        <Grid ColumnDefinitions="3, *">
+                            <Border Background="#cc7700" CornerRadius="6,0,0,6"/>
+                            <StackPanel Grid.Column="1" Spacing="6" Margin="10,8">
+                                <TextBlock Text="Gemini" FontSize="12" FontWeight="SemiBold" Foreground="#e0e0e0"/>
+                                <TextBox Name="GeminiApiKeyTextBox"
+                                         Watermark="API Key"
+                                         Background="#141414" BorderBrush="#333333" BorderThickness="1" CornerRadius="3" Padding="6,4" Foreground="#e0e0e0" FontSize="11"/>
+                                <TextBox Name="GeminiModelNameTextBox"
+                                         Watermark="e.g. gemini-2.5-flash"
+                                         Background="#141414" BorderBrush="#333333" BorderThickness="1" CornerRadius="3" Padding="6,4" Foreground="#e0e0e0" FontSize="11"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- ZhipuAI -->
+                    <Border Name="ZhipuConfigBorder"
+                            Background="#1e1e1e"
+                            BorderBrush="#2a2a2a"
+                            BorderThickness="1"
+                            CornerRadius="6">
+                        <Grid ColumnDefinitions="3, *">
+                            <Border Background="#4a9a4e" CornerRadius="6,0,0,6"/>
+                            <StackPanel Grid.Column="1" Spacing="6" Margin="10,8">
+                                <TextBlock Text="Zhipu AI" FontSize="12" FontWeight="SemiBold" Foreground="#e0e0e0"/>
+                                <TextBox Name="ZhipuApiKeyTextBox"
+                                         Watermark="API Key"
+                                         Background="#141414" BorderBrush="#333333" BorderThickness="1" CornerRadius="3" Padding="6,4" Foreground="#e0e0e0" FontSize="11"/>
+                                <TextBox Name="ZhipuModelNameTextBox"
+                                         Watermark="e.g. glm-4.7-flash"
+                                         Background="#141414" BorderBrush="#333333" BorderThickness="1" CornerRadius="3" Padding="6,4" Foreground="#e0e0e0" FontSize="11"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- SiliconFlow -->
+                    <Border Name="SiliconFlowConfigBorder"
+                            Background="#1e1e1e"
+                            BorderBrush="#2a2a2a"
+                            BorderThickness="1"
+                            CornerRadius="6">
+                        <Grid ColumnDefinitions="3, *">
+                            <Border Background="#6a5acd" CornerRadius="6,0,0,6"/>
+                            <StackPanel Grid.Column="1" Spacing="6" Margin="10,8">
+                                <TextBlock Text="SiliconFlow" FontSize="12" FontWeight="SemiBold" Foreground="#e0e0e0"/>
+                                <TextBox Name="SiliconFlowApiKeyTextBox"
+                                         Watermark="API Key"
+                                         Background="#141414" BorderBrush="#333333" BorderThickness="1" CornerRadius="3" Padding="6,4" Foreground="#e0e0e0" FontSize="11"/>
+                                <TextBox Name="SiliconFlowModelNameTextBox"
+                                         Watermark="e.g. Qwen/Qwen3-8B"
+                                         Background="#141414" BorderBrush="#333333" BorderThickness="1" CornerRadius="3" Padding="6,4" Foreground="#e0e0e0" FontSize="11"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- DeepSeek -->
+                    <Border Name="DeepSeekConfigBorder"
+                            Background="#1e1e1e"
+                            BorderBrush="#2a2a2a"
+                            BorderThickness="1"
+                            CornerRadius="6">
+                        <Grid ColumnDefinitions="3, *">
+                            <Border Background="#3a7a9a" CornerRadius="6,0,0,6"/>
+                            <StackPanel Grid.Column="1" Spacing="6" Margin="10,8">
+                                <TextBlock Text="DeepSeek" FontSize="12" FontWeight="SemiBold" Foreground="#e0e0e0"/>
+                                <TextBox Name="DeepSeekApiKeyTextBox"
+                                         Watermark="API Key"
+                                         Background="#141414" BorderBrush="#333333" BorderThickness="1" CornerRadius="3" Padding="6,4" Foreground="#e0e0e0" FontSize="11"/>
+                                <TextBox Name="DeepSeekModelNameTextBox"
+                                         Watermark="e.g. deepseek-chat"
+                                         Background="#141414" BorderBrush="#333333" BorderThickness="1" CornerRadius="3" Padding="6,4" Foreground="#e0e0e0" FontSize="11"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+
+                <!-- Prefix Mode Settings -->
+                <Border Name="PrefixModeBorder"
+                        Background="#1e1e1e"
+                        BorderBrush="#2a2a2a"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="12,10">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="Message Settings" FontSize="12" FontWeight="SemiBold" Foreground="#e0e0e0"/>
+                        <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
+                            <StackPanel Spacing="5">
+                                <TextBlock Text="Prefix" FontSize="11" Foreground="#888888"/>
+                                <TextBox Name="PrefixTextBox"
+                                         Watermark="e.g. /ai"
+                                         Background="#141414" BorderBrush="#333333" BorderThickness="1" CornerRadius="3" Padding="6,4" Foreground="#e0e0e0" FontSize="11"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="5">
+                                <TextBlock Text="Max Context Turns" FontSize="11" Foreground="#888888"/>
+                                <NumericUpDown Name="MaxContextTurnsUpDown"
+                                               Value="10" Minimum="1" Maximum="100"
+                                               Background="#141414" BorderBrush="#333333" BorderThickness="1" CornerRadius="3" Padding="6,4" Foreground="#e0e0e0" FontSize="11"/>
+                            </StackPanel>
+                        </Grid>
+                        <CheckBox Name="InterceptAllCheckBox"
+                                  Content="Intercept All Messages"
+                                  Foreground="#aaaaaa"
+                                  FontSize="11"
+                                  Padding="4"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- TRPG Global Settings -->
+                <Border Name="TrpgConfigBorder"
+                        Background="#1e1e1e"
+                        BorderBrush="#2a2a2a"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="12,10">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="TRPG Global Settings" FontSize="12" FontWeight="SemiBold" Foreground="#e0e0e0"/>
+                        <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
+                            <StackPanel Spacing="5">
+                                <TextBlock Text="Cooldown (s)" FontSize="11" Foreground="#888888"/>
+                                <NumericUpDown Name="TrpgCooldownSecondsUpDown"
+                                               Value="60" Minimum="5" Maximum="600"
+                                               Background="#141414" BorderBrush="#333333" BorderThickness="1" CornerRadius="3" Padding="6,4" Foreground="#e0e0e0" FontSize="11"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="5">
+                                <TextBlock Text="折叠 token 阈值" FontSize="11" Foreground="#888888"/>
+                                <NumericUpDown Name="TrpgTokenThresholdUpDown"
+                                               Value="6000" Minimum="2000" Maximum="16000"
+                                               Background="#141414" BorderBrush="#333333" BorderThickness="1" CornerRadius="3" Padding="6,4" Foreground="#e0e0e0" FontSize="11"/>
+                                <TextBlock Text="建议 4000-16000，最小 2000" FontSize="10" Foreground="#666666"/>
+                            </StackPanel>
+                        </Grid>
+                        <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
+                            <StackPanel Spacing="5">
+                                <TextBlock Text="折叠消息条数阈值" FontSize="11" Foreground="#888888"/>
+                                <NumericUpDown Name="TrpgRecentHistoryCountUpDown"
+                                               Value="40" Minimum="12" Maximum="100"
+                                               Background="#141414" BorderBrush="#333333" BorderThickness="1" CornerRadius="3" Padding="6,4" Foreground="#e0e0e0" FontSize="11"/>
+                                <TextBlock Text="建议 20-100，最小 12" FontSize="10" Foreground="#666666"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="5">
+                                <TextBlock Text="每次折叠条数" FontSize="11" Foreground="#888888"/>
+                                <NumericUpDown Name="TrpgHistoryFoldCountUpDown"
+                                               Value="20" Minimum="4" Maximum="50"
+                                               Background="#141414" BorderBrush="#333333" BorderThickness="1" CornerRadius="3" Padding="6,4" Foreground="#e0e0e0" FontSize="11"/>
+                                <TextBlock Text="建议 8-50，最小 4" FontSize="10" Foreground="#666666"/>
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="当 active history 条数 &gt;= RecentHistoryCount，或 active history token &gt;= TokenThreshold 时触发折叠；触发后折叠最旧的 HistoryFoldCount 条。"
+                                   TextWrapping="Wrap"
+                                   FontSize="10"
+                                   Foreground="#888888"/>
+                        <TextBlock Name="TrpgFoldValidationTextBlock"
+                                   Text=""
+                                   TextWrapping="Wrap"
+                                   FontSize="10"
+                                   Foreground="#d0a85a"/>
+                        <StackPanel Spacing="5">
+                            <TextBlock Text="TRPG System Prompt (Hot Update)" FontSize="11" Foreground="#888888"/>
+                            <TextBox Name="TrpgSystemPromptTextBox"
+                                     Watermark="留空则使用内置默认 TRPG 提示词"
+                                     AcceptsReturn="True"
+                                     Height="120"
+                                     TextWrapping="Wrap"
+                                     Background="#141414"
+                                     BorderBrush="#333333"
+                                     BorderThickness="1"
+                                     CornerRadius="3"
+                                     Padding="6,4"
+                                     Foreground="#e0e0e0"
+                                     FontSize="11"/>
+                        </StackPanel>
+                        <CheckBox Name="TrpgStateInterceptionEnabledCheckBox"
+                                  Content="Enable State Interception"
+                                  IsChecked="True"
+                                  Foreground="#aaaaaa"
+                                  FontSize="11"
+                                  Padding="4"/>
+                        <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
+                            <StackPanel Spacing="5">
+                                <TextBlock Text="Recall Top-K" FontSize="11" Foreground="#888888"/>
+                                <NumericUpDown Name="TrpgRecallTopKUpDown"
+                                               Value="1" Minimum="1" Maximum="10"
+                                               Background="#141414" BorderBrush="#333333" BorderThickness="1" CornerRadius="3" Padding="6,4" Foreground="#e0e0e0" FontSize="11"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="5">
+                                <TextBlock Text="Recall Min Similarity" FontSize="11" Foreground="#888888"/>
+                                <NumericUpDown Name="TrpgRecallMinSimilarityUpDown"
+                                               Value="0.85" Increment="0.01" FormatString="F2" Minimum="0" Maximum="1"
+                                               Background="#141414" BorderBrush="#333333" BorderThickness="1" CornerRadius="3" Padding="6,4" Foreground="#e0e0e0" FontSize="11"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Secondary API Settings (for embedding and delta extraction) -->
+                <Border Name="SecondaryApiConfigBorder"
+                        Background="#1e1e1e"
+                        BorderBrush="#2a2a2a"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="12,10">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="Secondary API (Embedding &amp; Delta Extraction)" FontSize="12" FontWeight="SemiBold" Foreground="#e0e0e0"/>
+                        <StackPanel Spacing="5">
+                            <TextBlock Text="API Key" FontSize="11" Foreground="#888888"/>
+                            <TextBox Name="SecondaryApiKeyTextBox"
+                                     Watermark="Leave empty to use primary API"
+                                     Background="#141414" BorderBrush="#333333" BorderThickness="1" CornerRadius="3" Padding="6,4" Foreground="#e0e0e0" FontSize="11"/>
+                        </StackPanel>
+                        <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
+                            <StackPanel Spacing="5">
+                                <TextBlock Text="Model" FontSize="11" Foreground="#888888"/>
+                                <TextBox Name="SecondaryModelTextBox"
+                                         Watermark="e.g. gpt-4o-mini"
+                                         Background="#141414" BorderBrush="#333333" BorderThickness="1" CornerRadius="3" Padding="6,4" Foreground="#e0e0e0" FontSize="11"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="5">
+                                <TextBlock Text="Endpoint" FontSize="11" Foreground="#888888"/>
+                                <TextBox Name="SecondaryEndpointTextBox"
+                                         Watermark="https://api.openai.com/v1/chat/completions"
+                                         Background="#141414" BorderBrush="#333333" BorderThickness="1" CornerRadius="3" Padding="6,4" Foreground="#e0e0e0" FontSize="11"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Buttons -->
+                <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,4,0,0">
+                    <Button Name="SaveButton"
+                            Content="Save Configuration"
+                            Background="#2d6a3d"
+                            Foreground="#e0e0e0"
+                            BorderThickness="0"
+                            CornerRadius="4"
+                            Padding="14,7"
+                            FontSize="12"/>
+                    <Button Name="TestListModelsButton"
+                            Content="Test: List Models"
+                            Background="#2a2a2a"
+                            Foreground="#aaaaaa"
+                            BorderBrush="#333333"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Padding="14,7"
+                            FontSize="12"/>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- ═══════ Right Column: TRPG Command Guide ═══════ -->
+        <Border Name="TrpgGuideBorder"
+                Grid.Row="1" Grid.Column="1"
+                Background="#181f1a"
+                BorderBrush="#2a3a2a"
+                BorderThickness="1"
+                CornerRadius="6">
+            <Grid RowDefinitions="Auto, *">
+                <Border Grid.Row="0" Background="#1e2e1e" CornerRadius="6,6,0,0" Padding="12,10">
+                    <TextBlock Text="TRPG Command Guide"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               Foreground="#88cc99"/>
+                </Border>
+                <ScrollViewer Grid.Row="1" Margin="0,0,0,0">
+                    <StackPanel Spacing="8" Margin="10,10,10,12">
+
+                        <!-- Character Management -->
+                        <Border Background="#1a261a" CornerRadius="4" Padding="9,7">
+                            <StackPanel Spacing="5">
+                                <TextBlock Text="Character Management (GM)"
+                                           FontSize="11" Foreground="#7abd8a" FontWeight="Bold"/>
+                                <TextBlock Text=".team addai &lt;Name&gt;"
+                                           FontSize="10" Foreground="#999999" FontFamily="Consolas"/>
+                                <TextBlock Text=".team removeai &lt;Name&gt;"
+                                           FontSize="10" Foreground="#999999" FontFamily="Consolas"/>
+                                <TextBlock Text=".team listai"
+                                           FontSize="10" Foreground="#999999" FontFamily="Consolas"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Configuration -->
+                        <Border Background="#1a261a" CornerRadius="4" Padding="9,7">
+                            <StackPanel Spacing="5">
+                                <TextBlock Text="Configuration (GM)"
+                                           FontSize="11" Foreground="#7abd8a" FontWeight="Bold"/>
+                                <TextBlock Text=".ai set &lt;Name&gt; background &lt;text&gt;"
+                                           FontSize="10" Foreground="#999999" FontFamily="Consolas"/>
+                                <TextBlock Text=".ai set &lt;Name&gt; state &lt;JSON&gt;"
+                                           FontSize="10" Foreground="#999999" FontFamily="Consolas"/>
+                                <TextBlock Text=".ai set &lt;Name&gt; skills &lt;Name&gt; &lt;Val&gt; ..."
+                                           FontSize="10" Foreground="#999999" FontFamily="Consolas"/>
+                                <TextBlock Text=".ai set &lt;Name&gt; inventory &lt;JSON&gt;"
+                                           FontSize="10" Foreground="#999999" FontFamily="Consolas"/>
+                                <TextBlock Text=".ai set &lt;Name&gt; rule {coc}|{dnd}|text"
+                                           FontSize="10" Foreground="#999999" FontFamily="Consolas"/>
+                                <TextBlock Text=".ai show &lt;Name&gt;"
+                                           FontSize="10" Foreground="#999999" FontFamily="Consolas"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Session Control -->
+                        <Border Background="#1a261a" CornerRadius="4" Padding="9,7">
+                            <StackPanel Spacing="5">
+                                <TextBlock Text="Session Control (GM)"
+                                           FontSize="11" Foreground="#7abd8a" FontWeight="Bold"/>
+                                <TextBlock Text=".logon  — Start session"
+                                           FontSize="10" Foreground="#999999" FontFamily="Consolas"/>
+                                <TextBlock Text=".logoff — End session"
+                                           FontSize="10" Foreground="#999999" FontFamily="Consolas"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Workflow -->
+                        <Border Background="#22221a" CornerRadius="4" Padding="9,7">
+                            <StackPanel Spacing="5">
+                                <TextBlock Text="Quick Start"
+                                           FontSize="11" Foreground="#cccc88" FontWeight="Bold"/>
+                                <TextBlock Text="1. Create team, add AI chars"
+                                           FontSize="10" Foreground="#888888" TextWrapping="Wrap"/>
+                                <TextBlock Text="2. .ai set background/state/skills"
+                                           FontSize="10" Foreground="#888888" TextWrapping="Wrap"/>
+                                <TextBlock Text="3. .logon to activate"
+                                           FontSize="10" Foreground="#888888" TextWrapping="Wrap"/>
+                                <TextBlock Text="4. .logoff when done"
+                                           FontSize="10" Foreground="#888888" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

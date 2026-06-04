@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- 在最开始禁用工具集检查 -->
+  <PropertyGroup>
+    <_SkipToolsetVersionCheck>true</_SkipToolsetVersionCheck>
+    <ToolsetNotFoundWarningSupression>true</ToolsetNotFoundWarningSupression>
+  </PropertyGroup>
+
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{9D35CA5E-0061-F067-17B7-DFA6F3758F45}</ProjectGuid>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <Keyword>ManagedCProj</Keyword>
+    <RootNamespace>ABot.CLI</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <AssemblyName>ABot.CLI</AssemblyName>
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+
+  <PropertyGroup>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v145</PlatformToolset>
+    <CLRSupport>true</CLRSupport>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <Optimization>Disabled</Optimization>
+    <OutDir>$(SolutionDir)bin\Debug\x64\</OutDir>
+    <IntDir>$(SolutionDir)obj\Debug\$(ProjectName)\x64\</IntDir>
+    <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\ABot.Core\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <DebugSymbols>false</DebugSymbols>
+    <Optimization>Full</Optimization>
+    <OutDir>$(SolutionDir)bin\Release\x64\</OutDir>
+    <IntDir>$(SolutionDir)obj\Release\$(ProjectName)\x64\</IntDir>
+    <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\ABot.Core\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <DebugSymbols>true</DebugSymbols>
+    <Optimization>Disabled</Optimization>
+    <OutDir>$(SolutionDir)bin\Debug\x86\</OutDir>
+    <IntDir>$(SolutionDir)obj\Debug\$(ProjectName)\x86\</IntDir>
+    <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\ABot.Core\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <DebugSymbols>false</DebugSymbols>
+    <Optimization>Full</Optimization>
+    <OutDir>$(SolutionDir)bin\Release\x86\</OutDir>
+    <IntDir>$(SolutionDir)obj\Release\$(ProjectName)\x86\</IntDir>
+    <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\ABot.Core\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+
+  <ItemGroup>
+    <ClCompile Include="ABotInterop.cpp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ClInclude Include="ABotInterop.h" />
+  </ItemGroup>
+
+  <!-- 引用ABot.Core库 -->
+  <ItemGroup>
+    <ProjectReference Include="..\ABot.Core\ABot.Core.vcxproj">
+      <Project>{8D35CA5E-0061-F067-17B7-DFA6F3758F45}</Project>
+    </ProjectReference>
+  </ItemGroup>
+
+  <!-- C++/CLI项目的标准属性 -->
+  <PropertyGroup>
+    <CLRSupport>true</CLRSupport>
+    <WarningLevel>3</WarningLevel>
+  </PropertyGroup>
+
+  <!-- Disable CET compatibility for Windows 10 21H2 compatibility -->
+  <ItemDefinitionGroup>
+    <Link>
+      <AdditionalOptions>/CETCOMPAT:NO %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <!-- 禁用 MSB8020 工具集检查错误 -->
+  <Target Name="DisableToolsetCheck" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <_SkipToolsetVersionCheck>true</_SkipToolsetVersionCheck>
+    </PropertyGroup>
+  </Target>
+
+</Project>

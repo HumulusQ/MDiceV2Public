@@ -1,0 +1,439 @@
+{
+  "characters": [
+    {
+       "name": "国王",
+       "help": "角色卡(★★★)#人类阵营-(8,6,4)\n一名胖国王，满脑子想着烤鹅和烧鸡，油脂满溢的烤鹅肝，老国王=桑一口气就吃了两个，三无三！何等无慈悲！\n在场时每回合增长（1,1,1）的三维属性。\n技能:\n登基：登场时，增加(5,5,5)的三维属性。",
+       "factions": ["Human"],
+       "rarity": "Epic",
+       "power": 8,
+       "wealth": 6,
+       "fame": 4,
+       "entranceBonus": {
+         "power": 5
+       },
+       "perTurnRecovery": {
+         "power": 1,
+         "wealth": 1,
+         "fame": 1
+       },
+       "innateSkills": [
+         {
+           "skillId": "king_entrance_buff",
+           "parameters": {
+             "FrontPowerBonus": 5,
+             "MiddleWealthBonus": 5,
+             "BackFameBonus": 5
+           }
+         }
+       ],
+       "fieldPreference": "Front",
+       "tags": ["leader", "legendary"],
+       "skillNarratives": {
+         "king_entrance_buff_Entrance": "{>新的国王登基了，但他看着不怎么聪明的样子，闭着眼睛就开始调整税率，但不管怎么说，民众还算开心，因为庆典免费供应气泡酒。||新的国王登基了，没什么人关心他是哪来的，但传令官撒到小镇里的购物券是千真万确}"
+       }
+    },
+    {
+      "name": "主教",
+      "help": "角色卡(★)#人类阵营-(4,8,6)\n主教棋子，瞪着眼睛，看着有点发毛。\n在场时每回合增长(0,2,1)的属性。\n技能:\n无",
+      "factions": ["Human"],
+      "rarity": "Rare",
+      "power": 4,
+      "wealth": 8,
+      "fame": 6,
+      "entranceBonus": {
+         "power": 2
+      },
+      "perTurnRecovery": {
+        "power": 0,
+        "wealth": 2,
+        "fame": 1
+      },
+      "innateSkills": [],
+      "fieldPreference": "Middle",
+      "tags": ["clergy", "stable"],
+      "chainSkills": [],
+      "eventSkill": null
+    },
+    {
+      "name": "战车",
+      "help": "角色卡(★)#人类阵营-(6,4,8)\n战车棋子，但更像一头犀牛。\n技能:\n进场时，增加(3,0,0)的属性。",
+      "factions": ["Human"],
+      "rarity": "Common",
+      "power": 6,
+      "wealth": 4,
+      "fame": 8,
+      "entranceBonus": {
+         "power": 3
+      },
+      "perTurnRecovery": {
+        "power": 0,
+        "wealth": 0,
+        "fame": 0
+      },
+      "innateSkills": [],
+      "fieldPreference": "Back",
+      "tags": ["chariot", "static"],
+      "chainSkills": [],
+      "eventSkill": null
+    },
+    {
+      "name": "魔王",
+      "help": "角色卡(★★★★)#恶魔阵营-(10,5,3)\n妄想统治全人类，实现每周三休，早九晚五邪恶计划的魔王，据说它的员工每天喝下午茶只能吃三块蛋糕！\n在场时每回合增长(2,1,0)的属性。\n技能:\n登场:进场时，增加(4,0,0)的属性。",
+      "factions": ["Demon"],
+      "rarity": "Legendary",
+      "power": 10,
+      "wealth": 5,
+      "fame": 3,
+      "entranceBonus": {
+         "power": 4
+      },
+      "perTurnRecovery": {
+        "power": 2,
+        "wealth": 1,
+        "fame": 0
+      },
+      "innateSkills": [],
+      "fieldPreference": "Front",
+      "tags": ["demon", "legendary", "offensive"],
+      "chainSkills": [],
+      "eventSkill": null
+    },
+    {
+      "name": "恶魔大公",
+      "help": "角色卡(★★★)#恶魔阵营-(3,10,5)\n地狱贵族，掌握着恶魔族的财政大权，其恶行连恶魔都闻之丧胆，从来不工作，实际恐怖！。\n在场时每回合增长(0,3,1)的属性。\n技能:\n登场:进场时，增加(1,0,0)的属性。",
+      "factions": ["Demon"],
+      "rarity": "Epic",
+      "power": 3,
+      "wealth": 10,
+      "fame": 5,
+      "entranceBonus": {
+         "power": 1
+      },
+      "perTurnRecovery": {
+        "power": 0,
+        "wealth": 3,
+        "fame": 1
+      },
+      "innateSkills": [],
+      "fieldPreference": "Middle",
+      "tags": ["demon", "noble", "wealth"],
+      "chainSkills": [],
+      "eventSkill": null
+    },
+    {
+      "name": "吸血鬼",
+      "help": "角色卡(★★★)#恶魔阵营-(5,3,10)\n因为猪血价格上涨，最近不得不使用鸡血当主食导致骨质酥松，因为acg文化火爆正在考虑出片当coser赚钱。\n在场时每回合增长(1,0,2)的属性。\n技能\n:无特殊技能，但进场加(2,0,0)，每回合恢复武力与声望。",
+      "factions": ["Demon"],
+      "rarity": "Epic",
+      "power": 5,
+      "wealth": 3,
+      "fame": 10,
+      "entranceBonus": {
+         "power": 2
+      },
+      "perTurnRecovery": {
+        "power": 1,
+        "wealth": 0,
+        "fame": 2
+      },
+      "innateSkills": [],
+      "fieldPreference": "Back",
+      "tags": ["undead", "demon", "fame"],
+      "chainSkills": [],
+      "eventSkill": null
+    },
+    {
+      "name": "僵尸鸡骑士",
+      "help": "角色卡(★★★)#恶魔阵营-(0,0,0)\n一只笨重的僵尸骑着鸡，不知所措地乱跑。\n技能：\n登场:进场时，增加(5,-3,0)的属性。\n骚扰：每回合30%概率触发，减少对手(1,1,1)的属性。\n:亡语：召唤僵尸：从场上因为效果被移除时，召唤一个僵尸。",
+      "factions": ["Demon"],
+      "rarity": "Epic",
+      "power": 0,
+      "wealth": 0,
+      "fame": 0,
+      "entranceBonus": {
+         "power": 5,
+         "wealth": -3,
+         "fame": 0
+      },
+      "perTurnRecovery": {
+        "power": 0,
+        "wealth": 0,
+        "fame": 0
+      },
+      "innateSkills": [
+        {
+          "skillId": "field_harassment",
+          "parameters": {
+            "Probability": 30,
+            "OpponentPowerAdj": -1,
+            "OpponentWealthAdj": -1,
+            "OpponentFameAdj": -1
+          }
+        },
+        {
+          "skillId": "deathrattle_summon_zombie",
+          "parameters": {}
+        }
+      ],
+      "fieldPreference": "Front",
+      "tags": ["undead", "humanshape"],
+      "skillNarratives": {
+        "field_harassment_Field": "一堆脑袋很方的僵尸骑在鸡上趁着夜色闯入农场大搞破坏。。。僵尸倒是做不了什么，鸡把秋刀鱼啄了个秃噜"
+      }
+    },
+    {
+      "name": "僵尸",
+      "help": "角色卡(★★)#恶魔阵营-(0,0,0)\n普通的呆滞僵尸，脑袋和身体都有点方，魔王军最不缺这样的家伙。\n技能\n:骚扰:30%概率触发，减少对方属性(1,1,1)。",
+      "factions": ["Demon"],
+      "rarity": "Rare",
+      "power": 0,
+      "wealth": 0,
+      "fame": 0,
+      "entranceBonus": {
+         "power": 3,
+         "wealth": -1,
+         "fame": 0
+      },
+      "perTurnRecovery": {
+        "power": 0,
+        "wealth": 0,
+        "fame": 0
+      },
+      "innateSkills": [
+        {
+          "skillId": "field_harassment",
+          "parameters": {
+            "Probability": 30,
+            "OpponentPowerAdj": -1,
+            "OpponentWealthAdj": -1,
+            "OpponentFameAdj": -1
+          }
+        }
+      ],
+      "fieldPreference": "Front",
+      "tags": ["zombie", "demon", "harassment"],
+      "skillNarratives": {
+        "field_harassment_Field": "一堆脑袋很方的僵尸趁着夜色闯入农场大搞破坏。。。他们其实不知道要干什么，但是成功踩踏了农作物"
+      }
+    },
+    {
+      "name": "法棍骑士",
+      "help": "角色卡(★★★)#人类阵营-(0,0,0)\n手持一米长硬面包的疯狂骑士，一往无前。据说那个面包是他自己烤制的，而且每天都有一根新的。\n技能\n:面包骑士的登场：前排角色额外增加(2,0,0)武力。\n:啃面包(40%概率)：每次触发自己增加(2,0,0)武力。",
+      "factions": ["Human"],
+      "rarity": "Epic",
+      "power": 0,
+      "wealth": 0,
+      "fame": 0,
+      "entranceBonus": {
+         "power": 8,
+         "wealth": -4,
+         "fame": -2
+      },
+      "perTurnRecovery": {
+        "power": 0,
+        "wealth": 0,
+        "fame": 0
+      },
+      "innateSkills": [
+        {
+          "skillId": "knight_bread_entrance",
+          "parameters": {
+             "FrontPowerBonus": 2,
+             "MiddleWealthBonus": 0,
+             "BackFameBonus": 0
+          }
+        },
+        {
+          "skillId": "field_eat_bread",
+          "parameters": {
+            "Probability": 40,
+            "SelfPowerAdj": 2,
+            "SelfWealthAdj": 0,
+            "SelfFameAdj": 0
+          }
+        }
+      ],
+      "fieldPreference": "Front",
+      "tags": ["knight", "human"],
+      "skillNarratives": {
+        "knight_bread_entrance_Entrance": "一名骑士披甲骑着马走来，他的手中拿着一节一米长的法棍，坚硬如铁，麦香扑鼻。",
+        "field_eat_bread_Field": "法棍骑士思索良久，啃了口面包，他的长剑短了一截，但他的饥饿填补了大半"
+      }
+    },
+    {
+      "name": "独眼会计师",
+      "help": "角色卡(★★)#人类阵营-(0,0,-3)\n王都唯一一位能做十位数乘除法的会计师，虽然瞎了一只眼睛导致看不清数字，但没人怀疑他的能耐。\n技能:\n登场:进场时，增加(5,-3,0)的属性。\n假账：每回合结束时以40%概率做检定，成功时增加(0,5,0)属性，失败时则增加(0,-2,0)。",
+      "factions": ["Human"],
+      "rarity": "Rare",
+      "power": 0,
+      "wealth": 0,
+      "fame": -3,
+      "entranceBonus": {
+         "power": 0,
+         "wealth": 5,
+         "fame": -3
+      },
+      "perTurnRecovery": {
+        "power": 0,
+        "wealth": 0,
+        "fame": 0
+      },
+      "innateSkills": [
+        {
+          "skillId": "turn_end_fake_accounts",
+          "parameters": {
+            "SuccessPowerAdj": 0,
+            "SuccessWealthAdj": 5,
+            "SuccessFameAdj": 0,
+            "FailPowerAdj": 0,
+            "FailWealthAdj": -2,
+            "FailFameAdj": 0
+          }
+        }
+      ],
+      "fieldPreference": "Middle",
+      "tags": ["human", "accountant", "wealth", "gamble"],
+      "skillNarratives": {
+        "turn_end_fake_accounts_TurnEnd": "会计师正在做账..." 
+      }
+    },
+    {
+      "name": "哥布林杀手",
+      "help": "角色卡(★★★)#人类阵营-(-4,-4,-4)\n看不到脸的神秘冒险者，讨厌绿色的东西和矮小的东西，城里的灌木丛几乎全部遭殃。\n技能:\n哥布林杀手: 回合结束时从对方场上搜索并移除一只带有goblin标签的单位，优先搜索前场。移除成功时为我方增加5点名声、扣除1点财力。如果当回合未搜索到移除目标，则将自己从场地移除并扣除4点武力。",
+      "factions": ["Human"],
+      "rarity": "Epic",
+      "power": -4,
+      "wealth": -4,
+      "fame": -4,
+      "perTurnRecovery": {
+        "power": 0,
+        "wealth": 0,
+        "fame": 0
+      },
+      "innateSkills": [
+        {
+          "skillId": "goblin_slayer",
+          "parameters": {}
+        }
+      ],
+      "fieldPreference": "Front",
+      "tags": ["slayer", "hunter"],
+      "skillNarratives": {
+        "goblin_slayer_TurnEnd": "哥布林杀手在荒野捡漏了一只落单的哥布林，胜利凯旋。",
+        "goblin_slayer_fail_TurnEnd": "找不到猎物的哥布林杀手朝着荒野发起冲锋，也许跑到隔壁城镇去了。"
+      }
+    },
+    {
+      "name": "哥布林",
+      "help": "角色卡(★)#恶魔阵营-(3,2,1)\n标签:goblin,beast\n智慧超凡的绿色生物，它们是装备生产的流水线成员，然而要生产什么装备全看它们灵感。\n在场时每回合增长(1,0,0)的属性。\n技能\n:拼凑装备(动态威力)：人口少于5，每回合有10%概率，增加(5,0,0)的属性，全场存在5人以上时，概率改为40%，增加(8,0,0)，但多个单位仅触发一次此技能。",
+      "factions": ["Demon"],
+      "rarity": "Common",
+      "power": 3,
+      "wealth": 2,
+      "fame": 1,
+      "perTurnRecovery": {
+        "power": 1,
+        "wealth": 0,
+        "fame": 0
+      },
+      "innateSkills": [
+        {
+          "skillId": "goblin_scrap_equipment",
+          "parameters": {
+            "BaseTriggerRate": 10,
+            "HighPopulationThreshold": 5,
+            "HighPopulationTriggerRate": 50,
+            "LowPowerBonus": 5,
+            "HighPowerBonus": 8,
+            "LowPopulationNarrative": "哥布林小子们用废铜烂铁、竹子、布条拼凑出一台攻城车，但忘记装轮子了！",
+            "HighPopulationNarrative": "哥布林小子们用石子、树皮、布条做出一台帅气的机器人，可惜驾驶室太高需要三个人才能开！"
+          }
+        }
+      ],
+      "fieldPreference": "Front",
+      "tags": ["goblin", "beast"]
+    },
+    {
+      "name": "巨型青蛙",
+      "help": "角色卡(★★)#通用阵营-(5,4,3)\n一只体型巨大的青蛙，什么东西都往肚子里吞，经常在平地上呆坐沉思蛙生。适合油炸水煮清蒸，不宜生吃，巨型青蛙蛙权保护会的人偶尔会在街上游行，但不妨碍这是酒馆里最好卖的下酒菜。\n技能:\n登场：登场时，可以在己方登场场地选择至多3张稀有度为Common或Rare的角色，将其吞掉，每选中一个角色，额外获得2点Power。\n亡语：此卡被移除时，为我方追加5点Wealth。",
+      "factions": ["Demon", "Human"],
+      "rarity": "Rare",
+      "power": 5,
+      "wealth": 4,
+      "fame": 3,
+      "entranceBonus": {
+        "power": 0
+      },
+      "perTurnRecovery": {
+        "power": 0,
+        "wealth": 0,
+        "fame": 0
+      },
+      "innateSkills": [
+        {
+          "skillId": "giant_frog_entrance",
+          "parameters": {
+            "MaxRemoveCount": 3,
+            "PowerPerRemoval": 2
+          }
+        }
+      ],
+      "eventSkill": {
+        "skillId": "giant_frog_removal_wealth",
+        "parameters": {
+          "WealthBonus": 5
+        }
+      },
+      "fieldPreference": "Middle",
+      "tags": ["beast"],
+      "skillNarratives": {
+        "giant_frog_entrance_Entrance": "巨型青蛙跳进战场，吃掉了几个倒霉蛋，好像大了一圈，救出那几个倒霉蛋之前暂时把它当做墙用应该也不错。",
+        "giant_frog_removal_wealth_Immediate": "今天的晚饭是巨型青蛙天妇罗，和气泡酒组合出售2999厄里斯，10点后八折！"
+      }
+    },
+    {
+      "name": "亢奋的新人冒险者",
+      "help": "角色卡(★)#人类阵营-(4,2,-6)\n年轻热血的新人冒险者，对一切充满好奇心和战斗欲望。没什么本事，但是劲大，遇到什么都敢搏一搏，一般来说本地的保险公司都会拒绝去做这类人的生意。\n在场时每回合有50%概率触发\"亢奋冲锋\"技能：从场上（己方和对方）选择一个包含\"demon\"或\"beast\"词条的角色卡进行移除尝试，或者失败后自刎归天（移除自身）。",
+      "factions": ["Human"],
+      "rarity": "Common",
+      "power": 4,
+      "wealth": 2,
+      "fame": -6,
+      "entranceBonus": {
+        "power": 2
+      },
+      "perTurnRecovery": {
+        "power": 0,
+        "wealth": 0,
+        "fame": 1
+      },
+      "innateSkills": [
+        {
+          "skillId": "fledgling_adventurer_frenzied_charge",
+          "parameters": {
+            "TriggerProbability": 50,
+            "CommonSuccessRate": 100,
+            "RareSuccessRate": 80,
+            "EpicSuccessRate": 50,
+            "LegendarySuccessRate": 20,
+            "CommonPowerCost": 6,
+            "RarePowerCost": 4,
+            "EpicPowerCost": 8,
+            "LegendaryPowerCost": 10,
+            "FameMultiplier": 1.5,
+            "PowerDamageMultiplier": 1.5,
+            "FrogEasterEggPower": 5
+          }
+        }
+      ],
+      "fieldPreference": "Front",
+      "tags": ["adventurer", "human", "hunter"],
+      "skillNarratives": {
+        "fledgling_adventurer_frenzied_charge_success_ally": "亢奋的冒险者分不清敌我，大声叫唤着向我方{0}发起了冲锋，从结果来讲至少鼓舞了士气。。",
+        "fledgling_adventurer_frenzied_charge_success_opponent": "亢奋的冒险者乱挥手里的武器，哇哇大叫冲向了敌人{0}，将其讨伐，一般来说冒险者工会不提倡此类行为。。但，总之有用就行",
+        "fledgling_adventurer_frenzied_charge_failure": "亢奋的冒险者冲进战场，向{0}发起冲锋时，脚崴摔进了泥坑里，大约有段时间爬不出来了！",
+        "fledgling_adventurer_frenzied_charge_frog_easter_egg": "亢奋的冒险者冲向了巨型青蛙，被一口吞进了肚子里，结果上而言成功控制住了这头猛兽，它因为消化不良而动弹不得。。大概？"
+      }
+    }
+  ]
+}

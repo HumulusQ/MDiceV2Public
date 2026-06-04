@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+   sodipodi:docname="Reset.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="1.1162327"
+     inkscape:cx="290.26205"
+     inkscape:cy="604.7126"
+     inkscape:window-width="1920"
+     inkscape:window-height="1130"
+     inkscape:window-x="-6"
+     inkscape:window-y="-6"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1">
+    <marker
+       style="overflow:visible"
+       id="Diamond"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Diamond"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.45)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 0,-7.0710768 -7.0710894,0 0,7.0710589 7.0710462,0 Z"
+         id="path19" />
+    </marker>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       id="path2"
+       style="fill:#eba4a4;fill-opacity:0;stroke:#ffffff;stroke-width:4.03;stroke-dasharray:none;marker-end:url(#Diamond);stroke-opacity:1"
+       d="m 73.831535,129.47713 c 5.747713,-5.74771 13.688104,-9.30274 22.458817,-9.30274 17.541428,0 31.761568,14.22013 31.761568,31.76156"
+       sodipodi:nodetypes="csc"
+       inkscape:export-filename="Reset.png"
+       inkscape:export-xdpi="37.913399"
+       inkscape:export-ydpi="37.913399" />
+    <rect
+       style="fill:#eba4a4;fill-opacity:0;stroke:#ffffff;stroke-width:4.03;stroke-dasharray:none;stroke-opacity:1"
+       id="rect4"
+       width="13.911399"
+       height="13.911399"
+       x="170.50891"
+       y="29.726015"
+       transform="rotate(45.344285)" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Layer 2">
+    <path
+       d="m 122.16578,174.42968 c -5.74771,5.74771 -13.6881,9.30274 -22.458815,9.30274 -17.541435,0 -31.761575,-14.22013 -31.761575,-31.76156"
+       style="fill:#eba4a4;fill-opacity:0;stroke:#ffffff;stroke-width:4.03;stroke-dasharray:none;marker-end:url(#Diamond);stroke-opacity:1"
+       id="path1"
+       sodipodi:nodetypes="csc" />
+  </g>
+</svg>

@@ -1,0 +1,37 @@
+{
+    "search.exclude": {
+        "**/.history": true
+    },
+    "files.exclude": {
+        "**/.history": true
+    },
+    "chat.tools.terminal.autoApprove": {
+        "&": true,
+        "Test-Path": true,
+        "dotnet \"MDiceV2.Launcher.dll\"": true,
+        "/^cd \"C:\\\\Users\\\\Humulus\\.MSI\\\\Documents\\\\Mydata\\\\Programming\\\\MDiceV2\\\\MDiceV2_Published\"\ncmd /c run\\.bat 2>&1 \\| Select-Object -First 100\n$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^cmd /c \"cd C:\\\\Users\\\\Humulus\\.MSI\\\\Documents\\\\Mydata\\\\Programming\\\\MDiceV2\\\\MDiceV2_Published && run\\.bat\" 2>&1 \\| Select-Object -Last 50$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^powershell -ExecutionPolicy Bypass -File \"tools\\\\publish-local\\.ps1\" 2>&1 \\| Select-String -Pattern \"Building\\|Publishing\\|Cleanup\\|successful\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^powershell -ExecutionPolicy Bypass -NoProfile -File \"tools/build-debug\\.ps1\" -NoRun 2>&1$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^powershell -ExecutionPolicy Bypass -NoProfile -File \"c:\\\\Users\\\\Humulus\\.MSI\\\\Documents\\\\Mydata\\\\Programming\\\\MDiceV2\\\\tools\\\\build-debug\\.ps1\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^powershell -ExecutionPolicy Bypass -File \"\\.\\\\tools\\\\build-debug\\.ps1\" -NoRun 2>&1 \\| Select-Object -Last 100 \\| Out-String$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

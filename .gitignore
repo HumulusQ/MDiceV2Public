@@ -1,0 +1,37 @@
+# 鎺掗櫎鑴氭湰鏂囦欢
+*.ps1
+*.dll
+*.bat
+*.txt
+*.cmd
+*.py
+*.sh
+ECHO 处于关闭状态。
+# 鎺掗櫎 Markdown 鏂囦欢
+*.md
+ECHO 处于关闭状态。
+# 鎺掗櫎鐗瑰畾鏂囦欢澶?
+publish/
+releases/
+debug/
+.deepcode/
+.history/
+MDiceV2_Published/
+MDiceV2_Release/
+MDiceV2_Debug/
+ECHO 处于关闭状态。
+# 鎺掗櫎澶ф枃浠?
+*.Dice
+*.zip
+*.pdb
+*.idb
+ECHO 处于关闭状态。
+# 鎺掗櫎鏋勫缓鏃ュ織
+build-debug-output.txt
+build_output.txt
+build*.txt
+errors_only.txt
+COMPILATION_LOG.txt
+ECHO 处于关闭状态。
+# 鎺掗櫎鏈湴閰嶇疆鏂囦欢
+.yuanzhi_chat_port

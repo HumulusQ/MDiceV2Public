@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- ============ 濡炪倕婀卞ú浼村春閻戞ɑ鎷卞ǎ鍥ｅ墲娴?============ -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Mod闁绘鎳撻悾楣冩煀瀹ュ洨鏋?-->
+    <OutputType>Library</OutputType>
+    <AssemblyName>ABot</AssemblyName>
+    <!-- 闁绘鐗婂﹢鐗堢┍閳╁啩绱?-->
+    <Authors>ABOT Team</Authors>
+    <Description>ABOT Battle Orchestration Interpreter for MDiceV2</Description>
+    <!-- 濞戞挸绉堕弫鎾诲箣閹』semblyInfo闁挎稑濂旀繛鍥偨閳ユ槼rectory.Build.props -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <SelfContained>false</SelfContained>
+    <!-- 闁绘鐗婂﹢浼村矗閾氬倻鐭?Version.props 闁告柣鍔嶉埀顑挎祰楠炲繘宕ｉ弽鐢电闂侇偅淇虹换?Directory.Build.props 閻庣數鍘ч崣?-->
+    <!-- AssemblyVersion: $(VersionBase).$(BuildCounter) -->
+    <!-- FileVersion: $(VersionBase).$(BuildCounter) -->
+    <!-- InformationalVersion 濞寸姴鎳愰弫銈嗙鎼淬垻鍨奸悹浣峰嵆椤ｂ晠宕ｉ幋锝庢斀闁绘鐗婂﹢?-->
+    <Version>0.2.7</Version>
+    <AssemblyVersion>0.2.7</AssemblyVersion>
+    <FileVersion>0.2.7</FileVersion>
+    <InformationalVersion>beta</InformationalVersion>
+  </PropertyGroup>
+  <!-- ============ 濡炪倕婀卞ú鐗堢瑹濠靛﹦顩?============ -->
+  <ItemGroup>
+    <!-- 鐎殿喗娲滈弫?Interfaces 濞寸姰鍎撮獮蹇涘矗?IModPlugin 闁规亽鍎辫ぐ?-->
+    <ProjectReference Include="..\..\MDiceV2.Interfaces\MDiceV2.Interfaces.csproj">
+      <Private>false</Private>
+    </ProjectReference>
+    <!-- 鐎殿喗娲滈弫?Core 濞寸姰鍎撮獮蹇涘矗?Mod 闁规亽鍎辫ぐ娑氣偓瑙勭煯缁?-->
+    <ProjectReference Include="..\..\MDiceV2.Core\MDiceV2.Core.csproj">
+      <Private>false</Private>
+    </ProjectReference>
+    <!-- Avalonia UI Framework - Complete dependency set -->
+    <PackageReference Include="Avalonia" Version="11.3.6" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.6" />
+  </ItemGroup>
+  <!-- ============ 閺夊牊鎸搁崵顓㈡煀瀹ュ洨鏋?============ -->
+  <PropertyGroup>
+    <!-- Mod閹煎瓨妫佺欢顓㈠礄閸濆嫬鐓傞柣妤冩嚀閻ｉ箖鎯勯鑲╃Э濞寸姰鍎扮粚鍫曟焾閵娧嗩唹 -->
+  </PropertyGroup>
+</Project>

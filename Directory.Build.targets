@@ -1,0 +1,16 @@
+<Project>
+  <Target Name="AutoVersion" BeforeTargets="CoreCompile" Condition="'$(AssemblyVersion)' != ''">
+    <PropertyGroup>
+      <CounterFile>$(MSBuildThisFileDirectory)build.counter</CounterFile>
+      <BaseFile>$(CounterFile).base</BaseFile>
+      <GeneratedVersionFile>$(IntermediateOutputPath)GeneratedVersion.g.cs</GeneratedVersionFile>
+        <VersionCommand>powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)tools\compute-version.ps1&quot; -AssemblyVersion $(AssemblyVersion) -InformationalVersion &quot;$(InformationalVersion)&quot; -CounterFile &quot;$(CounterFile)&quot; -BaseFile &quot;$(BaseFile)&quot; -GeneratedFile &quot;$(GeneratedVersionFile)&quot;</VersionCommand>
+    </PropertyGroup>
+
+    <Exec Command="$(VersionCommand)" />
+
+    <ItemGroup>
+      <Compile Include="$(GeneratedVersionFile)" />
+    </ItemGroup>
+  </Target>
+</Project>

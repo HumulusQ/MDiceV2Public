@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+package mdv2.remotesync;
+
+import "google/protobuf/empty.proto";
+
+// ============== 认证与连接 ==============
+
+message AuthRequest {
+  string password_hash = 1;  // HMAC-SHA256(password, timestamp)
+  string timestamp = 2;      // ISO8601 UTC timestamp
+}
+
+message AuthResponse {
+  bool success = 1;
+  string message = 2;
+  string client_id = 3;  // 新增：服务器分配的客户端ID
+}
+
+// ============== 配置同步 ==============
+
+message ConfigItem {
+  string key = 1;
+  string value = 2;
+  int64 updated_at_ticks = 3;  // DateTime.UtcNow.Ticks
+  string last_modified_by = 4; // 修改客户端标识
+}
+
+message SyncConfigRequest {
+  repeated ConfigItem config_items = 1;
+  string client_id = 2;  // 客户端会话ID，由客户端提供而不依赖peer
+}
+
+message SyncConfigResponse {
+  bool success = 1;
+  repeated ConfigItem config_items = 2;
+  int32 conflict_count = 3;
+  string message = 4;
+}
+
+message PullConfigRequest {
+  string client_id = 1;  // 客户端会话ID
+}
+
+// ============== 日志流 ==============
+
+message LogEntry {
+  string group_id = 1;
+  string content = 2;
+  int64 timestamp_ticks = 3;
+  string level = 4;  // INFO, WARN, ERROR, DEBUG
+}
+
+message LogBatch {
+  string batch_id = 1;
+  int64 created_at_ticks = 2;
+  repeated LogEntry entries = 3;
+}
+
+message SubscribeLogsRequest {
+  string client_id = 1;  // 客户端会话ID
+}
+
+message LogStreamAck {
+  int32 received_count = 1;
+  bool success = 2;
+}
+
+// ============== 模拟消息 ==============
+
+message SimulationMessage {
+  string user_id = 1;
+  string group_id = 2;
+  string content = 3;
+  int64 timestamp_ticks = 4;
+  string message_id = 5;  // 新增：消息ID
+}
+
+message SimulationAck {
+  string message_id = 1;  // 确认的消息ID
+  bool success = 2;
+  string message = 3;
+  int64 processed_at_ticks = 4;  // 处理时间戳
+}
+
+// ============== ConfigSyncService ==============
+
+service ConfigSyncService {
+  // 客户端认证
+  rpc Authenticate(AuthRequest) returns (AuthResponse);
+
+  // 拉取远程配置
+  rpc PullConfig(PullConfigRequest) returns (SyncConfigResponse);
+
+  // 推送本地配置覆盖远程
+  rpc PushConfig(SyncConfigRequest) returns (SyncConfigResponse);
+
+  // 订阅日志流（服务端推送流）
+  // 客户端订阅后，服务器会定期批量推送日志
+  rpc SubscribeLogs(SubscribeLogsRequest) returns (stream LogBatch);
+
+  // 推送模拟消息到所有连接的客户端（双向流）
+  rpc StreamSimulationMessages(stream SimulationMessage) returns (stream SimulationAck);
+}

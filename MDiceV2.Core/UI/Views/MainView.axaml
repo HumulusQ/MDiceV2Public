@@ -1,0 +1,100 @@
+<!-- MainView.axaml - 应用程序的主视图控件 -->
+<!-- 实现了一个可折叠的导航侧边栏和内容显示区域 -->
+<!-- 使用SplitView控件和Semi.Avalonia控件实现美观的折叠/展开导航体验 -->
+<UserControl xmlns="https://github.com/avaloniaui"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+              xmlns:vm="using:MDiceV2.Core.UI.ViewModels"
+              xmlns:views="using:MDiceV2.Core.UI.Views"
+              xmlns:conv="using:MDiceV2.Core.Converters"
+              xmlns:semi="https://github.com/irihitech/Semi.Avalonia"
+              xmlns:models="using:MDiceV2.Core.UI.Models"
+              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+              x:Class="MDiceV2.Core.UI.Views.MainView"
+              x:DataType="vm:MainViewModel">
+
+     <UserControl.Resources>
+         <!-- 局部注册转换器，确保静态资源可用 -->
+         <conv:BoolToWidthConverter x:Key="BoolToWidthConverter" />
+         
+         <!-- Mod 面板导航项背景颜色转换器 -->
+         <SolidColorBrush x:Key="ModPanelBackground">#FFFDD0</SolidColorBrush>
+         <SolidColorBrush x:Key="DefaultPanelBackground">{DynamicResource SemiColorBackground0}</SolidColorBrush>
+     </UserControl.Resources>
+
+    <!-- 设计时数据上下文，方便在设计器中预览 -->
+    <Design.DataContext>
+        <vm:MainViewModel/>
+    </Design.DataContext>
+
+    <!-- 主布局容器 -->
+    <Grid>
+        <!-- SplitView控件实现可折叠的导航面板 -->
+        <!-- DisplayMode="CompactInline" 提供紧凑的折叠/展开体验 -->
+        <!-- CompactPaneLength="50" 定义折叠状态下的宽度（只显示图标） -->
+        <!-- OpenPaneLength="200" 定义展开状态下的宽度（显示完整内容） -->
+        <!-- PointerEntered和PointerExited事件绑定到SplitView而不是整个UserControl -->
+        <SplitView x:Name="NavigationSplitView"
+                   IsPaneOpen="{Binding IsPaneOpen, Mode=TwoWay}"
+                   PanePlacement="Left"
+                   CompactPaneLength="60"
+                   OpenPaneLength="200"
+                   DisplayMode="CompactInline">
+
+            <!-- 左侧导航面板 -->
+            <SplitView.Pane>
+                <Grid>
+                    <Grid.Background>
+                        <SolidColorBrush Color="#2A2A2A"/>
+                    </Grid.Background>
+                    <!-- 使用Semi.Avalonia美化的ListBox -->
+                    <StackPanel Orientation="Vertical">
+                    <!-- 面板展开/折叠按钮 -->
+                    <Button x:Name="PanelExpandButton" Height="48" Margin="4,2" CornerRadius="6"
+                            Background="{DynamicResource SemiColorBackground0}" BorderBrush="{DynamicResource SemiColorBorder0}" BorderThickness="1"
+                            Click="PanelExpandButton_Click">
+                        <Button.Width>
+                            <Binding Path="IsPaneOpen" ConverterParameter="52,190">
+                                <Binding.Converter>
+                                    <conv:BoolToWidthConverter />
+                                </Binding.Converter>
+                            </Binding>
+                        </Button.Width>
+                        <Grid>
+                            <StackPanel Orientation="Horizontal" IsVisible="{Binding IsPaneOpen}" VerticalAlignment="Center">
+                               <Image Source="avares://MDiceV2.Core/Assets/Sprite/Panel64.png" Width="18" Height="18" Margin="10,0,10,0"/>
+                               <TextBlock Text="Collapse" VerticalAlignment="Center" FontWeight="Medium"/>
+                           </StackPanel>
+                            <Image Source="avares://MDiceV2.Core/Assets/Sprite/Panel64.png" Width="18" Height="18"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   IsVisible="{Binding !IsPaneOpen}"/>
+                        </Grid>
+                    </Button>
+
+                    <ListBox x:Name="NavigationListBox"
+                             SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             PointerEntered="NavigationListBox_PointerEntered"
+                             PointerExited="NavigationListBox_PointerExited">
+                    </ListBox>
+                    </StackPanel>
+                </Grid>
+            </SplitView.Pane>
+
+            <!-- 主内容区域 -->
+            <!-- ContentControl根据选中的导航项动态显示对应内容 -->
+            <SplitView.Content>
+                <Grid>
+                    <Grid.Background>
+                        <ImageBrush Source="avares://MDiceV2.Core/Assets/Sprite/Background.png" Stretch="UniformToFill"/>
+                    </Grid.Background>
+                    <Border CornerRadius="12" Margin="12" Background="Transparent" BorderBrush="{DynamicResource SemiColorBorder0}" BorderThickness="1" BoxShadow="0 2 8 0 #40000000">
+                        <ContentControl Content="{Binding CurrentView}" Margin="20" />
+                    </Border>
+                </Grid>
+            </SplitView.Content>
+        </SplitView>
+    </Grid>
+</UserControl>

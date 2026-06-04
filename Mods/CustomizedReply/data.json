@@ -1,0 +1,172 @@
+{
+  "description": "CustomizedReply Mod 的规则库 - 完整格式参考",
+  "note": "此文件应放在 data/mods/CustomizedReply/ 目录中，与CustomizedReply.dll同级。用户可在此文件中直接编辑规则并迁移数据。",
+  "formatVersion": "2.0",
+  "formatDescription": {
+    "trigger": "触发词，支持模糊匹配时的子字符串包含",
+    "matchType": "匹配类型：'exact'(精确) / 'regex'(正则表达式) / 'fuzzy'(模糊包含)",
+    "replies": "回复文本列表，bot会随机选择一条回复（必填）",
+    "hasScript": "是否启用脚本模式（true/false，默认false）",
+    "scriptContent": "Lua脚本内容（当hasScript=true时可选择包含脚本代码或使用scriptPath）",
+    "scriptMetadata": "脚本元数据：包含scriptName、version、createdAt、requiresState等信息",
+    "conditions": "筛选条件列表（可选），支持QQ限制、群号限制、等级限制等。如果规则有多个条件，须全部满足才会回复"
+  },
+  "conditionTypes": {
+    "QQRestriction": "QQ号限制。format: 'qq1,qq2,qq3' 或使用isInverted:true表示排除这些QQ",
+    "GroupRestriction": "群号限制。format: 'group1,group2,group3' 或使用isInverted:true表示排除这些群",
+    "LevelRestriction": "用户等级限制。format: 'level1,level2,level3' 或使用isInverted:true表示排除这些等级"
+  },
+  "replies": [
+    {
+      "description": "示例1：简单的精确匹配，无条件无脚本",
+      "trigger": "你好",
+      "matchType": "exact",
+      "replies": [
+        "你好呀！",
+        "嗨～",
+        "你好，有什么我可以帮助你的吗？"
+      ],
+      "hasScript": false
+    },
+    {
+      "description": "示例2：正则表达式匹配，无条件无脚本",
+      "trigger": "^(早|早安|早上)",
+      "matchType": "regex",
+      "replies": [
+        "早上好～",
+        "早安！祝你有美好的一天～",
+        "早！😊"
+      ],
+      "hasScript": false
+    },
+    {
+      "description": "示例3：模糊匹配，带条件筛选（仅特定QQ）",
+      "trigger": "谢谢",
+      "matchType": "fuzzy",
+      "replies": [
+        "不客气～",
+        "帮助你是我的荣幸！",
+        "别客气！😉"
+      ],
+      "hasScript": false,
+      "conditions": [
+        {
+          "type": "QQRestriction",
+          "value": "123456789,987654321",
+          "isInverted": false,
+          "description": "仅允许QQ号为123456789或987654321的用户触发此规则"
+        }
+      ]
+    },
+    {
+      "description": "示例4：模糊匹配，带群号筛选和反相条件（排除某些群）",
+      "trigger": "开始游戏",
+      "matchType": "exact",
+      "replies": [
+        "好的，现在开始游戏！请稍等...",
+        "游戏即将开始，准备好了吗？"
+      ],
+      "hasScript": false,
+      "conditions": [
+        {
+          "type": "GroupRestriction",
+          "value": "111111111,222222222",
+          "isInverted": true,
+          "description": "在除了111111111和222222222之外的所有群都可以触发"
+        }
+      ]
+    },
+    {
+      "description": "示例5：带脚本内容的规则（内联Lua脚本）",
+      "trigger": "计算一下",
+      "matchType": "fuzzy",
+      "replies": [
+        "计算结果：${output_line_1}",
+        "得到答案：${output_line_1}"
+      ],
+      "hasScript": true,
+      "scriptContent": "-- 简单的Lua脚本示例\nprint('1 + 1 = ' .. (1 + 1))\nprint('现在时间：' .. os.date('%Y-%m-%d %H:%M:%S'))",
+      "scriptMetadata": {
+        "scriptName": "简单计算器",
+        "version": "1.0.0",
+        "createdAt": "2026-02-13T10:30:00Z",
+        "requiresState": false,
+        "description": "执行简单的计算，输出结果用于回复文本中的${output_line_1}替换"
+      }
+    },
+    {
+      "description": "示例6：复杂规则 - 带脚本、多个条件、需要持久状态",
+      "trigger": "签到",
+      "matchType": "exact",
+      "replies": [
+        "签到成功！您已累计签到${output_line_1}天，获得奖励！",
+        "欢迎签到！今天是您第${output_line_1}次签到~"
+      ],
+      "hasScript": true,
+      "scriptContent": "-- 签到脚本：跟踪用户签到次数\n-- 使用全局状态存储签到数据\nif state == nil then\n  state = { count = 0 }\nend\nstate.count = state.count + 1\nprint('签到次数：' .. state.count)",
+      "scriptMetadata": {
+        "scriptName": "用户签到脚本",
+        "version": "2.0.0",
+        "createdAt": "2026-02-13T10:30:00Z",
+        "requiresState": true,
+        "description": "需要使用持久状态来跟踪用户签到的总次数"
+      },
+      "conditions": [
+        {
+          "type": "GroupRestriction",
+          "value": "123456789",
+          "isInverted": false,
+          "description": "仅在群123456789启用签到功能"
+        },
+        {
+          "type": "QQRestriction",
+          "value": "999999999",
+          "isInverted": true,
+          "description": "除了黑名单用户999999999外都可以签到"
+        }
+      ]
+    },
+    {
+      "description": "示例7：多条件匹配 - QQ + 群号 + 等级限制",
+      "trigger": "领取奖励",
+      "matchType": "exact",
+      "replies": [
+        "恭喜！您获得了奖励！",
+        "奖励已准备好，请查收~"
+      ],
+      "hasScript": false,
+      "conditions": [
+        {
+          "type": "GroupRestriction",
+          "value": "admin_group_123",
+          "isInverted": false,
+          "description": "仅在指定群开启奖励领取"
+        },
+        {
+          "type": "LevelRestriction",
+          "value": "1,2,3,4,5",
+          "isInverted": false,
+          "description": "用户等级须为1-5级才能领取"
+        }
+      ]
+    },
+    {
+      "description": "示例8：脚本路径参考（未来扩展用）- 若支持外部脚本文件",
+      "trigger": "执行脚本",
+      "matchType": "fuzzy",
+      "replies": [
+        "脚本已执行，结果：${output_line_1}",
+        "操作完成！"
+      ],
+      "hasScript": true,
+      "scriptContent": "print('这是内联脚本')",
+      "_scriptPath": "（注：当前版本不支持外部脚本路径，脚本内容必须内联到scriptContent字段）",
+      "scriptMetadata": {
+        "scriptName": "示例脚本",
+        "version": "1.0.0",
+        "createdAt": "2026-02-13T10:30:00Z",
+        "requiresState": false
+      }
+    }
+  ]
+}

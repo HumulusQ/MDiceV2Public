@@ -1,0 +1,69 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <AssemblyName>AIMod</AssemblyName>
+    <Authors>Humulus</Authors>
+    <Description>An AI-powered chat mod using Gemini.</Description>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <SelfContained>false</SelfContained>
+    <!-- AIMod 运行在宿主进程内，宿主共享库应由主程序提供 -->
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+    <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
+    <!-- 闁绘鐗婂﹢浼村矗閾氬倻鐭?Version.props 闁告柣鍔嶉埀顑挎祰楠炲繘宕?-->
+    <Version>0.2.7</Version>
+    <AssemblyVersion>0.2.7</AssemblyVersion>
+    <FileVersion>0.2.7</FileVersion>
+    <InformationalVersion>beta</InformationalVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="mod.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="ai-config.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Assets\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.6" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.6" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.6" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+    <!-- Avalonia.ReactiveUI removed: AIMod does not use ReactiveUI types. -->
+    <PackageReference Include="Semi.Avalonia" Version="11.1.0" />
+    <PackageReference Include="System.Net.Http.Json" Version="8.0.0" />
+    <PackageReference Include="System.Data.SQLite" Version="1.0.119" />
+    <PackageReference Include="Polly" Version="8.5.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\MDiceV2.Core\MDiceV2.Core.csproj">
+      <Private>false</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\..\MDiceV2.Interfaces\MDiceV2.Interfaces.csproj">
+      <Private>false</Private>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="Avalonia" ExcludeAssets="runtime" />
+    <PackageReference Update="Avalonia.Themes.Fluent" ExcludeAssets="runtime" />
+    <PackageReference Update="Avalonia.Fonts.Inter" ExcludeAssets="runtime" />
+    <PackageReference Update="CommunityToolkit.Mvvm" ExcludeAssets="runtime" />
+    <!-- Avalonia.ReactiveUI ExcludeAssets removed along with the package reference -->
+    <PackageReference Update="Semi.Avalonia" ExcludeAssets="runtime" />
+    <PackageReference Update="System.Net.Http.Json" ExcludeAssets="runtime" />
+    <PackageReference Update="System.Data.SQLite" ExcludeAssets="runtime" />
+    <PackageReference Update="Polly" ExcludeAssets="runtime" />
+  </ItemGroup>
+  <Target Name="SlimPluginOutput" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
+    <ItemGroup>
+      <AIModExtraDlls Include="$(TargetDir)*.dll" Exclude="$(TargetDir)AIMod.dll" />
+      <AIModExtraFiles Include="$(TargetDir)*.pdb;$(TargetDir)*.deps.json;$(TargetDir)*.runtimeconfig.json" Exclude="$(TargetDir)AIMod.pdb" />
+    </ItemGroup>
+    <Delete Files="@(AIModExtraDlls);@(AIModExtraFiles)" />
+    <RemoveDir Directories="$(TargetDir)runtimes" Condition="Exists('$(TargetDir)runtimes')" />
+  </Target>
+</Project>

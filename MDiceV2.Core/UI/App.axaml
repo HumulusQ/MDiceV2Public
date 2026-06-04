@@ -1,0 +1,179 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="using:MDiceV2.Core.Converters"
+             x:Class="MDiceV2.Core.UI.App">
+    <Application.Resources>
+       <!-- 注册全局转换器 -->
+       <conv:BoolToWidthConverter x:Key="BoolToWidthConverter" />
+       <!-- Default font family: use PlayfairDisplay-Black for all UI -->
+       <FontFamily x:Key="DefaultFontFamily">avares://MDiceV2.Core/Assets/Font/PlayfairDisplay-Black.ttf#Playfair Display</FontFamily>
+       <!-- Chinese TextBox font: use new Alibaba PuHuiTi Light font for input fields -->
+       <FontFamily x:Key="ChineseFontFamily">avares://MDiceV2.Core/Assets/Font/AlibabaPuHuiTi-3-45-Light.ttf#Alibaba PuHuiTi, 楷体, SimSun</FontFamily>
+       <!-- Bold Chinese font: use Alibaba PuHuiTi Bold for labels (deprecated, keeping for compatibility) -->
+       <FontFamily x:Key="BoldChineseFontFamily">avares://MDiceV2.Core/Assets/Font/Alibaba-PuHuiTi-B.ttf#Alibaba PuHuiTi, 楷体, SimSun</FontFamily>
+       <!-- Bold English font: use PlayfairDisplay Black for English labels (same as DefaultFontFamily now) -->
+       <FontFamily x:Key="BoldEnglishFontFamily">avares://MDiceV2.Core/Assets/Font/PlayfairDisplay-Black.ttf#Playfair Display</FontFamily>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme/>
+
+        <!-- EllipseButton 样式 -->
+        <Style Selector="Button.EllipseButton">
+          <Setter Property="Background" Value="#258292"/>
+          <Setter Property="Foreground" Value="White"/>
+          <Setter Property="Padding" Value="16"/>
+          <Setter Property="Template">
+            <ControlTemplate>
+              <Border Background="{TemplateBinding Background}"
+                      CornerRadius="8"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch">
+                <ContentPresenter x:Name="PART_ContentPresenter"
+                                  Content="{TemplateBinding Content}"
+                                  Margin="{TemplateBinding Padding}"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"/>
+              </Border>
+            </ControlTemplate>
+          </Setter>
+        </Style>
+
+        <!-- 悬停状态 -->
+        <Style Selector="Button.EllipseButton:pointerover">
+          <Setter Property="Background" Value="Red"/>
+          <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <!-- ================= TextBlock 文字颜色锁定为白色 ================= -->
+        <!-- 全局 TextBlock：锁定文字为白色，防止 FluentTheme 覆盖 -->
+        <Style Selector="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource DefaultFontFamily}" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <!-- TextBlock 禁用状态：仍保持白色 -->
+        <Style Selector="TextBlock:disabled">
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <!-- 其他控件字体配置 -->
+        <Style Selector="Button, Label">
+            <Setter Property="FontFamily" Value="{StaticResource DefaultFontFamily}" />
+        </Style>
+        
+        <!-- TextBox: use ChineseFontFamily with fallbacks and Normal weight -->
+        <Style Selector="TextBox">
+            <Setter Property="FontFamily" Value="{StaticResource ChineseFontFamily}" />
+            <Setter Property="FontWeight" Value="Normal" />
+            <Setter Property="Background" Value="#303030" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="CaretBrush" Value="White" />
+            <Setter Property="BorderBrush" Value="#444444" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="SelectionForegroundBrush" Value="White" />
+            <Setter Property="SelectionBrush" Value="#4F7FBF" />
+        </Style>
+
+        <!-- TextBox内部的水印文本（watermark）必须显式指定字体，避免继承TextBlock全局样式的粗体 -->
+        <Style Selector="TextBox /template/ TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource ChineseFontFamily}" />
+            <Setter Property="FontWeight" Value="Normal" />
+        </Style>
+
+        <!-- Ensure check-like controls use the same default font (labels/content of CheckBox/RadioButton/ToggleSwitch) -->
+        <Style Selector="CheckBox, RadioButton, ToggleSwitch">
+            <Setter Property="FontFamily" Value="{StaticResource DefaultFontFamily}" />
+        </Style>
+
+        <!-- 获得焦点时仍保持黑底白字 -->
+        <Style Selector="TextBox:focus">
+            <Setter Property="Background" Value="#303030" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="CaretBrush" Value="White" />
+            <Setter Property="BorderBrush" Value="#444444" />
+        </Style>
+
+        <!-- 鼠标悬停时也不改变背景颜色 -->
+        <Style Selector="TextBox:pointerover">
+            <Setter Property="Background" Value="#528e5aff" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <!-- 日志 ScrollViewer：锁死为黑底，防止模板使用浅色 Panel -->
+        <Style Selector="ScrollViewer.WsLogScroll">
+            <Setter Property="Background" Value="#303030" />
+        </Style>
+
+        <!-- 深层覆盖：TextBox 模板内部的 Border 背景（FluentTheme 在 focus 时会改变这个） -->
+        <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="#303030" />
+        </Style>
+        
+        <Style Selector="TextBox:focus /template/ Border">
+            <Setter Property="Background" Value="#303030" />
+        </Style>
+
+        <!-- ABOT Script 输入框：强制白色背景，覆盖全局默认 -->
+        <Style Selector="TextBox.WhiteBackgroundTextBox">
+            <Setter Property="Background" Value="#F5F5F5" />
+            <Setter Property="Foreground" Value="Black" />
+            <Setter Property="CaretBrush" Value="Black" />
+            <Setter Property="BorderBrush" Value="#CCCCCC" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+
+        <!-- ABOT Script 输入框：focus 时保持白色背景 -->
+        <Style Selector="TextBox.WhiteBackgroundTextBox:focus">
+            <Setter Property="Background" Value="#F5F5F5" />
+            <Setter Property="Foreground" Value="Black" />
+            <Setter Property="CaretBrush" Value="Black" />
+            <Setter Property="BorderBrush" Value="#4F7FBF" />
+        </Style>
+
+        <!-- ABOT Script 输入框：鼠标悬停时保持白色背景 -->
+        <Style Selector="TextBox.WhiteBackgroundTextBox:pointerover">
+            <Setter Property="Background" Value="#F5F5F5" />
+            <Setter Property="Foreground" Value="Black" />
+        </Style>
+
+        <!-- ABOT Script 输入框：深层覆盖模板内部 Border 背景 -->
+        <Style Selector="TextBox.WhiteBackgroundTextBox:focus /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="#F5F5F5" />
+        </Style>
+
+        <Style Selector="TextBox.WhiteBackgroundTextBox:focus /template/ Border">
+            <Setter Property="Background" Value="#F5F5F5" />
+        </Style>
+
+        <!-- ABOT Script 输入框：悬停时深层覆盖模板内部 Border 背景 -->
+        <Style Selector="TextBox.WhiteBackgroundTextBox:pointerover /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="#F5F5F5" />
+        </Style>
+
+        <Style Selector="TextBox.WhiteBackgroundTextBox:pointerover /template/ Border">
+            <Setter Property="Background" Value="#F5F5F5" />
+        </Style>
+
+        <!-- ================= Button 文字颜色锁定为白色 ================= -->
+        <!-- 全局 Button：锁死文字为白色，防止 FluentTheme 覆盖 -->
+        <Style Selector="Button">
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <!-- Button 悬停状态：保持白色文字 -->
+        <Style Selector="Button:pointerover">
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <!-- Button 按下状态：保持白色文字 -->
+        <Style Selector="Button:pressed">
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <!-- Button 禁用状态：仍保持白色（或可选调整为灰白） -->
+        <Style Selector="Button:disabled">
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+    </Application.Styles>
+</Application>

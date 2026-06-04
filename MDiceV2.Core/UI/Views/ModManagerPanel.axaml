@@ -1,0 +1,203 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:MDiceV2.Core.UI.ViewModels"
+             xmlns:c="using:MDiceV2.Core.Converters"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
+             x:Class="MDiceV2.Core.UI.Views.ModManagerPanel"
+             x:DataType="vm:ModManagerViewModel">
+
+    <!-- 转换器资源 -->
+    <UserControl.Resources>
+        <c:NotConverter x:Key="NotConverter"/>
+    </UserControl.Resources>
+
+    <!-- 设计时数据上下文 -->
+    <Design.DataContext>
+        <vm:ModManagerViewModel/>
+    </Design.DataContext>
+
+    <!-- 主容器 -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- 标题栏 -->
+        <Border Grid.Row="0" Background="#258292" Height="50" CornerRadius="8" Margin="0,0,0,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 标题文本 -->
+                <TextBlock Grid.Column="0" Text="{Binding Title}" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="15,0,0,0"
+                           FontFamily="{StaticResource BoldEnglishFontFamily}" FontSize="16"/>
+
+                <!-- 搜索框 -->
+                <TextBox Grid.Column="2" Text="{Binding SearchText, Mode=TwoWay}"
+                         VerticalAlignment="Center" VerticalContentAlignment="Center" Height="30" Width="200" BorderThickness="1" Padding="10,0"
+                         Watermark="Search mods..." FontSize="12" Margin="0,0,10,0"
+                         Background="#2a2a2a"
+                         BorderBrush="#444444" Foreground="White"/>
+
+                <!-- 刷新按钮 -->
+                <Button Grid.Column="3" Width="36" Height="36" Margin="0,0,8,0" CornerRadius="6"
+                        Background="#258292" BorderBrush="#1a5f6b" BorderThickness="1"
+                        Command="{Binding RefreshModsCommand}" ToolTip.Tip="Refresh">
+                    <Image Source="avares://MDiceV2.Core/Assets/Sprite/Reset.png" Width="20" Height="20"/>
+                </Button>
+
+                <!-- 添加Mod按钮 -->
+                <Button Grid.Column="4" Width="36" Height="36" Margin="0,0,8,0" CornerRadius="6" Padding="0"
+                        Background="#258292" BorderBrush="#1a5f6b" BorderThickness="1"
+                        Click="OnAddModClick" ToolTip.Tip="Add Mod">
+                    <Image Source="avares://MDiceV2.Core/Assets/Sprite/Add.png" Width="16" Height="16"/>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- 空状态提示 -->
+        <Grid Grid.Row="1" IsVisible="{Binding IsEmptyState}" VerticalAlignment="Center" HorizontalAlignment="Center">
+            <StackPanel Orientation="Vertical" Spacing="15" HorizontalAlignment="Center">
+                <TextBlock Text="📦" FontSize="48" HorizontalAlignment="Center"/>
+                <TextBlock Text="{Binding EmptyMessage}" FontSize="14" HorizontalAlignment="Center" Opacity="0.7"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Mod列表（ListBox） -->
+        <ListBox Grid.Row="1" 
+                 ItemsSource="{Binding FilteredModItems}" 
+                 SelectedItem="{Binding SelectedMod, Mode=TwoWay}"
+                 Background="Transparent" 
+                 BorderThickness="0" 
+                 VerticalAlignment="Stretch"
+                 IsVisible="{Binding IsEmptyState, Converter={StaticResource NotConverter}}">
+            
+            <!-- ListBox样式 -->
+            <ListBox.Styles>
+                <Style Selector="ListBoxItem">
+                    <Setter Property="Margin" Value="0,5,0,5"/>
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                </Style>
+                <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+                    <Setter Property="Background" Value="Transparent"/>
+                </Style>
+                <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+                    <Setter Property="Background" Value="Transparent"/>
+                </Style>
+                <Style Selector="ListBoxItem:pressed /template/ ContentPresenter">
+                    <Setter Property="Background" Value="Transparent"/>
+                </Style>
+            </ListBox.Styles>
+            
+            <!-- 列表项模板 -->
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <!-- Mod卡片容器 -->
+                    <Border CornerRadius="8"
+                            Background="#256975"
+                            BorderBrush="#1a5f6b"
+                            BorderThickness="1"
+                            Padding="15,12,15,12"
+                            Margin="0">
+                        
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <!-- 左侧：选择框和mod信息 -->
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                          VerticalAlignment="Center"
+                                          HorizontalAlignment="Center"
+                                          Margin="0"/>
+                                
+                                <!-- Mod信息 -->
+                                <StackPanel Orientation="Vertical" Spacing="4" VerticalAlignment="Center">
+                                    <!-- Mod名称 -->
+                                    <TextBlock Text="{Binding Name}" 
+                                               FontFamily="{StaticResource DefaultFontFamily}" 
+                                               FontSize="14"
+                                               Foreground="White"/>
+                                    <!-- Mod作者和版本 -->
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="{Binding Author}" 
+                                                   FontSize="12"
+                                                   Foreground="#CCCCCC"/>
+                                        <TextBlock Text="{Binding Version}" 
+                                                   FontSize="12"
+                                                   FontFamily="{StaticResource DefaultFontFamily}"
+                                                   Foreground="#999999"/>
+                                    </StackPanel>
+                                    <!-- Mod类型 -->
+                                    <TextBlock Text="{Binding ContainType}" 
+                                               FontSize="11"
+                                               Foreground="#777777"/>
+                                </StackPanel>
+                            </StackPanel>
+                            
+                            <!-- 右侧：状态和操作按钮 -->
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <!-- 状态指示器 -->
+                                <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                                    <Border Width="12" Height="12" CornerRadius="2"
+                                            Background="{Binding StateColor}"/>
+                                    <TextBlock Text="{Binding StateText}"
+                                               Foreground="{Binding StateColor}"
+                                               FontSize="12"/>
+                                </StackPanel>
+                                
+                                <!-- 启用/禁用按钮 -->
+                                <Button Width="70" Height="32" CornerRadius="4" Padding="0"
+                                        Background="#2a2a2a"
+                                        BorderBrush="#444444"
+                                        BorderThickness="1"
+                                        Foreground="White"
+                                        Click="OnToggleModStateClick"
+                                        FontSize="11">
+                                    <TextBlock Text="{Binding ButtonText}"
+                                               VerticalAlignment="Center"/>
+                                </Button>
+                                
+                                <!-- 打开文件夹按钮 -->
+                                <Button Width="65" Height="32" CornerRadius="4" Padding="0"
+                                        Background="#2a2a2a"
+                                        BorderBrush="#444444"
+                                        BorderThickness="1"
+                                        Foreground="White"
+                                        Click="OnOpenModFolderClick"
+                                        FontSize="11">
+                                    <TextBlock Text="Folder"
+                                               VerticalAlignment="Center"/>
+                                </Button>
+                                
+                                <!-- 删除按钮 -->
+                                <Button Width="60" Height="32" CornerRadius="4" Padding="0"
+                                        Background="#AA0000"
+                                        BorderBrush="#880000"
+                                        BorderThickness="1"
+                                        Foreground="White"
+                                        Click="OnRemoveModClick"
+                                        FontSize="11">
+                                    <TextBlock Text="Delete"
+                                               VerticalAlignment="Center"/>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </Grid>
+</UserControl>
