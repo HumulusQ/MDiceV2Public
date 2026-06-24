@@ -1,0 +1,365 @@
+diff --git a/Mods/AIMod/AIMod.cs b/Mods/AIMod/AIMod.cs
+index 0000000..0000000 100644
+--- a/Mods/AIMod/AIMod.cs
++++ b/Mods/AIMod/AIMod.cs
+@@ -346,9 +346,12 @@ namespace AIMod
+                 sb.AppendLine($"队伍 '{teamName}' 的AI角色：");
+             foreach (var c in characters)
+             {
+                 var status = c.IsActive ? "🟢活跃" : "⚪待命";
+                 var listMode = _trpgDb.GetAiRuntimeModeAsync(scope, c.CharacterId).GetAwaiter().GetResult();
++                var listHeat = _trpgDb.GetAiResponseHeatAsync(scope, c.CharacterId).GetAwaiter().GetResult();
+                 var modeTag = listMode switch
+                 {
+                     AiRuntimeMode.Act => "act",
+                     AiRuntimeMode.Silent => "silent",
+                     AiRuntimeMode.Off => "off",
+                     _ => "act"
+                 };
+-                sb.AppendLine($"  {c.DisplayName} ({status}, {modeTag}) VID:{c.VirtualId}");
++                sb.AppendLine($"  {c.DisplayName} ({status}, {modeTag}, heat={listHeat}) VID:{c.VirtualId}");
+             }
+             return sb.ToString().Trim();
+         }
+@@ -534,11 +537,16 @@ namespace AIMod
+             var trimmedArgs = (args ?? "").Trim();
+             if (string.IsNullOrEmpty(trimmedArgs))
+                 return "用法：\n.ai set 角色名 属性 值\n.ai set 角色名 silent/off/act\n.ai show 角色名\n" +
+-                       "属性：background, state, skills, inventory, rule\n" +
++                       "属性：background, state, heat, skills, inventory, rule\n" +
++                       "state 是角色当前故事状态（身体/情绪/目标/处境），不是运行开关\n" +
++                       "heat 是手动发言倾向，范围 20-100：20-45旁听，45-70参与，70-100高热\n" +
+                        "skills 格式：技能名 数值 技能名 数值...（与 .st 相同）\n" +
+                        "rule 预设：{coc} / {dnd}，或直接写文本\n\n" +
+                        "运行模式：\n" +
+                        "  silent — 观望静默：记录和整理，但不回复\n" +
+                        "  off — 关闭冻结：不回复，也不记录/整理\n" +
+@@ -599,13 +607,24 @@ namespace AIMod
+                 return "用法：.ai inventory show 角色名 / .ai inventory reset 角色名";
+             }
+ 
+-            // RuntimeMode 分支：.ai set 角色名 slient/off/act
++            // RuntimeMode 分支：.ai set 角色名 silent/off/act
+             if (subCmd == "set" && parts.Length >= 3 && AiRuntimeModeParser.TryParse(parts[2], out var runtimeMode))
+             {
+                 var charName = parts[1];
+                 return HandleAiRuntimeModeSet(msg, charName, runtimeMode);
+             }
++
++            // 兼容误用：.ai set 角色名 state silent/off/act
++            // state 是故事内动态状态；silent/off/act 是运行模式。这里自动纠正，避免用户以为 state 已生效。
++            if (subCmd == "set" && parts.Length >= 4 &&
++                string.Equals(parts[2], "state", StringComparison.OrdinalIgnoreCase) &&
++                AiRuntimeModeParser.TryParse(parts[3], out var stateRuntimeMode))
++            {
++                var result = HandleAiRuntimeModeSet(msg, parts[1], stateRuntimeMode);
++                return string.IsNullOrWhiteSpace(result)
++                    ? result
++                    : result + "\n提示：state 用于角色故事状态；切换运行模式请直接使用 .ai set 角色名 off|silent|act。";
++            }
+ 
+             if (subCmd == "show" && parts.Length >= 2)
+             {
+                 var charName = string.Join(" ", parts.Skip(1)).Trim();
+@@ -631,6 +650,8 @@ namespace AIMod
+                 sb.AppendLine($"状态：{(entry.IsActive ? "🟢活跃" : "⚪待命")}");
+                 var showMode = _trpgDb.GetAiRuntimeModeAsync(scope, entry.CharacterId).GetAwaiter().GetResult();
+                 sb.AppendLine($"运行模式：{AiRuntimeModeParser.ToStorageValue(showMode)} / {AiRuntimeModeParser.ToDisplayName(showMode)}");
++                var showHeat = _trpgDb.GetAiResponseHeatAsync(scope, entry.CharacterId).GetAwaiter().GetResult();
++                sb.AppendLine($"ResponseHeat：{showHeat} / {FormatResponseHeatBand(showHeat)}");
+                 var activeHistory = _trpgDb.GetActiveHistoryAsync(scope, entry.CharacterId).GetAwaiter().GetResult();
+                 var activeTokens = _trpgDb.GetActiveTokenCountAsync(scope, entry.CharacterId).GetAwaiter().GetResult();
+                 var remainingHistory = Math.Max(0, _config.TrpgConfig.RecentHistoryCount - activeHistory.Count);
+@@ -691,6 +712,16 @@ namespace AIMod
+                     case "state":
+                         entry.DynamicStateJson = jsonValue;
+                         break;
++                    case "heat":
++                        if (!int.TryParse(jsonValue, out var parsedHeat))
++                            return "heat 必须是 20-100 的整数，例如：.ai set 角色名 heat 60";
++
++                        var heat = Math.Clamp(parsedHeat, 20, 100);
++                        _trpgDb.SetAiResponseHeatAsync(scope, entry.CharacterId, heat, msg.UserId).GetAwaiter().GetResult();
++                        return $"✓ 已设置AI角色 '{charName}' 的 ResponseHeat = {heat} / {FormatResponseHeatBand(heat)}\n" +
++                               "20-45旁听：被点名/强相关才说；45-70参与：正常回应；70-100高热：更想插话但仍受调度上限控制。";
+                     case "skills":
+                         {
+                             // 解析 key value 格式（与 .st 指令相同）：力量 50 体型 60
+@@ -717,7 +748,7 @@ namespace AIMod
+                         entry.RuleText = ExpandRulePreset(jsonValue);
+                         break;
+                     default:
+-                        return $"未知属性 '{property}'。支持：background, state, skills, inventory, rule";
++                        return $"未知属性 '{property}'。支持：background, state, heat, skills, inventory, rule";
+                 }
+ 
+                 _trpgDb.UpsertAiCharacterAsync(scope, entry).GetAwaiter().GetResult();
+@@ -725,9 +756,11 @@ namespace AIMod
+             }
+ 
+             return "用法：\n.ai set 角色名 属性 值\n.ai show 角色名\n" +
++                   ".ai set 角色名 heat 60\n" +
+                    "skills 格式：.ai set 角色名 skills 技能名 数值...\n" +
++                   "heat 范围：20-100；20-45旁听，45-70参与，70-100高热\n" +
+                    "rule 预设：{coc} / {dnd}，或直接写文本";
+         }
+@@ -1315,6 +1348,16 @@ namespace AIMod
+             return result;
+         }
++
++        private static string FormatResponseHeatBand(int heat)
++        {
++            if (heat < 45)
++                return "旁听";
++            if (heat < 70)
++                return "参与";
++            return "高热";
++        }
+ 
+         private string? HandleAiRuntimeModeSet(
+             MDiceV2.Models.Msg msg,
+@@ -2228,6 +2271,10 @@ namespace AIMod
+                 _llmCallTracker,
+                 EnterTrpgApiGroupScope,
+                 ExitTrpgApiGroupScope);
++
++            // 载入持久化运行模式，避免 .logon 重新创建 session 后 silent/off 被重置为 act。
++            var persistedMode = _trpgDb.GetAiRuntimeModeAsync(scope, character.CharacterId).GetAwaiter().GetResult();
++            session.SetRuntimeMode(character.GroupId, persistedMode);
+ 
+             // 设置 AI 发言广播回调：当此 session 产生回复时，通知同团其他 session 记录历史
+             session.OnAiSpeechBroadcast = (sourceId, sourceName, visibleText) =>
+@@ -2378,7 +2425,7 @@ namespace AIMod
+                 if (!string.IsNullOrWhiteSpace(llmResponse))
+                 {
+                     var parsed = ParseTurnPlannerResponse(llmResponse, sessions);
+                     if (parsed.Count > 0 || ContainsNoneMarker(llmResponse))
+-                        return parsed;
++                        return ApplyResponseHeatGate(parsed, userId, speakerType, isAted, content, sessions, team);
+                 }
+             }
+             catch (Exception ex)
+@@ -2386,9 +2433,80 @@ namespace AIMod
+                 _context.Log(LogLevel.Warn, $"[AIMod:TRPG] Turn planner failed, fallback to heuristic: {ex.Message}");
+             }
+ 
+-            return HeuristicActingCharacters(userId, isAted, content, sessions, team);
++            return ApplyResponseHeatGate(
++                HeuristicActingCharacters(userId, isAted, content, sessions, team),
++                userId,
++                speakerType,
++                isAted,
++                content,
++                sessions,
++                team);
+         }
++
++        private HashSet<string> ApplyResponseHeatGate(
++            HashSet<string> candidates,
++            long userId,
++            string speakerType,
++            bool isAted,
++            string content,
++            List<AiCharacterSession> sessions,
++            TeamSnapshot? team)
++        {
++            var qualified = new List<(AiCharacterSession Session, int Heat, int Score)>();
++            if (_trpgDb == null || sessions.Count == 0)
++                return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
++
++            var groupAddressed = Regex.IsMatch(content, @"所有人|全员|大家|你们|全部", RegexOptions.IgnoreCase);
++            var isGmMessage = string.Equals(speakerType, "GM", StringComparison.OrdinalIgnoreCase);
++            var senderSession = sessions.FirstOrDefault(s => s.Character.VirtualId == userId);
++            if (senderSession != null)
++                return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
++
++            foreach (var session in sessions)
++            {
++                if (session.RuntimeMode != AiRuntimeMode.Act)
++                    continue;
++
++                var characterId = session.Character.CharacterId;
++                var displayName = session.Character.DisplayName ?? "";
++                var heat = _trpgDb.GetAiResponseHeatAsync(session.Scope, characterId).GetAwaiter().GetResult();
++                var selected = candidates.Contains(characterId);
++                var directlyMentioned = !string.IsNullOrWhiteSpace(displayName) &&
++                    content.Contains(displayName, StringComparison.OrdinalIgnoreCase);
++                var singleAiGmPrompt = sessions.Count == 1 && isGmMessage;
++
++                var allow = heat switch
++                {
++                    < 45 => directlyMentioned || selected,
++                    < 70 => directlyMentioned || selected || groupAddressed || singleAiGmPrompt || (isAted && sessions.Count == 1),
++                    _ => directlyMentioned || selected || groupAddressed || singleAiGmPrompt || (isAted && sessions.Count == 1)
++                };
++
++                if (!allow)
++                    continue;
++
++                var score = heat;
++                if (directlyMentioned) score += 100;
++                if (selected) score += 40;
++                if (groupAddressed) score += 20;
++                qualified.Add((session, heat, score));
++            }
++
++            var maxActors = groupAddressed ? Math.Min(2, qualified.Count) : 1;
++            if (qualified.Count == 0 || maxActors <= 0)
++                return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
++
++            return qualified
++                .OrderByDescending(x => x.Score)
++                .ThenByDescending(x => x.Heat)
++                .Take(maxActors)
++                .Select(x => x.Session.Character.CharacterId)
++                .ToHashSet(StringComparer.OrdinalIgnoreCase);
++        }
+ 
+         private static string BuildTurnPlannerPrompt(
+             string teamName,
+@@ -2429,8 +2547,13 @@ namespace AIMod
+             sb.AppendLine();
+             sb.AppendLine("判定规则：");
+-            sb.AppendLine("1. 选择“现在该行动，对话或者做出反应”的角色，可多选。");
++            sb.AppendLine("1. 只选择被最新消息直接点名、被要求行动、或与当前处境强相关的角色。");
+             sb.AppendLine("2. “你们/所有人/全员/大家”这类群体指令可返回 all。");
++            sb.AppendLine("3. 不要因为角色长期沉默、性格活跃、或你认为它可能想说话就选择它；发言频率由本地 ResponseHeat 处理。");
++            sb.AppendLine("4. 如果消息只是其他角色之间的对话，且没有给某个AI角色合理介入点，返回 none。");
+             sb.AppendLine();
+             sb.AppendLine("严格按以下格式输出：");
+             sb.AppendLine("<act>none | all | 角色名1,角色名2</act>");
+diff --git a/Mods/AIMod/Trpg/ChatDatabase.cs b/Mods/AIMod/Trpg/ChatDatabase.cs
+index 0000000..0000000 100644
+--- a/Mods/AIMod/Trpg/ChatDatabase.cs
++++ b/Mods/AIMod/Trpg/ChatDatabase.cs
+@@ -244,6 +244,7 @@ public partial class ChatDatabase : IDisposable
+         await cmd.ExecuteNonQueryAsync();
+ 
+         await EnsureTrpgWorldScopeSchemaAsync();
++        await EnsureAiCharacterRuntimeControlSchemaAsync();
+         await EnsureMemoryAudienceSchemaAsync();
+         await EnsureQuestSchemaAsync();
+         await EnsureEntityCanonicalSchemaAsync();
+@@ -1000,6 +1001,7 @@ public partial class ChatDatabase : IDisposable
+                 CREATE TABLE IF NOT EXISTS AiCharacterRuntimeControl (
+                     WorldId TEXT NOT NULL,
+                     CharacterId TEXT NOT NULL,
+                     Mode TEXT NOT NULL DEFAULT 'act',
++                    ResponseHeat INTEGER NOT NULL DEFAULT 45,
+                     UpdatedAt TEXT NOT NULL,
+                     UpdatedByUserId INTEGER,
+                     PRIMARY KEY (WorldId, CharacterId)
+@@ -1418,6 +1420,37 @@ public partial class ChatDatabase : IDisposable
+         }
+     }
++
++    private async Task EnsureAiCharacterRuntimeControlSchemaAsync()
++    {
++        try
++        {
++            using (var cmd = _connection.CreateCommand())
++            {
++                cmd.CommandText = """
++                    CREATE TABLE IF NOT EXISTS AiCharacterRuntimeControl (
++                        WorldId TEXT NOT NULL,
++                        CharacterId TEXT NOT NULL,
++                        Mode TEXT NOT NULL DEFAULT 'act',
++                        ResponseHeat INTEGER NOT NULL DEFAULT 45,
++                        UpdatedAt TEXT NOT NULL,
++                        UpdatedByUserId INTEGER,
++                        PRIMARY KEY (WorldId, CharacterId)
++                    )
++                    """;
++                await cmd.ExecuteNonQueryAsync();
++            }
++
++            await EnsureColumnAsync("AiCharacterRuntimeControl", "ResponseHeat", "INTEGER NOT NULL DEFAULT 45");
++        }
++        catch (Exception ex)
++        {
++            _context.Log(LogLevel.Warn, $"[AIMod:TRPG] Runtime control schema initialization skipped: {ex.Message}");
++        }
++    }
+ 
+     private async Task<bool> ColumnExistsAsync(string tableName, string columnName)
+     {
+         using var pragmaCmd = _connection.CreateCommand();
+@@ -2527,6 +2560,46 @@ public partial class ChatDatabase : IDisposable
+         await cmd.ExecuteNonQueryAsync();
+     }
++
++    public async Task<int> GetAiResponseHeatAsync(TrpgScope scope, string characterId)
++    {
++        using var cmd = _connection.CreateCommand();
++        cmd.CommandText = """
++            SELECT ResponseHeat
++            FROM AiCharacterRuntimeControl
++            WHERE WorldId = @worldId AND CharacterId = @characterId
++            LIMIT 1;
++            """;
++        cmd.Parameters.AddWithValue("@worldId", scope.WorldId);
++        cmd.Parameters.AddWithValue("@characterId", characterId);
++        var result = await cmd.ExecuteScalarAsync();
++        if (result == null || result == DBNull.Value)
++            return 45;
++        return Math.Clamp(Convert.ToInt32(result), 20, 100);
++    }
++
++    public async Task SetAiResponseHeatAsync(TrpgScope scope, string characterId, int heat, long updatedByUserId)
++    {
++        var clamped = Math.Clamp(heat, 20, 100);
++        using var cmd = _connection.CreateCommand();
++        cmd.CommandText = """
++            INSERT INTO AiCharacterRuntimeControl
++                (WorldId, CharacterId, ResponseHeat, UpdatedAt, UpdatedByUserId)
++            VALUES
++                (@worldId, @characterId, @responseHeat, @updatedAt, @updatedByUserId)
++            ON CONFLICT(WorldId, CharacterId) DO UPDATE SET
++                ResponseHeat = excluded.ResponseHeat,
++                UpdatedAt = excluded.UpdatedAt,
++                UpdatedByUserId = excluded.UpdatedByUserId;
++            """;
++        cmd.Parameters.AddWithValue("@worldId", scope.WorldId);
++        cmd.Parameters.AddWithValue("@characterId", characterId);
++        cmd.Parameters.AddWithValue("@responseHeat", clamped);
++        cmd.Parameters.AddWithValue("@updatedAt", DateTime.UtcNow.ToString("o"));
++        cmd.Parameters.AddWithValue("@updatedByUserId", updatedByUserId);
++        await cmd.ExecuteNonQueryAsync();
++    }
+ 
+     private AiCharacterEntry ReadAiCharacterFromReader(System.Data.Common.DbDataReader reader)
+     {
+         return new AiCharacterEntry
+diff --git a/Mods/AIMod/Trpg/PromptAssembler.cs b/Mods/AIMod/Trpg/PromptAssembler.cs
+index 0000000..0000000 100644
+--- a/Mods/AIMod/Trpg/PromptAssembler.cs
++++ b/Mods/AIMod/Trpg/PromptAssembler.cs
+@@ -112,7 +112,18 @@ public class PromptAssembler
+ 4. 掷骰指令自检：若存在掷骰指令，确保它被包围在 <command> 标签中，必须确认该检定是 GM 明确要求，或你已在历史中申请并获得 GM 同意。若无法确认，删除该掷骰指令。
+ """;
+ 
+-    private const string TriggerString = "(当前是你的回合，请回应；无需行动则输出[PASS])";
++    private const string TriggerString = """
++[调度提示]
++系统已根据最新消息、角色相关性与 ResponseHeat 选择你进入本轮判断。
++进入本轮不代表必须发言。你必须先判断最新消息是否直接要求你的角色回应，或与你的角色目标、处境、物品、关系、当前行动强相关。
++
++如果相关，请按角色格式回应。
++如果不相关、只是其他角色之间的对话、你的角色没有合理介入点、或你的角色并未参与当前对话，只输出：[PASS]
++""";
+@@ -153,8 +164,17 @@ public class PromptAssembler
+ 
+         var systemContent = $"{AimodPromptPrefixes.BackendCommonPrefixV1}\n\n{coreRules}\n\n## 角色名\n你的角色名是【{roleName}】。你永远只能使用【{roleName}】作为角色名。\n\n## 角色设定\n{staticBg}";
+         if (!string.IsNullOrEmpty(aiChar.RuleText))
+             systemContent += $"\n\n## 游戏规则\n{aiChar.RuleText}";
++
++        var dynamicState = aiChar.DynamicStateJson?.Trim();
++        if (!string.IsNullOrWhiteSpace(dynamicState) &&
++            dynamicState != "{}" &&
++            dynamicState != "[]")
++        {
++            systemContent += $"\n\n## 角色动态状态\n{dynamicState}\n\n这描述角色当前身体、情绪、目标、资源或临时处境，会影响扮演方式；它不是运行模式开关。";
++        }
++
+         systemContent += "\n\n## 信息来源边界\n你会直接看到结构化 ActionContext。角色行动依据只能来自 GM/PL 最新消息、当前场景、角色 IC 记忆、角色事实性认知、当前目标、物品与情感框架。PL 桌面记忆只用于明知故演、避免玩家层面的重复，不得当作角色 IC 行动依据。若上下文与 GM 最新直接叙述冲突，一律以 GM 最新叙述为准。";
+         messages.Add(new ChatMessage("system", systemContent));
