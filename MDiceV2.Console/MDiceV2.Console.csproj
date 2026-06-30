@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <DefineConstants>$(DefineConstants);CONSOLE_MODE</DefineConstants>
+    <!-- Console is a lightweight launcher that uses system .NET runtime -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <SelfContained>false</SelfContained>
+    <!-- Disable CET compatibility for Windows 10 21H2 compatibility -->
+    <CETCompat>false</CETCompat>
+    <Version>0.2.7</Version>
+    <AssemblyVersion>0.2.7</AssemblyVersion>
+    <FileVersion>0.2.7</FileVersion>
+    <InformationalVersion>beta</InformationalVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Console is a standalone launcher - no dependencies on Core needed -->
+    <!-- It simply starts Core as a subprocess -->
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+  </ItemGroup>
+  <!-- DISABLED: Do NOT copy DLL files - dependencies handled by .NET runtime -->
+  <Target Name="CopyConsoleDll" AfterTargets="Publish" Condition="false">
+    <!-- This target is disabled - Console.exe links to system .NET runtime -->
+  </Target>
+  <!-- DISABLED: Do NOT copy any DLL files when using PublishSingleFile=true -->
+  <!-- All dependencies must be embedded in the single executable file -->
+  <Target Name="CopyCoreToOutputRoot" AfterTargets="Build;Publish" Condition="false">
+    <!-- This target is disabled for PublishSingleFile=true -->
+  </Target>
+  <!-- DISABLED: When PublishSingleFile=true, NO DLL files should be in root -->
+  <Target Name="MoveExtraDllsToDeps" AfterTargets="CopyCoreToOutputRoot" Condition="false">
+    <!-- This target is disabled -->
+  </Target>
+  <!-- Copy Mods into the output mods directory for both build and publish -->
+  <Target Name="CopyModsToOutput" AfterTargets="Build;Publish">
+    <PropertyGroup>
+      <ModsSourceDir>$(MSBuildThisFileDirectory)..\Mods</ModsSourceDir>
+      <ModsOutputDestination>$(OutputPath)mods</ModsOutputDestination>
+      <ModsOutputDestination Condition="'$(PublishDir)' != '' and '$(IsCopyingPublishFiles)' == 'true'">$(PublishDir)mods</ModsOutputDestination>
+    </PropertyGroup>
+    <Message Text="[CopyModsToOutput] Copying mods from $(ModsSourceDir) to $(ModsOutputDestination)" Importance="high" />
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;$modsDir = '$(ModsSourceDir)'; $outputDir = '$(ModsOutputDestination)'; if (Test-Path $modsDir) { Get-ChildItem -Path $modsDir -Directory | Where-Object { $_.Name -notmatch '^\.' } | ForEach-Object { $modName = $_.Name; $srcBinDir = Join-Path $_.FullName 'bin\$(Configuration)\net10.0-windows'; if (Test-Path $srcBinDir) { $targetDir = Join-Path $outputDir $modName; New-Item -ItemType Directory -Path $targetDir -Force | Out-Null; Copy-Item -Path &quot;$srcBinDir\$modName.dll&quot; -Destination $targetDir -Force -ErrorAction SilentlyContinue; Copy-Item -Path &quot;$srcBinDir\$modName.pdb&quot; -Destination $targetDir -Force -ErrorAction SilentlyContinue; Write-Host &quot;Copied mod: $modName&quot; } }; Copy-Item -Path '$(ModsSourceDir)\*\mod.json' -Destination $outputDir -Force -ErrorAction SilentlyContinue -Recurse; };&quot;" />
+  </Target>
+</Project>

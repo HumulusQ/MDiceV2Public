@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "dgSpecHash": "MS9b4h/HsqE=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Humulus.MSI\\Documents\\Mydata\\Programming\\MDiceV2\\ABotTestDirect\\ABotTestDirect.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Humulus.MSI\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
+    "C:\\Users\\Humulus.MSI\\.nuget\\packages\\microsoft.netcore.targets\\1.1.0\\microsoft.netcore.targets.1.1.0.nupkg.sha512",
+    "C:\\Users\\Humulus.MSI\\.nuget\\packages\\system.runtime.interopservices\\4.3.0\\system.runtime.interopservices.4.3.0.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1510",
+      "level": "Warning",
+      "message": "PackageReference System.Runtime.InteropServices will not be pruned. Consider removing this package from your dependencies, as it is likely unnecessary.",
+      "projectPath": "C:\\Users\\Humulus.MSI\\Documents\\Mydata\\Programming\\MDiceV2\\ABotTestDirect\\ABotTestDirect.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Users\\Humulus.MSI\\Documents\\Mydata\\Programming\\MDiceV2\\ABotTestDirect\\ABotTestDirect.csproj",
+      "libraryId": "System.Runtime.InteropServices",
+      "targetGraphs": [
+        "net10.0-windows7.0"
+      ]
+    }
+  ]
+}

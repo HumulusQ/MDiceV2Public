@@ -1,0 +1,363 @@
+<!-- AdjustableConfigContainer.axaml - 可调整配置容器用户控件 -->
+<!-- 继承自ConfigContainer，增加添加新配置项的功能 -->
+<UserControl xmlns="https://github.com/avaloniaui"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+              xmlns:vm="using:MDiceV2.Core.UI.ViewModels"
+              xmlns:conv="using:MDiceV2.Core.Converters"
+              xmlns:semi="https://github.com/irihitech/Semi.Avalonia"
+              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+              x:Class="MDiceV2.Core.UI.Views.AdjustableConfigContainer"
+              x:DataType="vm:ConfigContainerViewModel">
+
+    <!-- 控件资源定义 -->
+    <UserControl.Resources>
+        <!-- 虚拟化面板模板：正常浏览时使用（节约内存） -->
+        <ItemsPanelTemplate x:Key="VirtualizingPanelTemplate">
+            <VirtualizingStackPanel Orientation="Vertical" />
+        </ItemsPanelTemplate>
+        <!-- NonVirtualizingPanelTemplate 继承自父类 ConfigContainer，无需重复定义 -->
+    </UserControl.Resources>
+
+    <!-- 主容器：使用 Grid，使内容区能够伸展并正确显示滚动条 -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <!-- 标题栏 Panel 容器 -->
+        <Panel Panel.ZIndex="1" Grid.Row="0">
+            <!-- 标题栏 -->
+            <Border x:Name="Title" Background="#258292" Height="40" CornerRadius="8" Margin="0,0,0,5">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 搜索按钮 -->
+                    <Button x:Name="SearchButton" Grid.Column="0" Width="32" Height="32" Margin="4,4,4,4" CornerRadius="4"
+                            Background="{DynamicResource SemiColorBackground0}" BorderBrush="{DynamicResource SemiColorBorder0}" BorderThickness="1"
+                            Click="SearchButton_Click">
+                        <Image Source="avares://MDiceV2.Core/Assets/Sprite/Search.png" Width="16" Height="16"/>
+                    </Button>
+
+                    <!-- Add按钮（用于展开add面板） -->
+                    <Button x:Name="AddPanelButton" Grid.Column="1" Width="32" Height="32" Margin="0,4,4,4" CornerRadius="4"
+                            Background="{DynamicResource SemiColorBackground0}" BorderBrush="{DynamicResource SemiColorBorder0}" BorderThickness="1"
+                            Click="AddPanelButton_Click">
+                        <Image Source="avares://MDiceV2.Core/Assets/Sprite/Add.png" Width="16" Height="16"/>
+                    </Button>
+
+                    <!-- 标题文本 -->
+                    <TextBlock Grid.Column="2" Text="{Binding Title}" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,0,10,0"
+                               FontWeight="Bold" FontSize="14"/>
+
+                    <!-- Help按钮 -->
+                    <Button x:Name="HelpButton" Grid.Column="3" Width="32" Height="32" Margin="0,4,4,4" CornerRadius="4"
+                            Background="{DynamicResource SemiColorBackground0}" BorderBrush="{DynamicResource SemiColorBorder0}" BorderThickness="1"
+                            Click="HelpButton_Click">
+                        <Image Source="avares://MDiceV2.Core/Assets/Sprite/Log.png" Width="16" Height="16"/>
+                    </Button>
+                </Grid>
+            </Border>
+    </Panel>
+
+    <!-- 搜索面板 Panel 容器 -->
+    <Panel Panel.ZIndex="0" Grid.Row="1">
+            <!-- 搜索面板（可展开/折叠） -->
+            <Border x:Name="SearchPanel" Background="#1e6e7c" CornerRadius="6"
+                    IsVisible="{Binding IsSearchPanelVisible}" Margin="0,-45,0,0" Opacity="0">
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="CubicEaseOut"/>
+                    </Transitions>
+                </Border.Transitions>
+                <!-- 垂直布局：上部填充区 + 下部搜索控件 -->
+                <StackPanel>
+                    <!-- 上部填充区，高度控制动画 -->
+                    <Border x:Name="FillArea" Height="0" Background="Transparent">
+                        <Border.Transitions>
+                            <Transitions>
+                                <DoubleTransition Property="Height" Duration="0:0:0.3" Easing="CubicEaseOut"/>
+                            </Transitions>
+                        </Border.Transitions>
+                    </Border>
+
+                    <!-- 下部搜索控件区，始终可见 -->
+                    <Grid x:Name="SearchControls" Height="40" Margin="10,0,10,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- 按键搜索图标 -->
+                        <Image Grid.Column="0" Source="avares://MDiceV2.Core/Assets/Sprite/Search.png" Width="16" Height="16"
+                               VerticalAlignment="Center" Margin="0,0,5,0" Opacity="0.7"/>
+
+                        <!-- 按键搜索文本框 -->
+                        <TextBox Grid.Column="1" Text="{Binding KeyFilterText, Mode=TwoWay}"
+                                 VerticalAlignment="Center" Height="25" BorderThickness="1" Padding="5,0"
+                                 Watermark="搜索按键..." FontSize="12"/>
+
+                        <!-- 值搜索图标 -->
+                        <Image Grid.Column="2" Source="avares://MDiceV2.Core/Assets/Sprite/Search.png" Width="16" Height="16"
+                               VerticalAlignment="Center" Margin="10,0,5,0" Opacity="0.7"/>
+
+                        <!-- 值搜索文本框 -->
+                        <TextBox Grid.Column="3" Text="{Binding ValueFilterText, Mode=TwoWay}"
+                                 VerticalAlignment="Center" Height="25" BorderThickness="1" Padding="5,0"
+                                 Watermark="搜索值..." FontSize="12"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+    </Panel>
+
+    <!-- Add面板 Panel 容器 -->
+    <Panel Panel.ZIndex="0" Grid.Row="2">
+            <!-- Add面板（可展开/折叠） -->
+            <Border x:Name="AddPanel" Background="#1e6e7c" CornerRadius="6"
+                    IsVisible="{Binding IsAddPanelVisible}" Margin="0,-45,0,0" Opacity="0">
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="CubicEaseOut"/>
+                    </Transitions>
+                </Border.Transitions>
+                <!-- 垂直布局：上部填充区 + 下部Add控件 -->
+                <StackPanel>
+                    <!-- 上部填充区，高度控制动画 -->
+                    <Border x:Name="AddFillArea" Height="0" Background="Transparent">
+                        <Border.Transitions>
+                            <Transitions>
+                                <DoubleTransition Property="Height" Duration="0:0:0.3" Easing="CubicEaseOut"/>
+                            </Transitions>
+                        </Border.Transitions>
+                    </Border>
+
+                    <!-- 下部Add控件区，始终可见 -->
+                    <Grid x:Name="AddControls" Height="40" Margin="10,0,10,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Key输入图标 -->
+                        <Image Grid.Column="0" Source="avares://MDiceV2.Core/Assets/Sprite/Search.png" Width="16" Height="16"
+                               VerticalAlignment="Center" Margin="0,0,5,0" Opacity="0.7"/>
+
+                        <!-- Key输入文本框 -->
+                        <TextBox x:Name="NewKeyTextBox" Grid.Column="1" VerticalAlignment="Center" Height="25" BorderThickness="1" Padding="5,0"
+                                 Watermark="输入新键..." FontSize="12"/>
+
+                        <!-- Value输入图标 -->
+                        <Image Grid.Column="2" Source="avares://MDiceV2.Core/Assets/Sprite/Search.png" Width="16" Height="16"
+                               VerticalAlignment="Center" Margin="10,0,5,0" Opacity="0.7"/>
+
+                        <!-- Value输入文本框 -->
+                        <TextBox x:Name="NewValueTextBox" Grid.Column="3" VerticalAlignment="Center" Height="25" BorderThickness="1" Padding="5,0"
+                                 Watermark="输入值..." FontSize="12"/>
+
+                        <!-- Add按钮（用于插入新项） -->
+                        <Button x:Name="AddItemButton" Grid.Column="4" Width="32" Height="32" Margin="5,0,0,0" CornerRadius="4"
+                                Background="{DynamicResource SemiColorBackground0}" BorderBrush="{DynamicResource SemiColorBorder0}" BorderThickness="1"
+                                Click="AddItemButton_Click">
+                            <Image Source="avares://MDiceV2.Core/Assets/Sprite/Add.png" Width="16" Height="16"/>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Panel>
+
+    <!-- Help面板 Panel 容器 -->
+    <Panel Panel.ZIndex="0" Grid.Row="3">
+            <!-- Help面板（可展开/折叠） -->
+            <Border x:Name="HelpPanel" Background="#1e6e7c" CornerRadius="6"
+                    IsVisible="{Binding IsHelpPanelVisible}" Margin="0,-45,0,0" Opacity="0">
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.4" Easing="CubicEaseOut"/>
+                    </Transitions>
+                </Border.Transitions>
+                <!-- 垂直布局：上部填充区 + 下部Help内容 -->
+                <StackPanel>
+                    <!-- 上部填充区，高度控制动画 -->
+                    <Border x:Name="HelpFillArea" Height="0" Background="Transparent">
+                        <Border.Transitions>
+                            <Transitions>
+                                <DoubleTransition Property="Height" Duration="0:0:0.4" Easing="CubicEaseOut"/>
+                            </Transitions>
+                        </Border.Transitions>
+                    </Border>
+
+                    <!-- 下部Help内容区，始终可见 -->
+                    <Grid x:Name="HelpContent" Height="0" Margin="0" Background="Transparent">
+                        <Grid.Transitions>
+                            <Transitions>
+                                <DoubleTransition Property="Height" Duration="0:0:0.4" Easing="CubicEaseOut"/>
+                            </Transitions>
+                        </Grid.Transitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <!-- Help标题 -->
+                        <TextBlock Grid.Row="0" Text="帮助信息" FontSize="14" FontWeight="Bold"
+                                   VerticalAlignment="Top" Margin="10,10,10,5" Foreground="White"/>
+                        
+                        <!-- Help内容区域 -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="10,0,10,10">
+                            <TextBlock x:Name="HelpTextBlock"
+                                       Text=""
+                                       TextWrapping="Wrap" FontSize="12" Foreground="White"
+                                       LineHeight="18"/>
+                        </ScrollViewer>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Panel>
+
+        <!-- 配置项列表容器：放在最后一行并允许自身的滚动器工作，对内部布局变化添加平滑过渡 -->
+        <ListBox x:Name="ConfigListBox"
+                 Grid.Row="4"
+                 ItemsSource="{Binding FilteredItems}"
+                 Background="Transparent"
+                 BorderThickness="0"
+                 VerticalAlignment="Stretch"
+                 Margin="0,4,0,0"
+                 ItemsPanel="{StaticResource VirtualizingPanelTemplate}">
+            <!-- 为 ListBox 自身添加 Transitions，使其在子项高度变化导致布局变动时过渡更平滑。
+                 注意：这里对 Bounds 使用 DoubleTransition，Avalonia 在布局变化时会插值显示区域。 -->
+
+            <ListBox.Styles>
+                <Style Selector="ListBoxItem">
+                    <Setter Property="Margin" Value="0"/>
+                    <Setter Property="Background" Value="Transparent"/>
+
+                </Style>
+                <!-- 清除 ContentPresenter 的选中背景 -->
+                <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+                    <Setter Property="Background" Value="Transparent"/>
+                </Style>
+                <!-- 清除 ContentPresenter 的悬停背景 -->
+                <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+                    <Setter Property="Background" Value="Transparent"/>
+                </Style>
+                <!-- 清除 ContentPresenter 的按下背景 -->
+                <Style Selector="ListBoxItem:pressed /template/ ContentPresenter">
+                    <Setter Property="Background" Value="Transparent"/>
+                </Style>
+            </ListBox.Styles>
+
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <!-- 卡片容器：圆角边框，主题背景，随内部 TextBox 高度平滑变化 -->
+                    <Border CornerRadius="4"
+                            Margin="0"
+                            Height="30"
+                            Background="#454545"
+                            BorderBrush="#707070"
+                            BorderThickness="0.75">
+                        <Border.Transitions>
+                            <Transitions>
+                                <DoubleTransition Property="Height"
+                                                  Duration="0:0:0.3"
+                                                  Easing="QuadraticEaseInOut" />
+                            </Transitions>
+                        </Border.Transitions>
+                        <!-- 网格布局：三列（标签、分隔线、值控件），高度跟随外层 Border -->
+                        <Grid Margin="0"
+                              Background="Transparent"
+                              SizeChanged="Grid_SizeChanged">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="{Binding LeftColumnRatio, Mode=OneWay, Converter={StaticResource RatioToStarConverter}}" MinWidth="100"/>
+                                <ColumnDefinition Width="5"/>
+                                <ColumnDefinition Width="{Binding RightColumnRatio, Mode=OneWay, Converter={StaticResource RatioToStarConverter}}" MinWidth="100"/>
+                            </Grid.ColumnDefinitions>
+                              
+
+                            <!-- 左侧：配置项标签 -->
+                            <TextBlock Text="{Binding Key}"
+                                       VerticalAlignment="Center"
+                                       Margin="10,0"
+                                       MaxWidth="300"
+                                       TextTrimming="CharacterEllipsis"
+                                       FontSize="12"/>
+                                       
+                            <!-- 中间：可拖拽分隔线 -->
+                            <GridSplitter Grid.Column="1"
+                                          ResizeDirection="Columns"
+                                          Template="{StaticResource SplitterTemplate}"
+                                          DragDelta="GridSplitter_DragDelta"/>
+
+                            <!-- 右侧：值控件 + 重置按钮 -->
+                            <Grid Grid.Column="2"
+                                  Margin="10,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- 文本输入框：根据类型显示，带焦点事件与高度动画 -->
+                                <TextBox Grid.Column="0"
+                                         Text="{Binding Value, Mode=TwoWay}"
+                                         VerticalAlignment="Center"
+                                         Height="25"
+                                         MinHeight="25"
+                                         BorderThickness="0"
+                                         Padding="0"
+                                         IsVisible="{Binding Type, Converter={StaticResource ConfigTypeToBoolConverter}, ConverterParameter=LineEdit}"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         FontSize="12"
+                                         GotFocus="OnItemTextBoxGotFocus"
+                                         LostFocus="OnItemTextBoxLostFocus">
+                                    <TextBox.Transitions>
+                                        <Transitions>
+                                            <DoubleTransition Property="Height"
+                                                              Duration="0:0:0.3"
+                                                              Easing="QuadraticEaseInOut"/>
+                                        </Transitions>
+                                    </TextBox.Transitions>
+                                </TextBox>
+                                <!-- 复选框：根据类型显示 -->
+                                <CheckBox Grid.Column="0"
+                                          IsChecked="{Binding ValueAsBool, Mode=TwoWay}"
+                                          VerticalAlignment="Center"
+                                          IsVisible="{Binding Type, Converter={StaticResource ConfigTypeToBoolConverter}, ConverterParameter=CheckBox}"
+                                          FontSize="12"/>
+
+                                <!-- 重置按钮：默认值存在且与当前值不同才显示 -->
+                                <Button Grid.Column="1"
+                                        Width="24"
+                                        Height="24"
+                                        Margin="6,0,0,0"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        IsVisible="{Binding ShowResetButton}"
+                                        Click="OnResetButtonClick">
+                                     <Image Source="avares://MDiceV2.Core/Assets/Sprite/Reset.png"
+                                           Width="20" Height="20"
+                                           Stretch="Uniform"/>
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </Grid>
+</UserControl>

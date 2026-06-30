@@ -1,0 +1,25 @@
+{
+  "selectedModel": "Gemini",
+  "systemPrompt": "You are a helpful QQ group chat bot.",
+  "prefixRules": [
+    {
+      "prefix": "/ai ",
+      "enabled": true
+    }
+  ],
+  "interceptAll": false,
+  "timeoutSeconds": 30,
+  "maxContextMessages": 10,
+  "geminiConfig": {
+    "apiKey": "YOUR_GEMINI_API_KEY",
+    "modelName": "gemini-2.5-flash"
+  },
+  "zhipuAIConfig": {
+    "apiKey": "YOUR_ZHIPU_API_KEY",
+    "modelName": "glm-4.7-flash"
+  },
+  "siliconFlowConfig": {
+    "apiKey": "YOUR_SILICONFLOW_API_KEY",
+    "modelName": "Qwen/Qwen3-8B"
+  }
+}

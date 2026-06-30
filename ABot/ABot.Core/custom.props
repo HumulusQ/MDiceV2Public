@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- 显式指定编译器路径，绕过工具集验证问题 -->
+  <PropertyGroup>
+    <VCInstallDir>C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Tools\MSVC\14.50.35717\</VCInstallDir>
+    <WindowsSDKDir>C:\Program Files (x86)\Windows Kits\10\</WindowsSDKDir>
+    <WindowsSDKVersion>10.0.26100.0\</WindowsSDKVersion>
+    
+    <!-- 强制使用最新的编译器工具 -->
+    <CLToolPath>$(VCInstallDir)bin\Hostx64\x64\</CLToolPath>
+    <LibToolPath>$(VCInstallDir)bin\Hostx64\x64\</LibToolPath>
+    
+    <!-- 包含路径 -->
+    <AdditionalIncludeDirectories>
+      $(VCInstallDir)include;
+      $(WindowsSDKDir)Include\$(WindowsSDKVersion)ucrt;
+      $(WindowsSDKDir)Include\$(WindowsSDKVersion)um;
+      $(WindowsSDKDir)Include\$(WindowsSDKVersion)shared;
+      %(AdditionalIncludeDirectories)
+    </AdditionalIncludeDirectories>
+    
+    <!-- 库路径 -->
+    <LibraryPath>
+      $(VCInstallDir)lib\x64;
+      $(WindowsSDKDir)Lib\$(WindowsSDKVersion)ucrt\x64;
+      $(WindowsSDKDir)Lib\$(WindowsSDKVersion)um\x64;
+      %(LibraryPath)
+    </LibraryPath>
+  </PropertyGroup>
+</Project>

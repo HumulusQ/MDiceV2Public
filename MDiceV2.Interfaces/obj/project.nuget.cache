@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "dgSpecHash": "wnB9rCe8fQ8=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Interfaces\\MDiceV2.Interfaces.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\49405\\.nuget\\packages\\avalonia\\11.2.1\\avalonia.11.2.1.nupkg.sha512",
+    "C:\\Users\\49405\\.nuget\\packages\\avalonia.buildservices\\0.0.29\\avalonia.buildservices.0.0.29.nupkg.sha512",
+    "C:\\Users\\49405\\.nuget\\packages\\avalonia.remote.protocol\\11.2.1\\avalonia.remote.protocol.11.2.1.nupkg.sha512",
+    "C:\\Users\\49405\\.nuget\\packages\\microcom.runtime\\0.11.0\\microcom.runtime.0.11.0.nupkg.sha512"
+  ],
+  "logs": []
+}

@@ -1,0 +1,26 @@
+{
+  "version": "0.2.6",
+  "configurations": [
+    {
+      "name": "MDiceV2 Debug",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "debug-build-clean",
+      "program": "${workspaceFolder}/MDiceV2_Debug/MDiceV2.Launcher.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}/MDiceV2_Debug",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "logging": {
+        "moduleLoad": false,
+        "programOutput": true,
+        "engineLogging": false
+      }
+    }
+  ]
+}
+
+
+
+
+
