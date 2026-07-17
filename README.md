@@ -1,6 +1,5 @@
 <div align="center">
 
-<img src="Assets/Sprite/LOGO10.29.svg" alt="MDiceV2 Logo" width="180">
 
 # MDiceV2
 
