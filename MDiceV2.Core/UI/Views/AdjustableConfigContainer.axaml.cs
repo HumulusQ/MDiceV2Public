@@ -137,13 +137,15 @@ public partial class AdjustableConfigContainer : ConfigContainer
 
                     // 展开：立即设置为可见，动画会自动开始
                     _viewModel.IsAddPanelVisible = true;
-                    addFillArea.Height = 40; // 扩大到40像素以便观察动画
+                    addFillArea.Height = 58;
+                    addPanel.Height = 60;
                     addPanel.Opacity = 1.0; // 整个Add面板淡入
                 }
                 else
                 {
                     // 收回：等待动画完成（0.3秒），然后设置为不可见
                     addFillArea.Height = 0; // 填充区折叠到0像素
+                    addPanel.Height = 0;
                     addPanel.Opacity = 0.0; // 整个Add面板淡出
                     await Task.Delay(300); // 等待动画完成（0.3秒）
                     _viewModel.IsAddPanelVisible = false;
@@ -185,13 +187,15 @@ public partial class AdjustableConfigContainer : ConfigContainer
                 {
                     // 展开：立即设置为可见，动画会自动开始
                     _viewModel.IsSearchPanelVisible = true;
-                    fillArea.Height = 40; // 扩大到40像素以便观察动画
+                    fillArea.Height = 54;
+                    searchPanel.Height = 56;
                     searchPanel.Opacity = 1.0; // 整个搜索面板淡入
                 }
                 else
                 {
                     // 收回：等待动画完成（0.3秒），然后设置为不可见
                     fillArea.Height = 0; // 填充区折叠到0像素
+                    searchPanel.Height = 0;
                     searchPanel.Opacity = 0.0; // 整个搜索面板淡出
                     await Task.Delay(300); // 等待动画完成（0.3秒）
                     _viewModel.IsSearchPanelVisible = false;
@@ -233,8 +237,9 @@ public partial class AdjustableConfigContainer : ConfigContainer
                 {
                     // 展开：立即设置为可见，动画会自动开始
                     _viewModel.IsHelpPanelVisible = true;
-                    helpFillArea.Height = 40; // 扩大到40像素以便观察动画
+                    helpFillArea.Height = 38;
                     helpContent.Height = 120; // 展开Help内容区域
+                    helpPanel.Height = 174;
                     helpPanel.Opacity = 1.0; // 整个Help面板淡入
                 }
                 else
@@ -242,6 +247,7 @@ public partial class AdjustableConfigContainer : ConfigContainer
                     // 收起：同时收起所有元素
                     helpContent.Height = 0;
                     helpFillArea.Height = 0;
+                    helpPanel.Height = 0;
                     helpPanel.Opacity = 0.0;
                     await Task.Delay(300);
                     _viewModel.IsHelpPanelVisible = false;
@@ -261,6 +267,7 @@ public partial class AdjustableConfigContainer : ConfigContainer
         if (searchPanel != null && fillArea != null)
         {
             fillArea.Height = 0;
+            searchPanel.Height = 0;
             searchPanel.Opacity = 0.0;
             await Task.Delay(300);
             if (_viewModel != null)
@@ -281,6 +288,7 @@ public partial class AdjustableConfigContainer : ConfigContainer
         if (addPanel != null && addFillArea != null)
         {
             addFillArea.Height = 0;
+            addPanel.Height = 0;
             addPanel.Opacity = 0.0;
             await Task.Delay(300);
             if (_viewModel != null)
@@ -303,6 +311,7 @@ public partial class AdjustableConfigContainer : ConfigContainer
         {
             helpContent.Height = 0;
             helpFillArea.Height = 0;
+            helpPanel.Height = 0;
             helpPanel.Opacity = 0.0;
             await Task.Delay(300);
             if (_viewModel != null)

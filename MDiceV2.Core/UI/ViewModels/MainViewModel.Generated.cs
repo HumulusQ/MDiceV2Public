@@ -24,6 +24,9 @@ namespace MDiceV2.Core.UI.ViewModels
         [ObservableProperty]
         private object? currentView;
 
+        [ObservableProperty]
+        private bool isViewLoading;
+
         /// <summary>
         /// 导航面板是否展开
         /// </summary>

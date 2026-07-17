@@ -26,6 +26,13 @@ public static class ServiceBootstrapper
     /// </summary>
     public static StartupMode CurrentStartupMode { get; private set; } = StartupMode.UI;
 
+    public static bool IsMessageTestMode { get; private set; }
+
+    public static void EnableMessageTestMode()
+    {
+        IsMessageTestMode = true;
+    }
+
     /// <summary>
     /// 构建完整的服务提供程序
     /// </summary>

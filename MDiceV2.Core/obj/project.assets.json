@@ -1225,7 +1225,7 @@
           "lib/net8.0/Tmds.DBus.Protocol.dll": {}
         }
       },
-      "MDiceV2.Abstractions/0.2.7": {
+      "MDiceV2.Abstractions/0.3.1": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v9.0",
         "dependencies": {
@@ -1241,7 +1241,7 @@
           "bin/placeholder/MDiceV2.Abstractions.dll": {}
         }
       },
-      "MDiceV2.Interfaces/0.2.7": {
+      "MDiceV2.Interfaces/0.3.1": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v10.0",
         "dependencies": {
@@ -2299,7 +2299,7 @@
           "lib/net8.0/Tmds.DBus.Protocol.dll": {}
         }
       },
-      "MDiceV2.Abstractions/0.2.7": {
+      "MDiceV2.Abstractions/0.3.1": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v9.0",
         "dependencies": {
@@ -2315,7 +2315,7 @@
           "bin/placeholder/MDiceV2.Abstractions.dll": {}
         }
       },
-      "MDiceV2.Interfaces/0.2.7": {
+      "MDiceV2.Interfaces/0.3.1": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v10.0",
         "dependencies": {
@@ -4430,12 +4430,12 @@
         "tmds.dbus.protocol.nuspec"
       ]
     },
-    "MDiceV2.Abstractions/0.2.7": {
+    "MDiceV2.Abstractions/0.3.1": {
       "type": "project",
       "path": "../MDiceV2.Abstractions/MDiceV2.Abstractions.csproj",
       "msbuildProject": "../MDiceV2.Abstractions/MDiceV2.Abstractions.csproj"
     },
-    "MDiceV2.Interfaces/0.2.7": {
+    "MDiceV2.Interfaces/0.3.1": {
       "type": "project",
       "path": "../MDiceV2.Interfaces/MDiceV2.Interfaces.csproj",
       "msbuildProject": "../MDiceV2.Interfaces/MDiceV2.Interfaces.csproj"
@@ -4450,8 +4450,8 @@
       "Avalonia.Themes.Fluent >= 11.3.6",
       "CommunityToolkit.Mvvm >= 8.3.2",
       "Grpc.AspNetCore >= 2.60.0",
-      "MDiceV2.Abstractions >= 0.2.7",
-      "MDiceV2.Interfaces >= 0.2.7",
+      "MDiceV2.Abstractions >= 0.3.1",
+      "MDiceV2.Interfaces >= 0.3.1",
       "Microsoft.Extensions.DependencyInjection >= 9.0.0",
       "Microsoft.NET.ILLink.Tasks >= 10.0.9",
       "MoonSharp >= 2.0.0",
@@ -4466,7 +4466,7 @@
     "C:\\Users\\49405\\.nuget\\packages\\": {}
   },
   "project": {
-    "version": "0.2.7",
+    "version": "0.3.1",
     "restore": {
       "projectUniqueName": "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Core\\MDiceV2.Core.csproj",
       "projectName": "MDiceV2.Core",

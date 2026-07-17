@@ -1,46 +1,46 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- ============ 椤圭洰鍩烘湰淇℃伅 ============ -->
+  <!-- ============ 妞ゅ湱娲伴崺鐑樻拱娣団剝浼?============ -->
   <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <!-- Mod鐗瑰畾閰嶇疆 -->
-    <!-- 杈撳嚭涓篋LL锛屽悕绉颁负CustomizedReply.dll -->
+    <!-- Mod閻楃懓鐣鹃柊宥囩枂 -->
+    <!-- 鏉堟挸鍤稉绡婰L閿涘苯鎮曠粔棰佽礋CustomizedReply.dll -->
     <OutputType>Library</OutputType>
     <AssemblyName>CustomizedReply</AssemblyName>
-    <!-- 鐗堟湰淇℃伅 -->
-    <Version>0.2.7</Version>
+    <!-- 閻楀牊婀版穱鈩冧紖 -->
+    <Version>0.3.1</Version>
     <Authors>YourName</Authors>
     <Description>A Mod example for MDiceV2 that provides customized reply functionality</Description>
-    <!-- 涓嶇敓鎴怉ssemblyInfo锛屼娇鐢―irectory.Build.props -->
+    <!-- 娑撳秶鏁撻幋鎬塻semblyInfo閿涘奔濞囬悽鈥昳rectory.Build.props -->
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <SelfContained>false</SelfContained>
-    <AssemblyVersion>0.2.7</AssemblyVersion>
-    <FileVersion>0.2.7</FileVersion>
+    <AssemblyVersion>0.3.1</AssemblyVersion>
+    <FileVersion>0.3.1</FileVersion>
     <InformationalVersion>beta</InformationalVersion>
   </PropertyGroup>
-  <!-- ============ 椤圭洰渚濊禆 ============ -->
+  <!-- ============ 妞ゅ湱娲版笟婵婄 ============ -->
   <ItemGroup>
-    <!-- 寮曠敤 Interfaces 浠ヨ幏鍙?IConfigurable 鎺ュ彛 -->
+    <!-- 瀵洜鏁?Interfaces 娴犮儴骞忛崣?IConfigurable 閹恒儱褰?-->
     <ProjectReference Include="..\..\MDiceV2.Interfaces\MDiceV2.Interfaces.csproj" />
-    <!-- 寮曠敤 Core 浠ヨ幏鍙?Mod 鎺ュ彛瀹氫箟 -->
+    <!-- 瀵洜鏁?Core 娴犮儴骞忛崣?Mod 閹恒儱褰涚€规矮绠?-->
     <ProjectReference Include="..\..\MDiceV2.Core\MDiceV2.Core.csproj" />
   </ItemGroup>
-  <!-- ============ Lua 鑴氭湰鎵ц寮曟搸 ============ -->
+  <!-- ============ Lua 閼存碍婀伴幍褑顢戝鏇熸惛 ============ -->
   <ItemGroup>
-    <!-- MoonSharp: 绾疌#瀹炵幇鐨凩ua瑙ｉ噴鍣?-->
+    <!-- MoonSharp: 缁剧枌#鐎圭偟骞囬惃鍑﹗a鐟欙綁鍣撮崳?-->
     <PackageReference Include="MoonSharp" Version="2.0.0" />
   </ItemGroup>
-  <!-- ============ Avalonia 璧勬簮閰嶇疆 ============ -->
+  <!-- ============ Avalonia 鐠у嫭绨柊宥囩枂 ============ -->
   <ItemGroup>
-    <!-- 灏?Assets 鏂囦欢澶逛腑鐨勬墍鏈夎祫婧愭枃浠堕泦鎴愬埌绋嬪簭闆?-->
+    <!-- 鐏?Assets 閺傚洣娆㈡径閫涜厬閻ㄥ嫭澧嶉張澶庣カ濠ф劖鏋冩禒鍫曟肠閹存劕鍩岀粙瀣碍闂?-->
     <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
-  <!-- ============ 杈撳嚭閰嶇疆 ============ -->
+  <!-- ============ 鏉堟挸鍤柊宥囩枂 ============ -->
   <PropertyGroup>
     <!-- 
-      Mod搴旇緭鍑哄埌鐗瑰畾鐩綍浠ヤ究閮ㄧ讲
-      浣嗚繖涓厤缃槸鍙€夌殑锛屽疄闄呴儴缃叉椂鐢辩敤鎴峰喅瀹?
+      Mod鎼存棁绶崙鍝勫煂閻楃懓鐣鹃惄顔肩秿娴犮儰绌堕柈銊ц
+      娴ｅ棜绻栨稉顏堝帳缂冾喗妲搁崣顖炩偓澶屾畱閿涘苯鐤勯梽鍛村劥缂冨弶妞傞悽杈╂暏閹村嘲鍠呯€?
     -->
   </PropertyGroup>
 </Project>

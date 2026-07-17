@@ -1040,7 +1040,7 @@ public class CustomizedReplyMod : IModPlugin, IConfigurable, INavigationPanelPro
 
             _context.Log(LogLevel.Info, $"[CustomizedReply.Update] 下载目标: {targetPath}");
 
-            await DownloadAssetAsync(modAsset, tempPath);
+            await DownloadAssetAsync(modAsset, tempPath, owner, repo, latest.TagName);
 
             // 备份旧文件（如果存在）
             if (File.Exists(targetPath))
@@ -1113,57 +1113,31 @@ public class CustomizedReplyMod : IModPlugin, IConfigurable, INavigationPanelPro
     /// <summary>
     /// 从 GitHub 获取所有 Release（简化版，实现独立于主程序的 CustomUpdateManager）。
     /// </summary>
-    private static async Task<List<GitHubReleaseDto>> GetAllReleasesAsync(string owner, string repo)
+    private CustomUpdateManager CreateModUpdateDownloader()
     {
-        var url = $"https://api.github.com/repos/{owner}/{repo}/releases";
-
-        using var client = new HttpClient();
-        client.Timeout = TimeSpan.FromSeconds(30);
-        client.DefaultRequestHeaders.UserAgent.ParseAdd("MDiceV2-CustomizedReplyModUpdater");
-        client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
-
-        var response = await client.GetAsync(url);
-        if (!response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            throw new Exception($"获取 GitHub releases 失败: {response.StatusCode} - {content}");
-        }
-
-        var json = await response.Content.ReadAsStringAsync();
-        var options = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true,
-            AllowTrailingCommas = true
-        };
-
-        var releases = JsonSerializer.Deserialize<List<GitHubReleaseDto>>(json, options) ?? new List<GitHubReleaseDto>();
-        return releases;
+        return new CustomUpdateManager(message =>
+            _context.Log(LogLevel.Info, "[CustomizedReply.Update.Downloader] " + message));
     }
 
     /// <summary>
-    /// 使用 browser_download_url 下载资源到指定位置。
+    /// 通过主程序的共享更新器获取 GitHub Release 列表。
     /// </summary>
-    private static async Task DownloadAssetAsync(GitHubAssetDto asset, string targetPath)
+    private Task<List<GitHubRelease>> GetAllReleasesAsync(string owner, string repo)
     {
-        using var client = new HttpClient();
-        client.Timeout = TimeSpan.FromSeconds(300); // 下载超时:5倍延长(300秒)
-        client.DefaultRequestHeaders.UserAgent.ParseAdd("MDiceV2-CustomizedReplyModUpdater");
+        return CreateModUpdateDownloader().GetGitHubReleasesAsync(owner, repo);
+    }
 
-        var response = await client.GetAsync(asset.BrowserDownloadUrl);
-        if (!response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            throw new Exception($"下载资源失败: {response.StatusCode} - {content}");
-        }
-
-        var dir = Path.GetDirectoryName(targetPath);
-        if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-        {
-            Directory.CreateDirectory(dir);
-        }
-
-        await using var fs = File.Create(targetPath);
-        await response.Content.CopyToAsync(fs);
+    /// <summary>
+    /// 通过主程序的共享更新器下载资源到指定位置。
+    /// </summary>
+    private Task DownloadAssetAsync(
+        GitHubAsset asset,
+        string targetPath,
+        string owner,
+        string repo,
+        string? releaseTag = null)
+    {
+        return CreateModUpdateDownloader().DownloadGitHubAssetAsync(asset, targetPath, owner, repo, releaseTag);
     }
 
     /// <summary>
@@ -3143,5 +3117,4 @@ public enum MatchType
     /// <summary>模糊匹配：消息包含触发词即可匹配</summary>
     Fuzzy
 }
-
 

@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Input;
 using MDiceV2.Models;
 
 namespace MDiceV2.Core.UI.Views
@@ -59,6 +60,27 @@ namespace MDiceV2.Core.UI.Views
                     Console.WriteLine($"[MainWindow] Error disposing MessageProcessor during Closed: {ex}");
                 }
             };
+        }
+
+        private void TitleBar_PointerPressed(object? sender, PointerPressedEventArgs e)
+        {
+            if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+                BeginMoveDrag(e);
+        }
+
+        private void MinimizeButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            WindowState = WindowState.Minimized;
+        }
+
+        private void MaximizeButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+        }
+
+        private void CloseButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            Close();
         }
     }
 }

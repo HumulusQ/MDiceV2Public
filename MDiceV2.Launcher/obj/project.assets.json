@@ -199,7 +199,7 @@
           "lib/netstandard2.0/System.ServiceModel.dll": {}
         }
       },
-      "MDiceV2.Abstractions/0.2.7": {
+      "MDiceV2.Abstractions/0.3.1": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v9.0",
         "dependencies": {
@@ -407,7 +407,7 @@
           "lib/netstandard2.0/System.ServiceModel.dll": {}
         }
       },
-      "MDiceV2.Abstractions/0.2.7": {
+      "MDiceV2.Abstractions/0.3.1": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v9.0",
         "dependencies": {
@@ -871,7 +871,7 @@
         "version.txt"
       ]
     },
-    "MDiceV2.Abstractions/0.2.7": {
+    "MDiceV2.Abstractions/0.3.1": {
       "type": "project",
       "path": "../MDiceV2.Abstractions/MDiceV2.Abstractions.csproj",
       "msbuildProject": "../MDiceV2.Abstractions/MDiceV2.Abstractions.csproj"
@@ -879,7 +879,7 @@
   },
   "projectFileDependencyGroups": {
     "net10.0-windows": [
-      "MDiceV2.Abstractions >= 0.2.7",
+      "MDiceV2.Abstractions >= 0.3.1",
       "Microsoft.Extensions.DependencyInjection >= 9.0.0",
       "Microsoft.NET.ILLink.Tasks >= 10.0.9"
     ]
@@ -888,7 +888,7 @@
     "C:\\Users\\49405\\.nuget\\packages\\": {}
   },
   "project": {
-    "version": "0.2.7",
+    "version": "0.3.1",
     "restore": {
       "projectUniqueName": "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Launcher\\MDiceV2.Launcher.csproj",
       "projectName": "MDiceV2.Launcher",
@@ -910,8 +910,8 @@
           "framework": "net10.0-windows7.0",
           "targetAlias": "net10.0-windows",
           "projectReferences": {
-            "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj": {
-              "projectPath": "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj"
+            "c:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj": {
+              "projectPath": "c:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj"
             }
           }
         }

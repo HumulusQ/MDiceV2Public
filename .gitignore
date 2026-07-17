@@ -9,6 +9,7 @@
 ECHO 处于关闭状态。
 # 鎺掗櫎 Markdown 鏂囦欢
 *.md
+!/README.md
 ECHO 处于关闭状态。
 # 鎺掗櫎鐗瑰畾鏂囦欢澶?
 publish/

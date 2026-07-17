@@ -27,6 +27,9 @@ public partial class ConfigContainer : UserControl
     /// 视图模型引用
     /// </summary>
     protected ConfigContainerViewModel? _viewModel;
+    private bool _isSectionExpanded = true;
+    public bool IsSectionExpanded => _isSectionExpanded;
+    public event EventHandler? SectionExpansionChanged;
 
     /// <summary>
     /// 构造函数
@@ -69,6 +72,28 @@ public partial class ConfigContainer : UserControl
         _viewModel = DataContext as ConfigContainerViewModel;
     }
 
+    /// <summary>
+    /// Collapses the section body while keeping its shared section toolbar available.
+    /// </summary>
+    protected void SectionToggleButton_Click(object? sender, RoutedEventArgs e)
+    {
+        var sectionBody = this.FindControl<Control>("SectionBody");
+        var glyph = this.FindControl<TextBlock>("SectionToggleGlyph");
+        var toggleButton = this.FindControl<Button>("SectionToggleButton");
+        if (sectionBody == null)
+            return;
+
+        _isSectionExpanded = !_isSectionExpanded;
+        sectionBody.IsVisible = _isSectionExpanded;
+        SectionExpansionChanged?.Invoke(this, EventArgs.Empty);
+
+        if (glyph != null)
+            glyph.Text = _isSectionExpanded ? "−" : "+";
+
+        if (toggleButton != null)
+            ToolTip.SetTip(toggleButton, _isSectionExpanded ? "Collapse section" : "Expand section");
+    }
+
 
     /// <summary>
     /// 搜索按钮点击处理
@@ -101,13 +126,15 @@ public partial class ConfigContainer : UserControl
                 {
                     // 展开：立即设置为可见，动画会自动开始
                     _viewModel.IsSearchPanelVisible = true;
-                    fillArea.Height = 40; // 扩大到40像素以便观察动画
+                    fillArea.Height = 54;
+                    searchPanel.Height = 56;
                     searchPanel.Opacity = 1.0; // 整个搜索面板淡入
                 }
                 else
                 {
                     // 收回：等待动画完成（0.3秒），然后设置为不可见
                     fillArea.Height = 0; // 填充区折叠到0像素
+                    searchPanel.Height = 0;
                     searchPanel.Opacity = 0.0; // 整个搜索面板淡出
                     await Task.Delay(300); // 等待动画完成（0.3秒）
                     _viewModel.IsSearchPanelVisible = false;
@@ -133,6 +160,7 @@ public partial class ConfigContainer : UserControl
             // 收起：同时收起所有元素
             helpContent.Height = 0; // 折叠Help内容区域
             helpFillArea.Height = 0; // 填充区折叠到0像素
+            helpPanel.Height = 0;
             helpPanel.Opacity = 0.0; // 整个Help面板淡出
             await Task.Delay(300); // 等待动画完成
 
@@ -164,6 +192,7 @@ public partial class ConfigContainer : UserControl
                 {
                     // 收回：等待动画完成（0.3秒），然后设置为不可见
                     fillArea.Height = 0; // 填充区折叠到0像素
+                    searchPanel.Height = 0;
                     searchPanel.Opacity = 0.0; // 整个搜索面板淡出
                     await Task.Delay(300); // 等待动画完成（0.3秒）
                     _viewModel.IsSearchPanelVisible = false;
@@ -184,8 +213,9 @@ public partial class ConfigContainer : UserControl
                 {
                     // 展开：立即设置为可见，动画会自动开始
                     _viewModel.IsHelpPanelVisible = true;
-                    helpFillArea.Height = 40; // 扩大到40像素以便观察动画
+                    helpFillArea.Height = 38;
                     helpContent.Height = 120; // 展开Help内容区域
+                    helpPanel.Height = 174;
                     helpPanel.Opacity = 1.0; // 整个Help面板淡入
                 }
                 else
@@ -193,6 +223,7 @@ public partial class ConfigContainer : UserControl
                     // 收起：同时收起所有元素
                     helpContent.Height = 0;
                     helpFillArea.Height = 0;
+                    helpPanel.Height = 0;
                     helpPanel.Opacity = 0.0;
                     await Task.Delay(300);
                     _viewModel.IsHelpPanelVisible = false;
@@ -253,12 +284,12 @@ public partial class ConfigContainer : UserControl
         _isTextBoxExpanded = true;
 
         // 扩展文本框高度（内部内容区域）
-        tb.Height = 75;
+        tb.Height = 74;
 
         // 同步扩展父级 Border 高度（ItemTemplate 中的卡片容器）
         if (_focusedBorder != null)
         {
-            _focusedBorder.Height = 90; // 原始为 30，这里约 3 倍高度供多行展示
+            _focusedBorder.Height = 92;
         }
     }
 
@@ -315,13 +346,13 @@ public partial class ConfigContainer : UserControl
         if (tb != null)
         {
             // 恢复文本框紧凑高度
-            tb.Height = 25;
+            tb.Height = 34;
         }
 
         if (border != null)
         {
             // 恢复为原始卡片高度
-            border.Height = 30;
+            border.Height = 54;
         }
     }
 

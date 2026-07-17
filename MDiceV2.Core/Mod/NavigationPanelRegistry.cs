@@ -22,6 +22,9 @@ public class NavigationPanelRegistry : INavigationPanelRegistry
     /// </summary>
     public static NavigationPanelRegistry Instance => _instance ??= new NavigationPanelRegistry();
 
+    /// <summary>Raised when a mod navigation panel is added or removed at runtime.</summary>
+    public event EventHandler<NavigationPanelChangedEventArgs>? PanelChanged;
+
     /// <summary>
     /// 注册导航面板提供者
     /// </summary>
@@ -40,6 +43,7 @@ public class NavigationPanelRegistry : INavigationPanelRegistry
 
         _registeredPanels.Add(provider.PanelId, provider);
         MDiceV2.Models.Log.InfoFormat($"[NavigationPanelRegistry.Register] Successfully registered panel: '{provider.PanelId}' (name: {provider.PanelName}, priority: {provider.Priority})");
+        PanelChanged?.Invoke(this, new NavigationPanelChangedEventArgs(provider, true));
     }
 
     /// <summary>
@@ -55,7 +59,11 @@ public class NavigationPanelRegistry : INavigationPanelRegistry
         // 移除缓存的面板
         _cachedPanels.RemoveAll(x => x.PanelId == panelId);
 
-        return _registeredPanels.Remove(panelId);
+        if (!_registeredPanels.Remove(panelId, out var provider))
+            return false;
+
+        PanelChanged?.Invoke(this, new NavigationPanelChangedEventArgs(provider, false));
+        return true;
     }
 
     /// <summary>
@@ -135,4 +143,16 @@ public class NavigationPanelRegistry : INavigationPanelRegistry
         _registeredPanels.Clear();
         _cachedPanels.Clear();
     }
+}
+
+public sealed class NavigationPanelChangedEventArgs : EventArgs
+{
+    public NavigationPanelChangedEventArgs(INavigationPanelProvider provider, bool isRegistered)
+    {
+        Provider = provider;
+        IsRegistered = isRegistered;
+    }
+
+    public INavigationPanelProvider Provider { get; }
+    public bool IsRegistered { get; }
 }

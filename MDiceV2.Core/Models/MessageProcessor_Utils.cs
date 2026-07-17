@@ -227,6 +227,7 @@ public partial class MessageProcessor : ObservableObject
                     {
                         // 有修饰符，技能视为0
                         currentSkillValue = 0;
+                        lastSkillName = currentSkillName;
                     }
                     else
                     {
@@ -472,6 +473,7 @@ public partial class MessageProcessor : ObservableObject
                     {
                         // 有修饰符，技能视为0
                         currentSkillValue = 0;
+                        lastSkillName = currentSkillName;
                     }
                     else
                     {

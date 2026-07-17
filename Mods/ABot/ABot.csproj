@@ -1,34 +1,34 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- ============ 濡炪倕婀卞ú浼村春閻戞ɑ鎷卞ǎ鍥ｅ墲娴?============ -->
+  <!-- ============ 婵＄偑鍊曞﹢鍗灻烘导鏉戞槬闁绘垶蓱閹峰崬菐閸ワ絽澧插ù?============ -->
   <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <!-- Mod闁绘鎳撻悾楣冩煀瀹ュ洨鏋?-->
+    <!-- Mod闂佺粯顨堥幊鎾绘偩妤ｅ啯鐓€鐎广儱娲ㄩ弸?-->
     <OutputType>Library</OutputType>
     <AssemblyName>ABot</AssemblyName>
-    <!-- 闁绘鐗婂﹢鐗堢┍閳╁啩绱?-->
+    <!-- 闂佺粯顨呴悧濠傦耿閻楀牏鈹嶉柍鈺佸暕缁?-->
     <Authors>ABOT Team</Authors>
     <Description>ABOT Battle Orchestration Interpreter for MDiceV2</Description>
-    <!-- 濞戞挸绉堕弫鎾诲箣閹』semblyInfo闁挎稑濂旀繛鍥偨閳ユ槼rectory.Build.props -->
+    <!-- 婵炴垶鎸哥粔鍫曞极閹捐绠ｉ柟顒€銆弒emblyInfo闂佹寧绋戞總鏃€绻涢崶顒佸仺闁炽儲妲紃ectory.Build.props -->
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <SelfContained>false</SelfContained>
-    <!-- 闁绘鐗婂﹢浼村矗閾氬倻鐭?Version.props 闁告柣鍔嶉埀顑挎祰楠炲繘宕ｉ弽鐢电闂侇偅淇虹换?Directory.Build.props 閻庣數鍘ч崣?-->
+    <!-- 闂佺粯顨呴悧濠傦耿娴兼潙鐭楅柧姘€婚惌?Version.props 闂佸憡鏌ｉ崝宥夊焵椤戞寧绁版鐐茬箻瀹曪綁寮介悽鐢殿槷闂備緡鍋呮穱铏规崲?Directory.Build.props 闁诲海鏁搁崢褔宕?-->
     <!-- AssemblyVersion: $(VersionBase).$(BuildCounter) -->
     <!-- FileVersion: $(VersionBase).$(BuildCounter) -->
-    <!-- InformationalVersion 濞寸姴鎳愰弫銈嗙鎼淬垻鍨奸悹浣峰嵆椤ｂ晠宕ｉ幋锝庢斀闁绘鐗婂﹢?-->
-    <Version>0.2.7</Version>
-    <AssemblyVersion>0.2.7</AssemblyVersion>
-    <FileVersion>0.2.7</FileVersion>
+    <!-- InformationalVersion 婵炲濮撮幊鎰板极閵堝棛顩查幖娣灮閸ㄥジ鎮规担宄板祮妞わ絺鏅犲畷锝夊箣閿濆孩鏂€闂佺粯顨呴悧濠傦耿?-->
+    <Version>0.3.1</Version>
+    <AssemblyVersion>0.3.1</AssemblyVersion>
+    <FileVersion>0.3.1</FileVersion>
     <InformationalVersion>beta</InformationalVersion>
   </PropertyGroup>
-  <!-- ============ 濡炪倕婀卞ú鐗堢瑹濠靛﹦顩?============ -->
+  <!-- ============ 婵＄偑鍊曞﹢鍗灻洪悧鍫㈢懝婵犻潧锕﹂々?============ -->
   <ItemGroup>
-    <!-- 鐎殿喗娲滈弫?Interfaces 濞寸姰鍎撮獮蹇涘矗?IModPlugin 闁规亽鍎辫ぐ?-->
+    <!-- 閻庢鍠楀ú婊堝极?Interfaces 婵炲濮伴崕鎾嵁韫囨稑鐭?IModPlugin 闂佽浜介崕杈亹?-->
     <ProjectReference Include="..\..\MDiceV2.Interfaces\MDiceV2.Interfaces.csproj">
       <Private>false</Private>
     </ProjectReference>
-    <!-- 鐎殿喗娲滈弫?Core 濞寸姰鍎撮獮蹇涘矗?Mod 闁规亽鍎辫ぐ娑氣偓瑙勭煯缁?-->
+    <!-- 閻庢鍠楀ú婊堝极?Core 婵炲濮伴崕鎾嵁韫囨稑鐭?Mod 闂佽浜介崕杈亹濞戞埃鍋撶憴鍕叝缂?-->
     <ProjectReference Include="..\..\MDiceV2.Core\MDiceV2.Core.csproj">
       <Private>false</Private>
     </ProjectReference>
@@ -36,8 +36,8 @@
     <PackageReference Include="Avalonia" Version="11.3.6" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.6" />
   </ItemGroup>
-  <!-- ============ 閺夊牊鎸搁崵顓㈡煀瀹ュ洨鏋?============ -->
+  <!-- ============ 闁哄鐗婇幐鎼佸吹椤撱垺鐓€鐎广儱娲ㄩ弸?============ -->
   <PropertyGroup>
-    <!-- Mod閹煎瓨妫佺欢顓㈠礄閸濆嫬鐓傞柣妤冩嚀閻ｉ箖鎯勯鑲╃Э濞寸姰鍎扮粚鍫曟焾閵娧嗩唹 -->
+    <!-- Mod闁圭厧鐡ㄥΛ浣烘椤撱垹绀勯柛婵嗗閻撳倿鏌ｅΔ鍐╁殌闁伙綁绠栭幆鍕敊閼测晝协婵炲濮伴崕鎵矚閸洘鐒鹃柕濞у棭鍞?-->
   </PropertyGroup>
 </Project>

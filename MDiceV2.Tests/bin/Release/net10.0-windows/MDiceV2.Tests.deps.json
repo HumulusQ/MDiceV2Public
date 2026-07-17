@@ -6,14 +6,14 @@
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v10.0": {
-      "MDiceV2.Tests/1.0.0": {
+      "MDiceV2.Tests/0.3.1": {
         "dependencies": {
-          "AIMod": "0.2.7",
+          "AIMod": "0.3.1",
           "BenchmarkDotNet": "0.13.12",
           "FluentAssertions": "6.12.0",
           "Grpc.Net.Client.Web": "2.60.0",
-          "MDiceV2.Abstractions": "0.2.7",
-          "MDiceV2.Core": "0.2.7",
+          "MDiceV2.Abstractions": "0.3.1",
+          "MDiceV2.Core": "0.3.1",
           "Microsoft.NET.Test.Sdk": "17.10.0",
           "Moq": "4.20.70",
           "xunit": "2.7.1"
@@ -1446,26 +1446,26 @@
           }
         }
       },
-      "AIMod/0.2.7": {
+      "AIMod/0.3.1": {
         "dependencies": {
           "Avalonia": "11.3.6",
           "Avalonia.Fonts.Inter": "11.3.6",
           "Avalonia.Themes.Fluent": "11.3.6",
           "CommunityToolkit.Mvvm": "8.3.2",
-          "MDiceV2.Core": "0.2.7",
-          "MDiceV2.Interfaces": "0.2.7",
+          "MDiceV2.Core": "0.3.1",
+          "MDiceV2.Interfaces": "0.3.1",
           "Polly": "8.5.0",
           "Semi.Avalonia": "11.1.0",
           "System.Data.SQLite": "1.0.119"
         },
         "runtime": {
           "AIMod.dll": {
-            "assemblyVersion": "0.2.7.621",
-            "fileVersion": "0.2.7.621"
+            "assemblyVersion": "0.3.1.35",
+            "fileVersion": "0.3.1.35"
           }
         }
       },
-      "MDiceV2.Abstractions/0.2.7": {
+      "MDiceV2.Abstractions/0.3.1": {
         "dependencies": {
           "Google.Protobuf": "3.24.4",
           "Grpc.Net.Client": "2.60.0",
@@ -1473,12 +1473,12 @@
         },
         "runtime": {
           "MDiceV2.Abstractions.dll": {
-            "assemblyVersion": "0.2.7.621",
-            "fileVersion": "0.2.7.621"
+            "assemblyVersion": "0.3.1.35",
+            "fileVersion": "0.3.1.35"
           }
         }
       },
-      "MDiceV2.Core/0.2.7": {
+      "MDiceV2.Core/0.3.1": {
         "dependencies": {
           "Avalonia": "11.3.6",
           "Avalonia.Controls.DataGrid": "11.3.6",
@@ -1487,8 +1487,8 @@
           "Avalonia.Themes.Fluent": "11.3.6",
           "CommunityToolkit.Mvvm": "8.3.2",
           "Grpc.AspNetCore": "2.60.0",
-          "MDiceV2.Abstractions": "0.2.7",
-          "MDiceV2.Interfaces": "0.2.7",
+          "MDiceV2.Abstractions": "0.3.1",
+          "MDiceV2.Interfaces": "0.3.1",
           "MoonSharp": "2.0.0",
           "Polly": "8.5.0",
           "Semi.Avalonia": "11.1.0",
@@ -1498,26 +1498,26 @@
         },
         "runtime": {
           "MDiceV2.Core.dll": {
-            "assemblyVersion": "0.2.7.621",
-            "fileVersion": "0.2.7.621"
+            "assemblyVersion": "0.3.1.35",
+            "fileVersion": "0.3.1.35"
           }
         }
       },
-      "MDiceV2.Interfaces/0.2.7": {
+      "MDiceV2.Interfaces/0.3.1": {
         "dependencies": {
           "Avalonia": "11.3.6"
         },
         "runtime": {
           "MDiceV2.Interfaces.dll": {
-            "assemblyVersion": "0.2.7.621",
-            "fileVersion": "0.2.7.621"
+            "assemblyVersion": "0.3.1.35",
+            "fileVersion": "0.3.1.35"
           }
         }
       }
     }
   },
   "libraries": {
-    "MDiceV2.Tests/1.0.0": {
+    "MDiceV2.Tests/0.3.1": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
@@ -2117,22 +2117,22 @@
       "path": "xunit.extensibility.execution/2.7.1",
       "hashPath": "xunit.extensibility.execution.2.7.1.nupkg.sha512"
     },
-    "AIMod/0.2.7": {
+    "AIMod/0.3.1": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
     },
-    "MDiceV2.Abstractions/0.2.7": {
+    "MDiceV2.Abstractions/0.3.1": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
     },
-    "MDiceV2.Core/0.2.7": {
+    "MDiceV2.Core/0.3.1": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
     },
-    "MDiceV2.Interfaces/0.2.7": {
+    "MDiceV2.Interfaces/0.3.1": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

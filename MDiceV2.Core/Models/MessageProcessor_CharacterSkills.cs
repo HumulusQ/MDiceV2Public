@@ -10,8 +10,24 @@ using static MDiceV2.Models.Dice;
 
 namespace MDiceV2.Models;
 
+public enum CharacterCardConflictPolicy
+{
+    Rename,
+    Overwrite,
+    Reject
+}
+
+public sealed record CharacterCardImportResult(
+    bool Success,
+    string Message,
+    string? FinalCharacterName = null,
+    int CharacteristicCount = 0,
+    int SkillCount = 0,
+    int ConflictCount = 0);
+
 public partial class MessageProcessor : ObservableObject
 {
+    private readonly object _characterCardImportLock = new();
     /// <summary>
     /// 当前人物姓名字典
     /// Key: 用户ID, Value: 人物名
@@ -289,6 +305,86 @@ public partial class MessageProcessor : ObservableObject
     {
         // 统一调用 UserData 持久化，避免多表分散
         SaveUserData();
+    }
+
+    /// <summary>
+    /// Imports a fully mapped character sheet without going through text commands.
+    /// The lock makes name allocation and persistence a single operation so two
+    /// simultaneous uploads cannot silently overwrite one another.
+    /// </summary>
+    public CharacterCardImportResult ImportCharacterCard(
+        long userId,
+        CharacterSheet sheet,
+        CharacterCardConflictPolicy conflictPolicy = CharacterCardConflictPolicy.Rename,
+        bool setAsCurrent = true)
+    {
+        if (userId <= 0) return new(false, "无效的用户 ID。");
+        if (sheet is null) return new(false, "人物卡为空。");
+
+        var requestedName = string.IsNullOrWhiteSpace(sheet.Name) ? "未命名调查员" : sheet.Name.Trim();
+        lock (_characterCardImportLock)
+        {
+            var cards = characterSkills.GetOrAdd(userId, _ => new ConcurrentDictionary<string, CharacterSheet>());
+            string finalName;
+            switch (conflictPolicy)
+            {
+                case CharacterCardConflictPolicy.Reject:
+                    if (cards.ContainsKey(requestedName))
+                        return new(false, $"人物卡“{requestedName}”已经存在。");
+                    finalName = requestedName;
+                    break;
+                case CharacterCardConflictPolicy.Overwrite:
+                    finalName = requestedName;
+                    break;
+                default:
+                    finalName = GenerateUniqueCharacterName(cards, requestedName);
+                    break;
+            }
+
+            sheet.Name = finalName;
+            if (conflictPolicy == CharacterCardConflictPolicy.Overwrite)
+                cards[finalName] = sheet;
+            else if (!cards.TryAdd(finalName, sheet))
+                return new(false, $"人物卡“{finalName}”创建失败，请重试。");
+
+            if (setAsCurrent) CurrentCharacterNames[userId] = finalName;
+            SaveCharacterSkills();
+            return new(
+                true,
+                "人物卡导入成功。",
+                finalName,
+                CharacteristicCount: CountCharacteristics(sheet),
+                SkillCount: sheet.Skills.Count);
+        }
+    }
+
+    public CharacterSheet? GetCharacterCard(long userId, string characterName)
+    {
+        return TryGetCharacterSheet(userId, characterName);
+    }
+
+    public string? GetCurrentCharacterCardName(long userId)
+    {
+        return TryGetCurrentCharacterName(userId);
+    }
+
+    private static string GenerateUniqueCharacterName(
+        ConcurrentDictionary<string, CharacterSheet> cards,
+        string baseName)
+    {
+        if (!cards.ContainsKey(baseName)) return baseName;
+        for (var index = 2; index < 10_000; index++)
+        {
+            var candidate = $"{baseName} ({index})";
+            if (!cards.ContainsKey(candidate)) return candidate;
+        }
+        return $"{baseName} ({Guid.NewGuid():N})";
+    }
+
+    private static int CountCharacteristics(CharacterSheet sheet)
+    {
+        return new[] { "力量", "体质", "体型", "敏捷", "外貌", "智力", "意志", "教育", "幸运" }
+            .Count(sheet.Skills.ContainsKey);
     }
 
     /// <summary>

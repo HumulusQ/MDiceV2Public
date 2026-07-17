@@ -1204,7 +1204,7 @@
           "lib/net8.0/Tmds.DBus.Protocol.dll": {}
         }
       },
-      "MDiceV2.Abstractions/0.2.7": {
+      "MDiceV2.Abstractions/0.3.1": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v9.0",
         "dependencies": {
@@ -1220,7 +1220,7 @@
           "bin/placeholder/MDiceV2.Abstractions.dll": {}
         }
       },
-      "MDiceV2.Core/0.2.7": {
+      "MDiceV2.Core/0.3.1": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v10.0",
         "dependencies": {
@@ -1231,8 +1231,8 @@
           "Avalonia.Themes.Fluent": "11.3.6",
           "CommunityToolkit.Mvvm": "8.3.2",
           "Grpc.AspNetCore": "2.60.0",
-          "MDiceV2.Abstractions": "0.2.7",
-          "MDiceV2.Interfaces": "0.2.7",
+          "MDiceV2.Abstractions": "0.3.1",
+          "MDiceV2.Interfaces": "0.3.1",
           "Microsoft.Extensions.DependencyInjection": "9.0.0",
           "MoonSharp": "2.0.0",
           "Polly": "8.5.0",
@@ -1248,7 +1248,7 @@
           "bin/placeholder/MDiceV2.Core.dll": {}
         }
       },
-      "MDiceV2.Interfaces/0.2.7": {
+      "MDiceV2.Interfaces/0.3.1": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v10.0",
         "dependencies": {
@@ -3343,17 +3343,17 @@
         "tmds.dbus.protocol.nuspec"
       ]
     },
-    "MDiceV2.Abstractions/0.2.7": {
+    "MDiceV2.Abstractions/0.3.1": {
       "type": "project",
       "path": "../../MDiceV2.Abstractions/MDiceV2.Abstractions.csproj",
       "msbuildProject": "../../MDiceV2.Abstractions/MDiceV2.Abstractions.csproj"
     },
-    "MDiceV2.Core/0.2.7": {
+    "MDiceV2.Core/0.3.1": {
       "type": "project",
       "path": "../../MDiceV2.Core/MDiceV2.Core.csproj",
       "msbuildProject": "../../MDiceV2.Core/MDiceV2.Core.csproj"
     },
-    "MDiceV2.Interfaces/0.2.7": {
+    "MDiceV2.Interfaces/0.3.1": {
       "type": "project",
       "path": "../../MDiceV2.Interfaces/MDiceV2.Interfaces.csproj",
       "msbuildProject": "../../MDiceV2.Interfaces/MDiceV2.Interfaces.csproj"
@@ -3365,8 +3365,8 @@
       "Avalonia.Fonts.Inter >= 11.3.6",
       "Avalonia.Themes.Fluent >= 11.3.6",
       "CommunityToolkit.Mvvm >= 8.3.2",
-      "MDiceV2.Core >= 0.2.7",
-      "MDiceV2.Interfaces >= 0.2.7",
+      "MDiceV2.Core >= 0.3.1",
+      "MDiceV2.Interfaces >= 0.3.1",
       "Polly >= 8.5.0",
       "Semi.Avalonia >= 11.1.0",
       "System.Data.SQLite >= 1.0.119",
@@ -3377,7 +3377,7 @@
     "C:\\Users\\49405\\.nuget\\packages\\": {}
   },
   "project": {
-    "version": "0.2.7",
+    "version": "0.3.1",
     "restore": {
       "projectUniqueName": "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\Mods\\AIMod\\AIMod.csproj",
       "projectName": "AIMod",

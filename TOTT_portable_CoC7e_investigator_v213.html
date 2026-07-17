@@ -1,0 +1,2289 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="color-scheme" content="light" />
+<title>便携 CoC 7版调查员人物卡 v213 · KP总览</title>
+<style>
+:root{
+  --bg:#f6f5f1;
+  --surface:#fffdf8;
+  --surface2:#f3f1ea;
+  --surface3:#ebe8df;
+  --ink:#20242a;
+  --muted:#667078;
+  --line:#ddd8cc;
+  --brand:#2f6175;
+  --orange:#ffb13d;
+  --cyan:#84d9e8;
+  --violet:#c4a0d2;
+  --green:#b9d79f;
+  --red:#984039;
+  --blue:#8bb5df;
+  --shadow:0 18px 54px rgba(25,28,31,.12);
+  --soft:0 1px 2px rgba(25,28,31,.05),0 10px 28px rgba(25,28,31,.06);
+}
+*{box-sizing:border-box}
+html{background:var(--bg);min-height:100%;scroll-behavior:smooth}
+body{margin:0;min-height:100%;padding:20px;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC","Microsoft YaHei",sans-serif;color:var(--ink);overflow-x:hidden}
+button,input,textarea,select{font:inherit}
+button{border:1px solid transparent;border-radius:999px;padding:10px 15px;background:var(--brand);color:#fff;font-weight:800;cursor:pointer;touch-action:manipulation;transition:transform .16s ease,box-shadow .16s ease,background .16s ease,border-color .16s ease}
+button:hover{transform:translateY(-1px);box-shadow:0 9px 22px rgba(31,35,40,.12)}
+button:active{transform:translateY(0)}
+button.secondary{background:var(--surface2);color:var(--ink);border-color:var(--line)}
+button.ghost{background:transparent;color:var(--brand);border-color:var(--line)}
+button.danger{background:var(--red)}
+button.small{padding:7px 10px;font-size:.82rem}
+button.iconbtn{width:34px;height:34px;padding:0;display:grid;place-items:center}
+button[disabled]{opacity:.46;cursor:not-allowed;transform:none;box-shadow:none}
+input,textarea,select{width:100%;border:1px solid var(--line);border-radius:13px;padding:10px 11px;background:#fff;color:var(--ink);outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(47,97,117,.18)}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--orange)}
+input[type=number]{font-variant-numeric:tabular-nums}
+textarea{resize:vertical;min-height:100px;line-height:1.58}
+label{min-width:0}
+.hidden{display:none!important}
+.dots{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.75}
+.app{position:relative;z-index:1;width:min(1360px,100%);margin:0 auto}
+.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-end;margin-bottom:18px}
+.top h1{margin:0;font-size:clamp(1.45rem,2.2vw,2.18rem);letter-spacing:-.04em}
+.sub{color:var(--muted);font-size:.9rem;line-height:1.55}
+.quick-info{text-align:right;max-width:520px}
+.export-notice{display:flex;gap:10px;align-items:center;margin:0 0 14px;padding:11px 14px;border:1px solid rgba(255,177,61,.48);border-radius:16px;background:rgba(255,177,61,.12);font-size:.85rem;color:#765420}
+.export-notice[hidden]{display:none}
+.layout{display:grid;grid-template-columns:128px 1fr}
+.nav{position:relative;display:flex;flex-direction:column;align-items:center;gap:42px;padding-top:42px}
+.nav:before{content:"";position:absolute;top:78px;bottom:100px;left:50%;width:1px;background:rgba(31,35,40,.08)}
+.navbtn{--tab:var(--orange);--glow:#ffb13d;position:relative;isolation:isolate;width:76px;height:76px;padding:0;border:2px solid color-mix(in srgb,var(--tab) 72%,#1f2328 28%);border-radius:50%;background:transparent;color:#111;display:grid;place-items:center;overflow:visible}
+.navbtn:nth-child(2){--tab:var(--cyan);--glow:#7ee9ff}
+.navbtn:nth-child(3){--tab:var(--violet);--glow:#f0a9ff}
+.navbtn:nth-child(4){--tab:var(--green);--glow:#b8ff9e}
+.navbtn:nth-child(5){--tab:#a8b7c9;--glow:#bcd5f3}
+.navbtn:hover{background:transparent;border-color:var(--tab);box-shadow:none}
+.navbtn.active{border-color:transparent}
+.navbtn:before{content:"";position:absolute;inset:-34px;z-index:-3;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--glow) 58%,transparent) 0%,color-mix(in srgb,var(--tab) 34%,transparent) 32%,color-mix(in srgb,var(--tab) 13%,transparent) 58%,transparent 84%);opacity:0;transform:scale(.75);transition:.24s}
+.navbtn.active:before{opacity:1;transform:scale(1.08);animation:aura 3.2s ease-in-out infinite}
+@keyframes aura{0%,100%{transform:scale(.94);opacity:.88}50%{transform:scale(1.16);opacity:1}}
+.navbtn > svg:not(.wave){position:relative;z-index:2;width:27px;height:27px;fill:none;stroke:#111;stroke-width:2.05;stroke-linecap:round;stroke-linejoin:round}
+.navbtn small{position:absolute;top:calc(100% + 20px);left:50%;transform:translateX(-50%);white-space:nowrap;color:var(--muted);font-size:.68rem;font-weight:900}
+.navbtn.active small{color:var(--ink)}
+.pages{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:30px;background:rgba(255,253,248,.94);box-shadow:var(--shadow)}
+.pages:before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(31,35,40,.045) .7px,transparent .8px);background-size:16px 16px;opacity:.5;pointer-events:none}
+.page{position:relative;z-index:1;display:none;min-height:760px;padding:clamp(18px,2.5vw,30px)}
+.page.active{display:block}
+.page-title{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;padding-bottom:16px;margin-bottom:20px;border-bottom:1px solid var(--line)}
+.page-title h2{margin:0;font-size:clamp(1.25rem,2vw,1.78rem);letter-spacing:-.035em}
+.page-actions,.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.panel{position:relative;border:1px solid var(--line);border-radius:24px;background:var(--surface);box-shadow:var(--soft);padding:18px}
+.section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:11px;border-bottom:1px solid var(--line)}
+.section-head h3{margin:0;font-size:1.06rem;letter-spacing:-.02em}
+.section-head span.kicker{font-size:.7rem;font-weight:950;letter-spacing:.13em;color:var(--muted);text-transform:uppercase}
+.stack{display:grid;gap:18px}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.field label{display:block;margin-bottom:6px;color:var(--muted);font-size:.77rem;font-weight:850}
+.field-note{margin-top:5px;color:var(--muted);font-size:.72rem;line-height:1.4}
+.hero{display:grid;grid-template-columns:minmax(220px,292px) 1fr;gap:18px}
+.portrait-panel{display:grid;align-content:start;gap:12px}
+.portrait{position:relative;width:100%;aspect-ratio:4/5;border:1px solid var(--line);border-radius:22px;background:var(--surface2);overflow:hidden;display:grid;place-items:center;text-align:center;color:var(--muted)}
+.portrait:before{content:"";position:absolute;inset:14px;border:1px dashed #c8c3b8;border-radius:16px}
+.portrait:after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 80% 14%,rgba(139,181,223,.26),transparent 37%),radial-gradient(circle at 16% 86%,rgba(255,177,61,.13),transparent 38%);pointer-events:none}
+.portrait img{width:100%;height:100%;object-fit:cover;position:relative;z-index:1}
+.profile-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.profile-grid .wide{grid-column:span 2}
+.creation-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:13px;border-top:1px dashed var(--line)}
+.contour-card{position:relative;isolation:isolate;overflow:hidden}
+.contour-card:before{content:"";position:absolute;inset:0;z-index:-1;background-image:var(--contour-image);background-repeat:no-repeat;background-position:right top;background-size:auto 100%;opacity:var(--contour-opacity,.76);pointer-events:none}
+.contour-card:after{content:"";position:absolute;inset:0;z-index:-2;background-image:radial-gradient(rgba(31,35,40,.11) .8px,transparent .9px);background-size:18px 18px;opacity:.28;pointer-events:none}
+.characteristics-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.char-card{min-height:128px;border:1px solid var(--line);border-radius:21px;background:rgba(255,255,255,.88);padding:14px 16px;display:grid;grid-template-columns:1fr 94px;grid-template-rows:auto 1fr;gap:8px 12px}
+.char-title{display:flex;gap:10px;align-items:center;min-width:0}
+.char-accent{width:7px;height:42px;flex:0 0 7px;border-radius:999px;background:linear-gradient(#ffc66f,#ffb13d);box-shadow:0 0 20px rgba(255,177,61,.35)}
+.char-title strong{display:block;font-size:1rem;letter-spacing:-.02em}
+.char-title small{display:block;color:var(--muted);font-size:.68rem;font-weight:900;letter-spacing:.12em}
+.char-input{align-self:center}
+.char-input input{padding:7px 8px;border:0;background:rgba(255,253,248,.72);text-align:right;color:#45484c;font-family:Georgia,"Times New Roman",serif;font-size:2.45rem;font-weight:900;line-height:1;letter-spacing:-.08em}
+.char-thresholds{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;align-self:end}
+.threshold{border:1px solid rgba(221,216,204,.78);border-radius:12px;background:rgba(255,255,255,.72);padding:6px 8px;text-align:center}
+.threshold span{display:block;color:var(--muted);font-size:.63rem;font-weight:900}
+.threshold b{font-family:Georgia,"Times New Roman",serif;font-size:1.02rem;font-variant-numeric:tabular-nums}
+.roll-dot{position:absolute;right:10px;bottom:10px;width:30px;height:30px;padding:0;border-radius:50%;background:rgba(255,255,255,.78);border-color:var(--line);color:var(--brand);font-size:.72rem;box-shadow:none}
+.resource-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.resource-card{min-height:182px;border:1px solid var(--line);border-radius:22px;background:rgba(255,255,255,.9);padding:15px;display:grid;gap:10px;align-content:start}
+.resource-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.resource-top strong{font-size:1rem}
+.resource-formula{color:var(--muted);font-size:.7rem;line-height:1.4;margin-top:3px}
+.resource-max{position:relative;z-index:1;color:#45484c;font-family:Georgia,"Times New Roman",serif;font-size:2.65rem;font-weight:900;line-height:.9;letter-spacing:-.09em;font-variant-numeric:tabular-nums;text-align:right}
+.resource-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.resource-fields label{display:grid;gap:4px;color:var(--muted);font-size:.68rem;font-weight:850}
+.resource-fields input{padding:8px;text-align:center;font-weight:900}
+.bar{position:relative;height:13px;border:1px solid var(--line);border-radius:999px;background:var(--surface2);overflow:hidden}
+.bar-fill{position:absolute;inset:0 auto 0 0;width:0%;border-radius:inherit;background:linear-gradient(90deg,#ffc56d,#ff9d22);transition:width .28s ease}
+.bar-fill.cyan{background:linear-gradient(90deg,#9fe5ee,#62c4d7)}
+.bar-fill.violet{background:linear-gradient(90deg,#dac0e2,#b58bc5)}
+.bar-fill.green{background:linear-gradient(90deg,#d0e6bd,#9fc67f)}
+.bar-fill.red{background:linear-gradient(90deg,#dba49e,#a54d45)}
+.bar-caption{display:flex;justify-content:space-between;color:var(--muted);font-size:.7rem;font-weight:850}
+.derived-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.derived-card{border:1px solid var(--line);border-radius:18px;background:var(--surface2);padding:12px;text-align:center}
+.derived-card span{display:block;color:var(--muted);font-size:.69rem;font-weight:900}
+.derived-card b{display:block;margin-top:6px;font-family:Georgia,"Times New Roman",serif;font-size:1.7rem;line-height:1;letter-spacing:-.06em}
+.condition-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.condition{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:15px;background:#fff;padding:10px 11px;font-size:.8rem;font-weight:850}
+.condition.active{background:#fbf1ef;border-color:#d9aaa5;color:var(--red)}
+.point-layout{display:grid;grid-template-columns:minmax(260px,.8fr) minmax(360px,1.2fr);gap:16px}
+.formula-grid{display:grid;grid-template-columns:1.35fr .65fr .65fr;gap:10px}
+.point-card{border:1px solid var(--line);border-radius:20px;background:var(--surface2);padding:14px;margin-top:10px}
+.point-head{display:flex;justify-content:space-between;gap:10px;margin-bottom:9px}
+.point-head span{font-size:.82rem;font-weight:900}
+.point-card.over{border-color:#d59b95;background:#fbf1ef;animation:warnPulse 2s ease-in-out infinite}
+@keyframes warnPulse{0%,100%{box-shadow:0 0 0 rgba(152,64,57,0)}50%{box-shadow:0 0 0 5px rgba(152,64,57,.08)}}
+.preset-grid{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:12px}
+.skill-toolbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.skill-search{flex:1 1 240px;position:relative}
+.skill-search input{padding-left:37px}
+.skill-search:before{content:"⌕";position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:1.1rem}
+.segment{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--surface2)}
+.segment button{padding:6px 11px;background:transparent;color:var(--muted);box-shadow:none}
+.segment button.active{background:#fff;color:var(--ink);border-color:var(--line)}
+.skill-editor{position:relative;overflow:hidden;border:1px solid #cbd4dc;border-radius:22px;background:linear-gradient(105deg,rgba(243,249,251,.96),rgba(255,253,248,.96));padding:16px 124px 16px 16px;margin-bottom:12px;min-height:142px}
+.skill-editor:before{content:"";position:absolute;inset:0;background-image:var(--contour-image);background-size:auto 100%;background-position:right center;background-repeat:no-repeat;opacity:.82;pointer-events:none}
+.skill-editor>*{position:relative;z-index:1}
+.skill-editor-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:11px}
+.skill-editor-head strong{display:block;font-size:1.08rem}
+.skill-editor-head span{color:var(--muted);font-size:.72rem;font-weight:850}
+.skill-editor-score{position:absolute;right:18px;top:16px;z-index:2;font-family:Georgia,"Times New Roman",serif;font-size:3.4rem;font-weight:900;line-height:.9;letter-spacing:-.1em;color:#45484c}
+.skill-editor-fields{display:grid;grid-template-columns:1.25fr repeat(5,minmax(74px,.6fr));gap:9px;align-items:end}
+.skill-editor-fields label{display:grid;gap:4px;color:var(--muted);font-size:.69rem;font-weight:850}
+.skill-editor-fields input{padding:8px}
+.skill-editor-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.skill-dense-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.skill-card{position:relative;isolation:isolate;overflow:hidden;min-height:84px;border:1px solid var(--line);border-radius:19px;background:rgba(255,255,255,.9);padding:11px 76px 11px 14px;display:flex;align-items:center;gap:9px;cursor:pointer;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}
+.skill-card:hover{transform:translateY(-1px);border-color:#b9c7d0;box-shadow:0 10px 24px rgba(31,35,40,.08)}
+.skill-card.selected{border-color:#8fb1c0;background:#f3f9fb}
+.skill-card:before{content:"";position:absolute;inset:0;z-index:-1;background-image:var(--contour-image);background-size:auto 100%;background-position:right center;background-repeat:no-repeat;opacity:.76;pointer-events:none}
+.skill-card:after{content:"";position:absolute;inset:0;z-index:-2;background-image:radial-gradient(rgba(31,35,40,.10) .75px,transparent .85px);background-size:17px 17px;opacity:.3}
+.skill-accent{width:7px;height:42px;flex:0 0 7px;border-radius:999px;background:linear-gradient(#ffc66f,#ffb13d);box-shadow:0 0 18px rgba(255,177,61,.35)}
+.skill-name{min-width:0;font-weight:900;line-height:1.2;letter-spacing:-.02em;overflow:hidden;text-overflow:ellipsis}
+.skill-name small{display:block;margin-top:3px;color:var(--muted);font-size:.66rem;font-weight:800}
+.skill-value{position:absolute;right:13px;top:50%;transform:translateY(-52%);width:60px;text-align:right;color:#45484c;font-family:Georgia,"Times New Roman",serif;font-size:2.45rem;font-weight:900;line-height:.9;letter-spacing:-.09em}
+.skill-levels{position:absolute;right:14px;bottom:8px;color:var(--muted);font-size:.63rem;font-weight:900;font-variant-numeric:tabular-nums}
+.skill-check{position:absolute;left:9px;top:8px;width:18px;height:18px;border:1px solid var(--line);border-radius:5px;background:#fff;display:grid;place-items:center;font-size:.7rem;font-weight:950;color:#fff;z-index:2}
+.skill-check.checked{background:var(--orange);border-color:var(--orange)}
+.skill-check.disabled{opacity:.26}
+.skill-table-wrap{overflow:auto;border:1px solid var(--line);border-radius:18px}
+.skill-table{width:100%;border-collapse:collapse;min-width:990px;background:#fff}
+.skill-table th,.skill-table td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:left;font-size:.78rem}
+.skill-table th{position:sticky;top:0;background:var(--surface2);z-index:1;color:var(--muted);font-size:.69rem;letter-spacing:.06em;text-transform:uppercase}
+.skill-table td.num{text-align:center;font-variant-numeric:tabular-nums}
+.skill-table input{padding:6px 7px;border-radius:10px;text-align:center}
+.skill-table tr.selected{background:#f3f9fb}
+.skill-table .name-cell{min-width:190px;font-weight:850}
+.skill-table .name-cell small{display:block;color:var(--muted);font-weight:700}
+.combat-summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.weapon-list,.gear-list,.fellow-list{display:grid;gap:10px}
+.weapon-row{display:grid;grid-template-columns:1.05fr 1.15fr 64px .9fr 62px .72fr .72fr 76px auto;gap:8px;align-items:end;border:1px solid var(--line);border-radius:18px;background:#fff;padding:11px}
+.weapon-row label,.gear-row label,.fellow-row label{display:grid;gap:4px;color:var(--muted);font-size:.66rem;font-weight:850}
+.weapon-row input,.weapon-row select,.gear-row input,.fellow-row input{padding:7px 8px}
+.weapon-skill-view{height:38px;border:1px solid var(--line);border-radius:11px;background:var(--surface2);display:grid;place-items:center;font-family:Georgia,"Times New Roman",serif;font-size:1.25rem;font-weight:900}
+.gear-row{display:grid;grid-template-columns:1.25fr 70px .8fr 1.4fr auto;gap:8px;align-items:end;border:1px solid var(--line);border-radius:17px;background:#fff;padding:10px}
+.fellow-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;border:1px solid var(--line);border-radius:17px;background:#fff;padding:10px}
+.credit-card{min-height:168px;border:1px solid var(--line);border-radius:22px;background:rgba(255,255,255,.9);padding:16px 132px 16px 16px}
+.credit-score{position:absolute;right:20px;top:16px;font-family:Georgia,"Times New Roman",serif;font-size:3.7rem;font-weight:900;line-height:.9;letter-spacing:-.1em;color:#45484c}
+.credit-tier{font-weight:900;font-size:1.05rem}
+.credit-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:12px}
+.story-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.story-field{border:1px solid var(--line);border-radius:19px;background:#fff;padding:12px}
+.story-field label{display:block;margin-bottom:7px;font-weight:900}
+.story-field textarea{min-height:112px;border:0;border-radius:12px;background:linear-gradient(#fff,#fff) padding-box,repeating-linear-gradient(to bottom,transparent 0 28px,rgba(31,35,40,.09) 29px 30px) border-box}
+.story-wide{grid-column:1/-1}
+.library-layout{display:grid;grid-template-columns:minmax(380px,1.2fr) minmax(280px,.8fr);gap:18px}
+.library-list{display:grid;gap:10px}
+.library-card{border:1px solid var(--line);border-radius:18px;background:#fff;padding:13px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.library-card.active{background:#f3f9fb;border-color:#9ebdca}
+.library-card strong{font-size:1rem}
+.library-meta{color:var(--muted);font-size:.75rem;line-height:1.5;margin-top:4px}
+.library-search{margin-bottom:12px}
+.status{white-space:pre-wrap;border:1px solid var(--line);border-radius:16px;background:var(--surface2);color:var(--muted);padding:12px;line-height:1.6;min-height:92px}
+.status.ok{background:#f3f8f1;color:#587447}.status.warn{background:#fbf7ed;color:#80602a}.status.bad{background:#fbf1ef;color:var(--red)}
+.codebox{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;min-height:180px}
+.rules-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.rule-card{border:1px solid var(--line);border-radius:19px;background:#fff;padding:14px}
+.rule-card h4{margin:0 0 8px;font-size:.95rem}
+.rule-card p{margin:6px 0;color:var(--muted);font-size:.82rem;line-height:1.55}
+.rule-table{width:100%;border-collapse:collapse;margin-top:8px}
+.rule-table td{padding:6px;border-bottom:1px solid var(--line);font-size:.78rem}
+.app-footer{text-align:center;color:var(--muted);font-size:.72rem;padding:16px 0 4px}
+.quick-dock{position:fixed;z-index:30;top:18px;right:18px;width:min(400px,calc(100vw - 36px));max-height:calc(100vh - 36px);transform:translateX(calc(100% + 18px));transition:transform .24s ease}
+.quick-dock.open{transform:translateX(0)}
+.quick-dock-panel{position:relative;max-height:calc(100vh - 36px);overflow:auto;border:1px solid var(--line);border-radius:26px;background:var(--surface);box-shadow:var(--shadow);padding:18px}
+.quick-toggle{position:absolute;left:-58px;top:50%;transform:translateY(-50%) scale(1);transform-origin:right center;writing-mode:vertical-rl;min-height:136px;min-width:48px;padding:20px 12px;border:1px solid rgba(255,255,255,.58);border-radius:24px;background:linear-gradient(180deg,#ffc96f 0%,#ffb13d 48%,#f39a21 100%);box-shadow:0 22px 54px rgba(31,35,40,.22),0 0 42px rgba(255,177,61,.28),inset 0 1px 0 rgba(255,255,255,.54);letter-spacing:.08em;isolation:isolate;overflow:hidden}
+.quick-toggle::before{content:"";position:absolute;inset:8px;border:1px solid rgba(255,255,255,.34);border-radius:18px;pointer-events:none}
+.quick-toggle::after{content:"";position:absolute;left:50%;top:50%;width:92px;height:92px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.34),rgba(255,255,255,.08) 42%,transparent 70%);transform:translate(-50%,-50%);z-index:-1;pointer-events:none}
+.quick-toggle:hover{transform:translateY(-50%) scale(1.055);box-shadow:0 28px 66px rgba(31,35,40,.25),0 0 52px rgba(255,177,61,.42),inset 0 1px 0 rgba(255,255,255,.65)}
+.quick-toggle:active{transform:translateY(-50%) scale(1.018)}
+.quick-form{display:grid;grid-template-columns:1fr 112px;gap:9px}
+.quick-target{display:grid;grid-template-columns:1fr 100px;gap:9px;margin-top:9px}
+.quick-result{position:relative;overflow:hidden;min-height:118px;margin-top:12px;border:1px solid var(--line);border-radius:20px;background:#fff;padding:14px 112px 14px 14px}
+.quick-result-number{position:absolute;right:18px;top:16px;font-family:Georgia,"Times New Roman",serif;font-size:4rem;font-weight:900;line-height:.9;letter-spacing:-.1em;color:#45484c}
+.quick-result strong{display:block;font-size:1.05rem}
+.quick-result small{display:block;margin-top:6px;color:var(--muted);line-height:1.5}
+.roll-log{display:grid;gap:7px;margin-top:12px}
+.roll-log-item{border:1px solid var(--line);border-radius:13px;background:var(--surface2);padding:8px 10px;font-size:.75rem;display:flex;justify-content:space-between;gap:8px}
+.toast{position:fixed;z-index:80;left:50%;bottom:24px;transform:translate(-50%,24px);max-width:min(520px,calc(100vw - 28px));padding:11px 16px;border-radius:999px;background:#2f343a;color:#fff;box-shadow:0 18px 46px rgba(31,35,40,.28);opacity:0;pointer-events:none;transition:.22s}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+dialog{width:min(460px,calc(100vw - 28px));border:1px solid var(--line);border-radius:24px;background:var(--surface);box-shadow:var(--shadow);padding:18px;color:var(--ink)}
+dialog::backdrop{background:rgba(31,35,40,.25);backdrop-filter:blur(3px)}
+.dialog-grid{display:grid;gap:10px}
+.dialog-grid h3{margin:0}
+.dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
+button.skill-value{background:transparent!important;border:0!important;padding:0!important;box-shadow:none!important;color:#45484c!important;border-radius:0!important}
+button.skill-value:hover{transform:translateY(-52%) scale(1.035)!important;box-shadow:none!important}
+button.skill-check{padding:0;box-shadow:none}
+button.skill-check:hover{transform:none;box-shadow:none}
+.char-card,.resource-card,.credit-card{isolation:isolate}
+@media(max-width:1180px){
+  .resource-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .skill-dense-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .weapon-row{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .weapon-row .remove-cell{grid-column:4}
+  .derived-grid,.condition-grid,.combat-summary{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .skill-editor-fields{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:900px){
+  body{padding:10px}.top{display:block}.quick-info{text-align:left;margin-top:6px}
+  .layout{display:block}.nav{position:sticky;top:0;z-index:15;flex-direction:row;justify-content:flex-start;gap:22px;padding:12px 8px 30px;overflow:auto;background:rgba(246,245,241,.91);backdrop-filter:blur(10px)}.nav:before{display:none}.navbtn{flex:0 0 66px;width:66px;height:66px}
+  .pages{border-radius:24px}.page{min-height:auto}.hero,.two,.point-layout,.library-layout{grid-template-columns:1fr}
+  .profile-grid,.characteristics-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .story-grid{grid-template-columns:1fr}.story-wide{grid-column:auto}
+  .grid4,.three{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .quick-dock{top:auto;right:10px;bottom:12px;width:min(400px,calc(100vw - 20px));transform:translateY(calc(100% + 18px))}.quick-dock.open{transform:translateY(0)}.quick-toggle{left:auto;right:0;top:-54px;transform:scale(1);transform-origin:right bottom;writing-mode:horizontal-tb;min-height:auto;min-width:120px;padding:11px 17px;border-radius:999px}.quick-toggle:hover{transform:scale(1.055)}.quick-toggle:active{transform:scale(1.018)}
+}
+@media(max-width:620px){
+  .page{padding:14px}.page-actions,.actions{display:grid;grid-template-columns:1fr 1fr;width:100%}.actions button,.page-actions button{width:100%}
+  .profile-grid,.characteristics-grid,.resource-grid,.grid4,.three,.derived-grid,.condition-grid,.combat-summary,.skill-dense-grid,.rules-grid{grid-template-columns:1fr}
+  .profile-grid .wide{grid-column:auto}.char-card{grid-template-columns:1fr 88px}.char-input input{font-size:2.1rem}
+  .formula-grid{grid-template-columns:1fr}.skill-editor{padding:15px 15px 104px}.skill-editor-score{top:auto;bottom:16px}.skill-editor-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .skill-card{min-height:76px}.weapon-row,.gear-row,.fellow-row{grid-template-columns:1fr 1fr}.weapon-row .remove-cell,.gear-row .remove-cell,.fellow-row .remove-cell{grid-column:2}.credit-card{padding-right:92px}.credit-score{font-size:3rem}.credit-fields{grid-template-columns:1fr}
+  .quick-form,.quick-target{grid-template-columns:1fr}.quick-result{padding-right:94px}.quick-result-number{font-size:3.4rem}
+}
+@media print{
+  body{padding:0;background:#fff}.dots,.nav,.page-actions,.actions,.quick-dock,.toast,.export-notice,.app-footer{display:none!important}.layout{display:block}.pages{box-shadow:none;border:0}.page{display:none!important;padding:10mm}.page.active{display:block!important}.panel{box-shadow:none;break-inside:avoid}
+}
+
+
+/* v205: retain radar spokes, remove the value-polygon outline, rebalance contour frequencies, and refresh quick-roll sessions. */
+.navbtn::after{
+  content:"";
+  position:absolute;
+  inset:-58px;
+  z-index:-4;
+  border-radius:50%;
+  background-image:radial-gradient(rgba(31,35,40,.19) 1.15px,transparent 1.35px);
+  background-size:15px 15px;
+  opacity:0;
+  transform:scale(.86);
+  transition:opacity .26s ease,transform .26s ease;
+  -webkit-mask-image:radial-gradient(circle,#000 0 28%,rgba(0,0,0,.72) 52%,rgba(0,0,0,.2) 73%,transparent 84%);
+  mask-image:radial-gradient(circle,#000 0 28%,rgba(0,0,0,.72) 52%,rgba(0,0,0,.2) 73%,transparent 84%);
+  pointer-events:none;
+}
+.navbtn.active::after{opacity:.62;transform:scale(1)}
+.navbtn > svg.wave{
+  position:absolute!important;
+  inset:-32px!important;
+  z-index:-2!important;
+  width:calc(100% + 64px)!important;
+  height:calc(100% + 64px)!important;
+  overflow:visible!important;
+  opacity:0;
+  pointer-events:none;
+  fill:none!important;
+  stroke:none!important;
+  transition:opacity .2s ease;
+}
+.navbtn.active > svg.wave{opacity:1}
+.navbtn > svg.wave path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.navbtn > svg.wave .soft{stroke:var(--glow);stroke-width:1.15;opacity:.36}
+.navbtn > svg.wave .main{stroke:var(--glow);stroke-width:3;opacity:.98;filter:drop-shadow(0 0 6px var(--glow))}
+.navbtn > svg.wave .hi{stroke:#fff;stroke-width:1.7;opacity:.92;filter:drop-shadow(0 0 5px var(--glow))}
+
+/* All contour ornaments now share one undistorted square canvas and one visual size. */
+:root{--global-contour-size:410px}
+.contour-card:before,
+.skill-card:before,
+.skill-editor:before{
+  background-size:var(--global-contour-size) var(--global-contour-size)!important;
+  background-position:calc(100% + 10px) -18px!important;
+  background-repeat:no-repeat!important;
+}
+
+.characteristics-layout{display:grid;grid-template-columns:minmax(0,1.42fr) minmax(370px,.78fr);gap:16px;align-items:stretch}
+.characteristics-layout .characteristics-grid{grid-template-columns:repeat(2,minmax(0,1fr));align-content:start}
+.radar-panel{
+  position:relative;
+  overflow:hidden;
+  min-height:100%;
+  padding:15px;
+  border:1px solid var(--line);
+  clip-path:polygon(23px 0,calc(100% - 23px) 0,100% 23px,100% calc(100% - 23px),calc(100% - 23px) 100%,23px 100%,0 calc(100% - 23px),0 23px);
+  background:radial-gradient(circle at 25% 20%,rgba(255,177,61,.17),transparent 35%),radial-gradient(circle at 78% 25%,rgba(47,97,117,.13),transparent 39%),rgba(255,253,248,.94);
+  isolation:isolate;
+}
+.radar-panel::before{content:"";position:absolute;inset:0;z-index:-1;background-image:radial-gradient(rgba(31,35,40,.18) 1px,transparent 1.3px);background-size:16px 16px;opacity:.23;pointer-events:none}
+.radar-panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px;padding-bottom:10px;border-bottom:1px solid rgba(221,216,204,.8)}
+.radar-panel-head strong{display:block;font-size:1.02rem;letter-spacing:-.02em}
+.radar-panel-head small{display:block;margin-top:3px;color:var(--muted);font-size:.68rem;font-weight:850;letter-spacing:.08em}
+.radar-panel-head>span{white-space:nowrap;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.7);padding:5px 9px;color:var(--muted);font-size:.7rem;font-weight:900}
+.radar-wrap{min-height:390px;display:grid;place-items:center;border:1px solid rgba(31,35,40,.07);border-radius:21px;background:radial-gradient(circle at center,rgba(255,255,255,.88),rgba(255,255,255,.35) 56%,transparent 74%)}
+.ability-radar{width:min(100%,430px);overflow:visible}
+.ability-radar .grid{display:none}
+.ability-radar .axis{stroke:rgba(31,35,40,.14);stroke-width:1.05;stroke-linecap:round}
+.ability-radar .poly-aura{display:none}
+.ability-radar .poly{fill:url(#cocAbilityFill);stroke:none;filter:none}
+.ability-radar .pt{fill:var(--ink);stroke:#ffb13d;stroke-width:2.5}
+.ability-radar .label{fill:var(--ink);font-size:12.5px;font-weight:900;text-anchor:middle;dominant-baseline:middle}
+.ability-radar .label-sub{fill:var(--muted);font-size:8.5px;font-weight:850;letter-spacing:.08em;text-anchor:middle;dominant-baseline:middle}
+.ability-radar .ability-wave{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.ability-radar .ability-wave.soft{stroke:#ffc66f;stroke-width:1.05;opacity:.26}
+.ability-radar .ability-wave.main{stroke:#ffb13d;stroke-width:2.15;opacity:.68;filter:drop-shadow(0 0 4px rgba(255,177,61,.42))}
+.radar-note{margin-top:8px;color:var(--muted);font-size:.68rem;line-height:1.45;text-align:center}
+
+@media(max-width:1180px){
+  .characteristics-layout{grid-template-columns:1fr}
+  .characteristics-layout .characteristics-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .radar-wrap{min-height:350px}
+}
+@media(max-width:900px){
+  .characteristics-layout .characteristics-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:620px){
+  :root{--global-contour-size:350px}
+  .characteristics-layout .characteristics-grid{grid-template-columns:1fr}
+  .radar-panel{clip-path:none;border-radius:20px}
+  .radar-wrap{min-height:300px}
+}
+
+
+/* v205: restore the original TOTT-style ability fill aura and make contour amplitude scale with ring size. */
+.contour-card:before,
+.skill-card:before,
+.skill-editor:before{
+  opacity:var(--contour-opacity,.64)!important;
+}
+
+.ability-radar .poly{
+  fill:url(#cocAbilityFill)!important;
+  stroke:none!important;
+  opacity:.52!important;
+  filter:none!important;
+}
+.ability-radar .poly-aura{
+  display:block!important;
+  fill:url(#cocAbilityFill)!important;
+  stroke:none!important;
+  opacity:.84!important;
+  filter:drop-shadow(0 0 14px rgba(255,177,61,.18))!important;
+  pointer-events:none!important;
+}
+.ability-radar .ability-wave.soft{
+  opacity:.205!important;
+}
+.ability-radar .ability-wave.main{
+  opacity:.54!important;
+  filter:drop-shadow(0 0 4px rgba(255,177,61,.30))!important;
+}
+
+
+/* v206: sticky desktop navigation, stronger low-frequency contour terrain, and searchable core references. */
+@media(min-width:901px){
+  .nav{
+    position:sticky!important;
+    top:18px;
+    align-self:start;
+    height:max-content;
+    max-height:calc(100vh - 36px);
+    overflow-y:auto;
+    overflow-x:visible;
+    scrollbar-width:none;
+    overscroll-behavior:contain;
+  }
+  .nav::-webkit-scrollbar{display:none}
+}
+.reference-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
+.reference-panel{min-width:0}
+.reference-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;margin-bottom:12px}
+.reference-toolbar:has(select){grid-template-columns:minmax(0,1fr) minmax(120px,.46fr) auto}
+.reference-toolbar input,.reference-toolbar select{padding:8px 10px}
+.reference-toolbar span{min-width:36px;border:1px solid var(--line);border-radius:999px;background:var(--surface2);padding:7px 9px;text-align:center;color:var(--muted);font-size:.72rem;font-weight:900;font-variant-numeric:tabular-nums}
+.reference-list{display:grid;gap:9px;max-height:720px;overflow:auto;padding-right:4px;scrollbar-gutter:stable}
+.reference-card{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.9);padding:12px 12px 12px 15px;isolation:isolate}
+.reference-card::after{content:"";position:absolute;left:0;top:12px;bottom:12px;width:5px;border-radius:0 999px 999px 0;background:linear-gradient(#ffc66f,#ffb13d);box-shadow:0 0 18px rgba(255,177,61,.28)}
+.reference-card-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.reference-card-head strong{display:block;font-size:.94rem;letter-spacing:-.02em}
+.reference-card-head small{display:block;margin-top:3px;color:var(--muted);font-size:.66rem;font-weight:850;letter-spacing:.06em}
+.reference-card-head button{flex:0 0 auto;padding:6px 9px;font-size:.72rem}
+.reference-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.reference-tag{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;background:var(--surface2);padding:3px 7px;color:#50585f;font-size:.67rem;font-weight:850}
+.reference-card p{margin:8px 0 0;color:var(--muted);font-size:.75rem;line-height:1.5}
+.reference-source{margin:10px 2px 0;color:var(--muted);font-size:.68rem;line-height:1.45}
+.weapon-reference-list .reference-card{padding-right:10px}
+.weapon-reference-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-top:8px}
+.weapon-reference-stat{border:1px solid rgba(221,216,204,.82);border-radius:11px;background:rgba(243,241,234,.78);padding:5px 7px;min-width:0}
+.weapon-reference-stat span{display:block;color:var(--muted);font-size:.59rem;font-weight:900;letter-spacing:.05em}
+.weapon-reference-stat b{display:block;margin-top:2px;overflow:hidden;text-overflow:ellipsis;color:#34383d;font-family:Georgia,"Times New Roman",serif;font-size:.82rem;font-weight:900;white-space:nowrap}
+@media(max-width:1080px){.reference-columns{grid-template-columns:1fr}.reference-list{max-height:620px}}
+@media(max-width:620px){.reference-toolbar,.reference-toolbar:has(select){grid-template-columns:1fr}.reference-toolbar span{justify-self:end}.weapon-reference-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* v207: KP overview for comparing every cached investigator and editing table resources in place. */
+.navbtn[data-page="overview"]{--tab:#e6c16b;--glow:#ffe39a}
+.navbtn[data-page="sheet"]{--tab:var(--orange);--glow:#ffb13d}
+.navbtn[data-page="skills"]{--tab:var(--cyan);--glow:#7ee9ff}
+.navbtn[data-page="story"]{--tab:var(--violet);--glow:#f0a9ff}
+.navbtn[data-page="library"]{--tab:var(--green);--glow:#b8ff9e}
+.navbtn[data-page="tools"]{--tab:#a8b7c9;--glow:#bcd5f3}
+.overview-toolbar{display:grid;grid-template-columns:minmax(220px,1.35fr) minmax(190px,.95fr) minmax(132px,.5fr) auto;gap:9px;align-items:center;margin-bottom:16px}
+.overview-toolbar .overview-count{min-width:72px;border:1px solid var(--line);border-radius:999px;background:var(--surface2);padding:9px 12px;text-align:center;color:var(--muted);font-size:.72rem;font-weight:950;white-space:nowrap}
+.overview-list{display:grid;gap:16px}
+.overview-empty{padding:34px;text-align:center}
+.overview-card{position:relative;overflow:hidden;display:grid;grid-template-columns:154px minmax(300px,.82fr) minmax(390px,1.18fr);gap:16px;border:1px solid var(--line);border-radius:25px;background:rgba(255,255,255,.9);box-shadow:var(--soft);padding:16px;isolation:isolate}
+.overview-card::before{content:"";position:absolute;inset:0;z-index:-2;background-image:radial-gradient(rgba(31,35,40,.09) .75px,transparent .9px);background-size:18px 18px;opacity:.24}
+.overview-card::after{content:"";position:absolute;left:0;top:20px;bottom:20px;width:6px;border-radius:0 999px 999px 0;background:linear-gradient(#ffc66f,#ffb13d);box-shadow:0 0 20px rgba(255,177,61,.32)}
+.overview-card.active{border-color:#9ebdca;background:linear-gradient(105deg,rgba(243,249,251,.95),rgba(255,253,248,.96))}
+.overview-identity{min-width:0;display:grid;align-content:start;gap:10px}
+.overview-portrait{position:relative;width:100%;aspect-ratio:4/5;border:1px solid var(--line);border-radius:19px;background:var(--surface2);overflow:hidden;display:grid;place-items:center;color:var(--muted)}
+.overview-portrait img{width:100%;height:100%;object-fit:cover}
+.overview-monogram{font-family:Georgia,"Times New Roman",serif;font-size:3rem;font-weight:900;color:#536069;text-transform:uppercase}
+.overview-name{min-width:0}
+.overview-name strong{display:block;overflow:hidden;text-overflow:ellipsis;font-size:1.08rem;letter-spacing:-.025em;white-space:nowrap}
+.overview-name small{display:block;margin-top:4px;color:var(--muted);font-size:.7rem;font-weight:800;line-height:1.45}
+.overview-badges{display:flex;flex-wrap:wrap;gap:5px}
+.overview-badge{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;background:var(--surface2);padding:4px 7px;color:#566068;font-size:.63rem;font-weight:900}
+.overview-badge.alert{border-color:#d9aaa5;background:#fbf1ef;color:var(--red)}
+.overview-open{width:100%;margin-top:2px}
+.overview-core{display:grid;align-content:start;gap:13px;min-width:0}
+.overview-section-title{display:flex;justify-content:space-between;align-items:end;gap:8px;padding-bottom:8px;border-bottom:1px solid rgba(221,216,204,.86)}
+.overview-section-title strong{font-size:.9rem}
+.overview-section-title span{color:var(--muted);font-size:.66rem;font-weight:850}
+/* v212: narrow the overview steppers and reserve horizontal room for current/max labels. */
+.overview-resources{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.overview-resource{display:grid;grid-template-columns:minmax(0,1fr) 60px;grid-template-areas:"head stepper" "bar bar";gap:7px 6px;align-items:center;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.78);padding:9px 8px;min-width:0}
+.overview-resource-head{grid-area:head;display:flex;justify-content:flex-start;gap:5px;align-items:center;min-width:0;margin:0}
+.overview-resource-head strong{flex:0 0 auto;font-size:.7rem;letter-spacing:.045em}
+.overview-resource-value{flex:1 1 auto;width:auto;min-width:0;max-width:100%;padding:4px 5px;border:1px solid transparent;border-radius:999px;background:var(--surface2);color:var(--muted);box-shadow:none;font-size:.64rem;font-weight:950;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.overview-resource-value:hover{transform:none;border-color:var(--line);background:#fff;box-shadow:none;color:var(--ink)}
+.overview-resource-value:focus-visible{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(47,97,117,.16)}
+.overview-stepper{grid-area:stepper;display:grid;grid-template-columns:repeat(2,28px);gap:4px;align-items:center;justify-content:end;width:60px}
+.overview-stepper button{width:28px;min-width:28px;height:30px;padding:0;border-radius:9px;background:var(--surface2);border-color:var(--line);color:var(--ink);box-shadow:none;font-size:.9rem;line-height:1;touch-action:none;user-select:none;-webkit-user-select:none}
+.overview-stepper button:hover{transform:none;background:#fff}
+.overview-stepper button.holding{background:#fff4dc;border-color:#e5bd6b;box-shadow:inset 0 0 0 1px rgba(255,177,61,.2),0 0 16px rgba(255,177,61,.16)}
+.overview-resource-popover{position:fixed;z-index:72;width:min(258px,calc(100vw - 20px));border:1px solid var(--line);border-radius:18px;background:rgba(255,253,248,.98);box-shadow:0 20px 58px rgba(25,28,31,.22);padding:13px;backdrop-filter:blur(12px)}
+.overview-resource-popover[hidden]{display:none}
+.overview-resource-popover::before{content:"";position:absolute;left:var(--popover-arrow-x,50%);width:12px;height:12px;background:var(--surface);border-left:1px solid var(--line);border-top:1px solid var(--line);transform:translateX(-50%) rotate(45deg)}
+.overview-resource-popover[data-side="bottom"]::before{top:-7px}
+.overview-resource-popover[data-side="top"]::before{bottom:-7px;transform:translateX(-50%) rotate(225deg)}
+.overview-popover-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.overview-popover-head strong{font-size:.88rem}
+.overview-popover-head button{width:28px;height:28px;padding:0;background:transparent;border-color:var(--line);color:var(--muted);box-shadow:none}
+.overview-popover-head button:hover{transform:none;background:var(--surface2);box-shadow:none}
+.overview-popover-field{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
+.overview-popover-field input{padding:9px 10px;text-align:center;font-size:1.05rem;font-weight:950;font-variant-numeric:tabular-nums}
+.overview-popover-field span{min-width:48px;color:var(--muted);font-size:.76rem;font-weight:900}
+.overview-popover-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}
+.overview-popover-actions button{padding:8px 10px;font-size:.78rem}
+.overview-mini-bar{grid-area:bar;height:5px;margin-top:0;border-radius:999px;background:var(--surface3);overflow:hidden}
+.overview-mini-bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#ffc56d,#ff9d22)}
+.overview-resource[data-overview-kind="mp"] .overview-mini-bar i{background:linear-gradient(90deg,#9fe5ee,#62c4d7)}
+.overview-resource[data-overview-kind="san"] .overview-mini-bar i{background:linear-gradient(90deg,#dac0e2,#b58bc5)}
+.overview-resource[data-overview-kind="luck"] .overview-mini-bar i{background:linear-gradient(90deg,#d0e6bd,#9fc67f)}
+.overview-attributes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.overview-attribute{display:flex;justify-content:space-between;gap:7px;align-items:center;border:1px solid rgba(221,216,204,.86);border-radius:13px;background:rgba(243,241,234,.76);padding:7px 9px}
+.overview-attribute span{color:var(--muted);font-size:.63rem;font-weight:950;letter-spacing:.05em}
+.overview-attribute b{font-family:Georgia,"Times New Roman",serif;font-size:1.04rem;font-variant-numeric:tabular-nums}
+.overview-derived{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.overview-derived div{border:1px solid rgba(221,216,204,.82);border-radius:12px;background:#fff;padding:6px 8px;text-align:center}
+.overview-derived span{display:block;color:var(--muted);font-size:.58rem;font-weight:900}
+.overview-derived b{display:block;margin-top:2px;font-family:Georgia,"Times New Roman",serif;font-size:.92rem}
+/* v209: use explicit skill-row classes and sizing so all-skill mode remains visible at every zoom level. */
+/* v210: skills are directly rollable and reserve a footer for investigator conditions. */
+/* v211: keep short major-skill lists compact instead of stretching to the card height. */
+.overview-skills{min-width:0;min-height:0;max-height:430px;align-self:start;display:grid;grid-template-rows:auto auto auto;align-content:start;gap:8px}
+.overview-skill-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(43px,auto);align-content:start;gap:6px;height:max-content;max-height:300px;overflow:auto;padding:1px 4px 1px 1px;scrollbar-gutter:stable}
+.overview-skill{position:relative;isolation:isolate;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr) minmax(30px,auto);gap:8px;align-items:center;min-width:0;min-height:43px;border:1px solid rgba(221,216,204,.88);border-radius:12px;background:rgba(255,255,255,.9);padding:7px 9px 7px 12px;color:var(--ink);font-size:1rem;line-height:1.2;opacity:1;visibility:visible;cursor:pointer;transition:transform .14s ease,border-color .14s ease,background .14s ease,box-shadow .14s ease}
+.overview-skill:hover{transform:translateY(-1px);border-color:#9ebdca;background:#f3f9fb;box-shadow:0 7px 18px rgba(31,35,40,.07)}
+.overview-skill:focus-visible{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(47,97,117,.16)}
+.overview-skill::before{content:"";position:absolute;z-index:0;left:0;top:7px;bottom:7px;width:3px;border-radius:0 999px 999px 0;background:#b8c7cf}
+.overview-skill.trained::before{background:var(--orange);box-shadow:0 0 10px rgba(255,177,61,.3)}
+.overview-skill-main{position:relative;z-index:1;display:block;min-width:0;color:var(--ink);opacity:1;visibility:visible}
+.overview-skill-name{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;color:var(--ink);font-size:.72rem;font-weight:850;line-height:1.25;white-space:nowrap;-webkit-text-fill-color:currentColor}
+.overview-skill-group{display:block;min-width:0;margin-top:2px;overflow:hidden;text-overflow:ellipsis;color:var(--muted);font-size:.58rem;font-weight:750;line-height:1.2;white-space:nowrap;-webkit-text-fill-color:currentColor}
+.overview-skill-value{position:relative;z-index:1;display:block;min-width:28px;color:#45484c;font-family:Georgia,"Times New Roman",serif;font-size:1.08rem;font-weight:900;font-variant-numeric:tabular-nums;line-height:1;text-align:right;-webkit-text-fill-color:currentColor}
+.overview-no-skills{grid-column:1/-1;border:1px dashed var(--line);border-radius:14px;padding:18px;color:var(--muted);font-size:.75rem;text-align:center}
+.overview-status-panel{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:center;min-height:56px;padding:9px 10px;border:1px solid rgba(221,216,204,.88);border-radius:14px;background:linear-gradient(105deg,rgba(243,241,234,.72),rgba(255,255,255,.88))}
+.overview-status-title{color:var(--muted);font-size:.65rem;font-weight:950;letter-spacing:.08em;white-space:nowrap}
+.overview-status-tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-width:0}
+.overview-status-tag{display:inline-flex;align-items:center;min-height:26px;border:1px solid var(--line);border-radius:999px;background:#fff;padding:4px 9px;color:#566068;font-size:.66rem;font-weight:900;white-space:nowrap}
+.overview-status-tag.alert{border-color:#d9aaa5;background:#fbf1ef;color:var(--red);box-shadow:0 0 14px rgba(152,64,57,.08)}
+.overview-status-tag.normal{border-color:#b9d3b0;background:#f3f8f1;color:#587447}
+.overview-help{margin:12px 2px 0;color:var(--muted);font-size:.7rem;line-height:1.5}
+/* v213: keep the modifier explanation inside the control and split it from the numeric combobox. */
+.quick-form{grid-template-columns:minmax(0,1fr) 142px;align-items:stretch}
+.quick-modifier-wrap{min-width:0;min-height:76px;display:grid;grid-template-rows:auto minmax(42px,1fr);overflow:hidden;border:1px solid var(--line);border-radius:13px;background:#fff;color:var(--ink)}
+.quick-modifier-label{display:grid;place-items:center;min-height:33px;padding:5px 7px;border-bottom:1px solid var(--line);background:var(--surface2);color:var(--muted);font-size:.61rem;font-weight:900;line-height:1.25;text-align:center;white-space:normal}
+.quick-modifier-wrap input{min-width:0;height:100%;border:0;border-radius:0;padding:7px 25px 7px 10px;background:#fff;text-align:center;font-size:1.12rem;font-weight:950;font-variant-numeric:tabular-nums;box-shadow:none}
+.quick-modifier-wrap input:focus{border:0;box-shadow:inset 0 0 0 2px rgba(47,97,117,.34)}
+@media(max-width:620px){.quick-form{grid-template-columns:1fr}.quick-modifier-wrap{min-height:72px}}
+@media(max-width:1180px){.overview-card{grid-template-columns:132px minmax(280px,.82fr) minmax(330px,1.18fr)}.overview-resources{grid-template-columns:1fr}}
+@media(max-width:980px){.overview-toolbar{grid-template-columns:1fr 1fr}.overview-toolbar .overview-count{justify-self:end}.overview-card{grid-template-columns:128px 1fr}.overview-resources{grid-template-columns:repeat(2,minmax(0,1fr))}.overview-skills{grid-column:1/-1}.overview-skill-list{grid-template-columns:repeat(3,minmax(0,1fr));max-height:280px}}
+@media(max-width:700px){.overview-toolbar{grid-template-columns:1fr}.overview-toolbar .overview-count{justify-self:stretch}.overview-card{grid-template-columns:1fr;padding:14px}.overview-identity{grid-template-columns:92px 1fr;align-items:start}.overview-portrait{grid-row:span 3}.overview-open{width:auto}.overview-resources{grid-template-columns:repeat(2,minmax(0,1fr))}.overview-skill-list{grid-template-columns:repeat(2,minmax(0,1fr));max-height:340px}}
+@media(max-width:430px){.overview-identity{grid-template-columns:76px 1fr}.overview-resources{grid-template-columns:1fr}.overview-attributes,.overview-derived,.overview-skill-list{grid-template-columns:1fr 1fr}.overview-status-panel{grid-template-columns:1fr;gap:6px}}
+
+</style>
+</head>
+<body>
+<canvas id="ambientDots" class="dots" aria-hidden="true"></canvas>
+<div class="app">
+<header class="top">
+  <div><h1>便携 CoC 7版调查员人物卡</h1><div class="sub">单文件 · 离线缓存 · 自动计算 · 波纹导航 · 能力图 · 1920s / 现代通用</div></div>
+  <div class="sub quick-info" id="quickInfo">正在启动……</div>
+</header>
+<div class="export-notice" id="exportNotice" hidden><strong>已读取内嵌调查员</strong><span>这是可继续编辑的导出包；保存后会同步到当前浏览器的本机库。</span></div>
+<div class="layout">
+<nav class="nav" aria-label="页面导航">
+  <button class="navbtn" data-page="overview" aria-label="KP总览"><svg viewBox="0 0 24 24"><path d="M4 5.5h6v6H4zM14 5.5h6v6h-6zM4 15h6v4H4zM14 15h6v4h-6z"/><path d="M7 8.5h0M17 8.5h0"/></svg><small>KP总览</small></button>
+  <button class="navbtn active" data-page="sheet" aria-label="调查员"><svg viewBox="0 0 24 24"><path d="M12 12.2a4.1 4.1 0 1 0 0-8.2 4.1 4.1 0 0 0 0 8.2Z"/><path d="M4.8 20.2c1.15-4.05 3.65-6.05 7.2-6.05s6.05 2 7.2 6.05"/></svg><small>调查员</small></button>
+  <button class="navbtn" data-page="skills" aria-label="技能与战斗"><svg viewBox="0 0 24 24"><path d="M4 18.5 16.8 5.7l1.5 1.5L5.5 20H4v-1.5Z"/><path d="m13.8 8.7 2.5 2.5"/><path d="M8 5h3M9.5 3.5v3"/></svg><small>技能战斗</small></button>
+  <button class="navbtn" data-page="story" aria-label="背景与装备"><svg viewBox="0 0 24 24"><path d="M5 4.5h10.4L19 8v11.5H5V4.5Z"/><path d="M15 4.7V8h3.4"/><path d="M8 12h8M8 15.5h8"/></svg><small>背景装备</small></button>
+  <button class="navbtn" data-page="library" aria-label="本机库"><svg viewBox="0 0 24 24"><path d="M5 7.2c0-1.55 3.15-2.8 7-2.8s7 1.25 7 2.8-3.15 2.8-7 2.8-7-1.25-7-2.8Z"/><path d="M5 7.3v4.6c0 1.55 3.15 2.8 7 2.8s7-1.25 7-2.8V7.3"/><path d="M5 12v4.8c0 1.55 3.15 2.8 7 2.8s7-1.25 7-2.8V12"/></svg><small>本机库</small></button>
+  <button class="navbtn" data-page="tools" aria-label="工具与规则"><svg viewBox="0 0 24 24"><path d="M6 4h12v16H6z"/><path d="M9 8h6M9 12h2M13 12h2M9 16h2M13 16h2"/></svg><small>工具规则</small></button>
+</nav>
+<section class="pages">
+<article class="page" id="page-overview">
+  <div class="page-title"><div><h2>KP 调查员总览</h2><p class="sub">同时浏览当前来源缓存中的全部调查员。头像、资源、九项属性与技能值集中展示；HP、MP、SAN 与幸运可直接在此修改并立即写回本机库。</p></div><div class="page-actions"><button id="refreshOverviewBtn">刷新总览</button><button class="secondary" id="overviewSaveBtn">保存当前人物卡</button></div></div>
+  <section class="panel">
+    <div class="section-head"><div><h3>调查员对比</h3><p class="sub">“主要技能”优先显示有投入的技能并按最终值排序；切换“全部技能”可查看完整技能表。输入技能名称可跨人物卡快速比较。</p></div><span class="kicker">Keeper View</span></div>
+    <div class="overview-toolbar">
+      <input id="overviewSearch" placeholder="搜索调查员、玩家、职业或时代……" />
+      <input id="overviewSkillSearch" placeholder="筛选技能，例如：侦查 / 心理学" />
+      <select id="overviewSkillMode" aria-label="总览技能显示模式"><option value="major">主要技能</option><option value="all">全部技能</option></select>
+      <span class="overview-count" id="overviewCount">0 张</span>
+    </div>
+    <div class="overview-list" id="overviewRoot"></div>
+    <p class="overview-help">点按 − / + 每次调整 1 点，长按可连续增减；点击“7 / 7”一类的资源数值可打开气泡并直接输入。点击任意技能会立即进行一次快速检定；状态标签固定显示在技能区底部。修改非当前人物卡时不会切换编辑对象。</p>
+  </section>
+</article>
+
+<article class="page active" id="page-sheet">
+  <div class="page-title"><div><h2>调查员档案</h2><p class="sub">CoC 7版标准调查员：属性自动计算困难与极难值，并联动生命、魔法、理智、移动力、体格与伤害加值。</p></div><div class="page-actions"><button id="saveBtn">保存当前调查员</button><button class="secondary" data-export-current>导出 MDICE</button></div></div>
+  <div class="hero">
+    <aside class="panel portrait-panel">
+      <div class="portrait" id="portraitBox"><span>调查员肖像<br>选择本地图片后会压缩并写入文件</span></div>
+      <input class="hidden" id="portraitInput" type="file" accept="image/*" />
+      <div class="actions"><button class="secondary" id="pickPortraitBtn">选择肖像</button><button class="ghost" id="clearPortraitBtn">清除</button></div>
+      <p class="sub">图像最长边压缩至 720px，以控制缓存与导出包体积。</p>
+    </aside>
+    <div class="stack">
+      <section class="panel">
+        <div class="section-head"><h3>基本信息</h3><span class="kicker">Investigator</span></div>
+        <div class="profile-grid">
+          <div class="field wide"><label for="profileName">姓名</label><input id="profileName" data-profile="name" placeholder="调查员姓名" /></div>
+          <div class="field"><label for="profilePlayer">玩家</label><input id="profilePlayer" data-profile="player" placeholder="玩家姓名" /></div>
+          <div class="field wide"><label for="profileOccupation">职业</label><input id="profileOccupation" data-profile="occupation" placeholder="记者 / 医生 / 私家侦探……" /></div>
+          <div class="field"><label for="profileAge">年龄</label><input id="profileAge" data-profile="age" type="number" min="15" max="120" inputmode="numeric" /></div>
+          <div class="field"><label for="profileGender">性别</label><select id="profileGender" data-profile="gender"><option value="">未选择</option><option value="男">男</option><option value="女">女</option></select></div>
+          <div class="field"><label for="profileEra">时代</label><select id="profileEra" data-profile="era"><option>1920s</option><option>现代</option><option>维多利亚</option><option>自定义</option></select></div>
+          <div class="field"><label for="profileResidence">居住地</label><input id="profileResidence" data-profile="residence" /></div>
+          <div class="field"><label for="profileBirthplace">出生地</label><input id="profileBirthplace" data-profile="birthplace" /></div>
+        </div>
+        <div class="creation-tools"><button class="secondary small" id="quickArrayBtn">填入标准数组示例</button><button class="secondary small" id="rollCharacteristicsBtn">按 7版方式掷骰生成</button><button class="ghost small" id="resetCurrentsBtn">将当前资源恢复至上限</button></div>
+      </section>
+      <section class="panel">
+        <div class="section-head"><div><h3>派生数据与状态</h3><p class="sub">移动力按 STR / DEX / SIZ 比较并根据年龄修正；可另加手动修正。</p></div><span class="kicker">Derived</span></div>
+        <div class="derived-grid">
+          <div class="derived-card"><span>移动力 MOV</span><b id="moveView">8</b></div>
+          <div class="derived-card"><span>体格 Build</span><b id="buildView">0</b></div>
+          <div class="derived-card"><span>伤害加值 DB</span><b id="dbView">—</b></div>
+          <div class="derived-card"><span>闪避 Dodge</span><b id="dodgeView">0</b></div>
+          <div class="derived-card"><span>最大理智</span><b id="maxSanView">99</b></div>
+        </div>
+        <div class="field" style="margin-top:12px;max-width:230px"><label for="moveAdjust">移动力修正</label><input id="moveAdjust" data-resource="moveAdjust" type="number" inputmode="numeric" value="0" /></div>
+        <div class="condition-grid" id="conditionGrid" style="margin-top:12px"></div>
+      </section>
+    </div>
+  </div>
+  <section class="panel" style="margin-top:18px">
+    <div class="section-head"><div><h3>九项属性与能力图</h3><p class="sub">常规值可直接输入；困难值为一半、极难值为五分之一，均向下取整。右侧多边形能力图沿用原 TOTT 人物卡的点阵、波纹与平滑变化设计。</p></div><span class="kicker">Characteristics</span></div>
+    <div class="characteristics-layout">
+      <div class="characteristics-grid" id="characteristicsGrid"></div>
+      <aside class="radar-panel" aria-labelledby="abilityRadarTitle">
+        <div class="radar-panel-head"><div><strong id="abilityRadarTitle">调查员能力图</strong><small>九项属性 · 0—100</small></div><span id="abilityRadarMean">平均 0</span></div>
+        <div class="radar-wrap"><svg id="abilityRadar" class="ability-radar" viewBox="0 0 420 420" role="img" aria-label="调查员九项属性多边形能力图"></svg></div>
+        <div class="radar-note">轮廓随属性平滑变化；外层波纹用于延续原人物卡的视觉语言，不参与规则计算。</div>
+      </aside>
+    </div>
+  </section>
+  <section class="panel" style="margin-top:18px">
+    <div class="section-head"><div><h3>生命、魔法、理智与幸运</h3><p class="sub">生命上限 = ⌊(CON + SIZ) / 10⌋；魔法上限 = ⌊POW / 5⌋；初始理智 = POW；最大理智 = 99 − 克苏鲁神话。</p></div><span class="kicker">Resources</span></div>
+    <div class="resource-grid">
+      <div class="resource-card contour-card" id="hpCard"><div class="resource-top"><div><strong>生命值 HP</strong><div class="resource-formula">CON + SIZ，除以 10 向下取整</div></div><div class="resource-max" id="hpMaxView">0</div></div><div class="resource-fields"><label>当前<input id="hpCurrent" data-current="hp" type="number" min="0" inputmode="numeric" /></label><label>上限修正<input id="hpAdjust" data-resource="hpAdjust" type="number" inputmode="numeric" /></label></div><div class="bar"><div class="bar-fill" id="hpBar"></div></div><div class="bar-caption"><span id="hpCaption">0 / 0</span><span>Hit Points</span></div></div>
+      <div class="resource-card contour-card" id="mpCard"><div class="resource-top"><div><strong>魔法值 MP</strong><div class="resource-formula">POW 的五分之一；通常每小时恢复 1 点</div></div><div class="resource-max" id="mpMaxView">0</div></div><div class="resource-fields"><label>当前<input id="mpCurrent" data-current="mp" type="number" min="0" inputmode="numeric" /></label><label>上限修正<input id="mpAdjust" data-resource="mpAdjust" type="number" inputmode="numeric" /></label></div><div class="bar"><div class="bar-fill cyan" id="mpBar"></div></div><div class="bar-caption"><span id="mpCaption">0 / 0</span><span>Magic Points</span></div></div>
+      <div class="resource-card contour-card" id="sanCard"><div class="resource-top"><div><strong>理智值 SAN</strong><div class="resource-formula">初始值等于 POW；上限受克苏鲁神话限制</div></div><button class="roll-dot secondary" data-roll-resource="san" aria-label="进行理智检定">检定</button><div class="resource-max" id="sanMaxNumber">0</div></div><div class="resource-fields"><label>当前<input id="sanCurrent" data-current="san" type="number" min="0" max="99" inputmode="numeric" /></label><label>初始修正<input id="sanStartAdjust" data-resource="sanStartAdjust" type="number" inputmode="numeric" /></label></div><div class="bar"><div class="bar-fill violet" id="sanBar"></div></div><div class="bar-caption"><span id="sanCaption">0 / 0</span><span id="sanStartCaption">初始 0</span></div></div>
+      <div class="resource-card contour-card" id="luckCard"><div class="resource-top"><div><strong>幸运值 Luck</strong><div class="resource-formula">初始通常为 3D6 × 5；可在游戏中花费与恢复</div></div><button class="roll-dot secondary" data-roll-resource="luck" aria-label="进行幸运检定">检定</button><div class="resource-max" id="luckStartView">0</div></div><div class="resource-fields"><label>当前<input id="luckCurrent" data-current="luck" type="number" min="0" max="99" inputmode="numeric" /></label><label>初始值<input id="luckStartRead" type="number" readonly /></label></div><div class="bar"><div class="bar-fill green" id="luckBar"></div></div><div class="bar-caption"><span id="luckCaption">0 / 0</span><span>Luck</span></div></div>
+    </div>
+  </section>
+</article>
+
+<article class="page" id="page-skills">
+  <div class="page-title"><div><h2>技能与战斗</h2><p class="sub">使用官方调查员表的基础技能。职业点、兴趣点、成长与其他调整分开记录；最终值自动生成常规 / 困难 / 极难阈值。</p></div><div class="page-actions"><button id="saveSkillsBtn">保存</button><button class="secondary" id="growthBtn">结算勾选成长</button></div></div>
+  <section class="panel">
+    <div class="section-head"><div><h3>职业与技能点</h3><p class="sub">不同职业使用不同公式；这里提供常见公式与自定义点数。兴趣点上限固定为 INT × 2。</p></div><span class="kicker">Occupation</span></div>
+    <div class="point-layout">
+      <div>
+        <div class="formula-grid">
+          <div class="field"><label for="occupationFormula">职业点公式</label><select id="occupationFormula" data-occupation="formula"><option value="edu4">EDU × 4</option><option value="edu2app2">EDU × 2 + APP × 2</option><option value="edu2dex2">EDU × 2 + DEX × 2</option><option value="edu2dexOrStr2">EDU × 2 + DEX / STR 较高者 × 2</option><option value="edu2str2">EDU × 2 + STR × 2</option><option value="edu2pow2">EDU × 2 + POW × 2</option><option value="custom">自定义</option></select></div>
+          <div class="field"><label for="customOccupationPoints">自定义上限</label><input id="customOccupationPoints" data-occupation="customPoints" type="number" min="0" inputmode="numeric" /></div>
+          <div class="field"><label for="creditRange">信用范围</label><input id="creditRange" data-occupation="creditRange" placeholder="例如 20–50" /></div>
+        </div>
+        <div class="point-card" id="occupationPointCard"><div class="point-head"><strong>职业技能点</strong><span id="occupationPointText">0 / 0</span></div><div class="bar"><div class="bar-fill" id="occupationPointBar"></div></div></div>
+        <div class="point-card" id="interestPointCard"><div class="point-head"><strong>个人兴趣点</strong><span id="interestPointText">0 / 0</span></div><div class="bar"><div class="bar-fill cyan" id="interestPointBar"></div></div></div>
+      </div>
+      <div>
+        <div class="field"><label for="occupationPreset">快速职业模板</label><select id="occupationPreset"><option value="">选择后再应用</option><option value="antiquarian">文物学家</option><option value="author">作家</option><option value="dilettante">业余艺术爱好者</option><option value="doctor">医生</option><option value="journalist">记者</option><option value="police">警探</option><option value="private">私家侦探</option><option value="professor">教授</option></select><div class="field-note">按 7版快速入门的 70 / 60 / 60 / 50 / 50 / 50 / 40 / 40 + 信用评级 40 方式分配；会覆盖当前职业点分配，但保留成长与其他调整。</div></div>
+        <div class="preset-grid"><input id="presetNote" readonly value="选择模板后可一键建立可玩的起始技能" /><button id="applyOccupationPresetBtn">应用模板</button></div>
+        <div class="field" style="margin-top:10px"><label for="occupationNotes">职业备注</label><textarea id="occupationNotes" data-occupation="notes" placeholder="职业技能选择、职业关系、守密人许可等……"></textarea></div>
+      </div>
+    </div>
+  </section>
+  <section class="panel" style="margin-top:18px">
+    <div class="section-head"><div><h3>技能</h3><p class="sub">密集模式将所有技能放在同一网格；点击卡片只会更新上方编辑器，不会强制移动页面。勾选框用于记录成功使用、等待幕间成长检定。</p></div><span class="kicker">Skills</span></div>
+    <div class="skill-toolbar">
+      <div class="skill-search"><input id="skillSearch" placeholder="搜索技能或专长……" /></div>
+      <div class="segment" role="group" aria-label="技能显示模式"><button class="active" id="skillModeDense" type="button">密集</button><button id="skillModeTable" type="button">列表</button></div>
+      <button class="secondary small" id="addCustomSkillBtn">+ 自定义技能</button>
+      <button class="ghost small" id="clearSkillChecksBtn">清除勾选</button>
+    </div>
+    <div id="skillEditor"></div>
+    <div id="skillsRoot"></div>
+  </section>
+  <section class="panel" style="margin-top:18px">
+    <div class="section-head"><div><h3>战斗与武器</h3><p class="sub">DEX 决定行动顺序；近战、闪避与射击使用相应技能。武器技能值从技能表自动引用。</p></div><button class="secondary small" id="addWeaponBtn">+ 添加武器</button></div>
+    <div class="combat-summary">
+      <div class="derived-card"><span>DEX</span><b id="combatDexView">0</b></div>
+      <div class="derived-card"><span>闪避</span><b id="combatDodgeView">0</b></div>
+      <div class="derived-card"><span>体格</span><b id="combatBuildView">0</b></div>
+      <div class="derived-card"><span>伤害加值</span><b id="combatDbView">—</b></div>
+      <div class="derived-card"><span>移动力</span><b id="combatMoveView">8</b></div>
+    </div>
+    <div class="weapon-list" id="weaponList"></div>
+    <div class="two" style="margin-top:12px"><div class="field"><label for="armorField">护甲 / 减伤</label><input id="armorField" data-resource="armor" placeholder="例如：厚皮衣 1 点；防弹背心 8 点" /></div><div class="field"><label for="injuryNotes">伤势与战斗备注</label><input id="injuryNotes" data-resource="injuryNotes" placeholder="重大伤势、流血、临时效果……" /></div></div>
+  </section>
+</article>
+
+<article class="page" id="page-story">
+  <div class="page-title"><div><h2>背景、装备与信用</h2><p class="sub">CoC 调查员的核心不只是数值。这里覆盖官方调查员表的背景条目、装备、同行调查员与财富记录。</p></div><div class="page-actions"><button id="saveStoryBtn">保存</button><button class="secondary" data-export-current>导出 MDICE</button></div></div>
+  <section class="panel">
+    <div class="section-head"><div><h3>信用评级与财富</h3><p class="sub">信用评级来自技能表，反映财富与社会阶层；消费水平、现金和资产按时代与守密人要求手动记录。</p></div><span class="kicker">Credit</span></div>
+    <div class="credit-card contour-card" id="creditCard">
+      <div class="credit-tier" id="creditTier">普通</div>
+      <p class="sub" id="creditDescription">具备合理的生活舒适度。</p>
+      <button class="secondary small" data-roll-skill="credit-rating">信用检定</button>
+      <div class="credit-score" id="creditScore">0</div>
+      <div class="credit-fields">
+        <div class="field"><label for="spendingLevel">消费水平</label><input id="spendingLevel" data-wealth="spendingLevel" /></div>
+        <div class="field"><label for="cashField">现金</label><input id="cashField" data-wealth="cash" /></div>
+        <div class="field"><label for="assetsField">资产</label><input id="assetsField" data-wealth="assets" /></div>
+      </div>
+      <div class="field" style="margin-top:9px"><label for="wealthNotes">财富备注</label><textarea id="wealthNotes" data-wealth="notes" placeholder="房产、车辆、投资、债务、固定收入……"></textarea></div>
+    </div>
+  </section>
+  <section class="panel" style="margin-top:18px">
+    <div class="section-head"><div><h3>装备与随身物品</h3><p class="sub">根据职业、时代与守密人许可记录。价格不是强制字段，信用评级通常决定日常消费能力。</p></div><button class="secondary small" id="addGearBtn">+ 添加物品</button></div>
+    <div class="gear-list" id="gearList"></div>
+  </section>
+  <section class="panel" style="margin-top:18px">
+    <div class="section-head"><div><h3>故事与背景</h3><p class="sub">每项用简洁但具体的句子记录；无需全部填满。</p></div><span class="kicker">Backstory</span></div>
+    <div class="story-grid">
+      <div class="story-field story-wide"><label for="storyText">我的故事</label><textarea id="storyText" data-backstory="story" style="min-height:160px" placeholder="调查员为何卷入事件？他/她试图保护什么，又惧怕失去什么？"></textarea></div>
+      <div class="story-field"><label for="personalDescription">个人描述</label><textarea id="personalDescription" data-backstory="personalDescription"></textarea></div>
+      <div class="story-field"><label for="traitsText">性格特征</label><textarea id="traitsText" data-backstory="traits"></textarea></div>
+      <div class="story-field"><label for="ideologyText">思想与信念</label><textarea id="ideologyText" data-backstory="ideology"></textarea></div>
+      <div class="story-field"><label for="injuriesScarsText">伤口与疤痕</label><textarea id="injuriesScarsText" data-backstory="injuriesScars"></textarea></div>
+      <div class="story-field"><label for="significantPeopleText">重要之人</label><textarea id="significantPeopleText" data-backstory="significantPeople"></textarea></div>
+      <div class="story-field"><label for="phobiasManiasText">恐惧症与狂躁症</label><textarea id="phobiasManiasText" data-backstory="phobiasManias"></textarea></div>
+      <div class="story-field"><label for="meaningfulLocationsText">意义非凡之地</label><textarea id="meaningfulLocationsText" data-backstory="meaningfulLocations"></textarea></div>
+      <div class="story-field"><label for="arcaneText">神秘典籍与法术</label><textarea id="arcaneText" data-backstory="arcaneTomesSpells"></textarea></div>
+      <div class="story-field"><label for="treasuredText">宝贵之物</label><textarea id="treasuredText" data-backstory="treasuredPossessions"></textarea></div>
+      <div class="story-field"><label for="strangeText">遭遇陌生实体</label><textarea id="strangeText" data-backstory="strangeEncounters"></textarea></div>
+      <div class="story-field story-wide"><label for="backstoryNotes">长期笔记</label><textarea id="backstoryNotes" data-backstory="notes" style="min-height:170px"></textarea></div>
+    </div>
+  </section>
+  <section class="panel" style="margin-top:18px">
+    <div class="section-head"><h3>同行调查员</h3><button class="secondary small" id="addFellowBtn">+ 添加同行</button></div>
+    <div class="fellow-list" id="fellowList"></div>
+  </section>
+</article>
+
+<article class="page" id="page-library">
+  <div class="page-title"><div><h2>本机调查员库</h2><p class="sub">保存在当前浏览器与当前来源中。读取、删除、复制后列表与当前人物卡会立即刷新。</p></div><div class="page-actions"><button id="newInvestigatorBtn">新建空白调查员</button><button class="secondary" id="refreshLibraryBtn">刷新列表</button></div></div>
+  <div class="library-layout">
+    <section class="panel">
+      <div class="section-head"><h3>调查员列表</h3><span class="kicker" id="libraryCount">0</span></div>
+      <input class="library-search" id="librarySearch" placeholder="搜索姓名、职业、时代……" />
+      <div class="library-list" id="libraryList"></div>
+    </section>
+    <section class="panel">
+      <div class="section-head"><h3>缓存管理</h3><span class="kicker">Storage</span></div>
+      <div class="status" id="storageStatus">正在读取本机缓存……</div>
+      <div class="actions" style="margin-top:12px"><button class="secondary" id="persistBtn">请求长期保存</button><button class="secondary" id="storageEstimateBtn">查看占用</button><button class="danger" id="deleteCurrentBtn">删除当前调查员</button><button class="danger" id="clearAllBtn">清空全部</button></div>
+      <p class="sub" style="margin-top:12px">浏览器隐私模式、清理站点数据或更换打开来源可能影响本机缓存。重要人物卡请同时导出 MDICE 备份。</p>
+    </section>
+  </div>
+</article>
+
+<article class="page" id="page-tools">
+  <div class="page-title"><div><h2>导入、导出与规则速查</h2><p class="sub">离线文件内嵌当前调查员数据；也可以复制 JSON 或导入其他本工具生成的 MDICE / HTML / JSON。</p></div><div class="page-actions"><button data-export-current>导出当前 MDICE</button><button class="secondary" id="shareCurrentBtn">分享当前 MDICE</button></div></div>
+  <div class="two">
+    <section class="panel">
+      <div class="section-head"><h3>数据交换</h3><span class="kicker">Portable</span></div>
+      <input class="hidden" id="importFileInput" type="file" accept=".mdice,.html,.htm,.json,text/html,application/json" />
+      <div class="actions"><button class="secondary" id="pickImportBtn">导入 MDICE / HTML / JSON</button><button class="secondary" id="copyJsonBtn">复制当前 JSON</button><button id="importJsonBtn">从文本导入</button></div>
+      <textarea id="jsonBox" class="codebox" placeholder="当前人物卡 JSON 或待导入 JSON" style="margin-top:12px"></textarea>
+      <div class="status" id="toolStatus" style="margin-top:12px">等待操作。</div>
+    </section>
+    <section class="panel">
+      <div class="section-head"><h3>手动快速检定</h3><span class="kicker">D100</span></div>
+      <p class="sub">右侧“检定”抽屉可在任何页面打开；也可从属性、技能、SAN、Luck 直接传入目标值。</p>
+      <div class="quick-target"><input id="toolRollLabel" placeholder="检定名称" value="临时检定" /><input id="toolRollTarget" type="number" min="0" max="100" inputmode="numeric" value="50" /></div>
+      <div class="actions" style="margin-top:10px"><button id="toolRollBtn">掷 D100</button><button class="secondary" id="openQuickDockBtn">打开检定抽屉</button><button class="secondary" id="printBtn">打印当前页</button></div>
+    </section>
+  </div>
+  <section class="panel" style="margin-top:18px">
+    <div class="section-head"><div><h3>CoC 7版速查</h3><p class="sub">供桌边使用的简要提示；具体裁定以守密人与正式规则书为准。</p></div><span class="kicker">Reference</span></div>
+    <div class="rules-grid">
+      <div class="rule-card"><h4>检定等级</h4><table class="rule-table"><tr><td>常规成功</td><td>≤ 技能 / 属性</td></tr><tr><td>困难成功</td><td>≤ 一半</td></tr><tr><td>极难成功</td><td>≤ 五分之一</td></tr><tr><td>大成功</td><td>01</td></tr><tr><td>大失败</td><td>目标 ≥ 50 时为 100；目标 &lt; 50 时为 96–100</td></tr></table></div>
+      <div class="rule-card"><h4>孤注一掷与奖励 / 惩罚骰</h4><p>失败的非战斗、非理智检定通常可在合理叙事下孤注一掷；再次失败会带来更严重后果。奖励骰取多个十位骰中较低结果，惩罚骰取较高结果。</p></div>
+      <div class="rule-card"><h4>伤势与治疗</h4><p>单次攻击造成至少最大 HP 一半的伤害会触发重大伤势检查。急救通常恢复 1 HP；医学通常恢复 1D3 HP。到达 0 HP 时是否昏迷或濒死取决于是否存在重大伤势。</p></div>
+      <div class="rule-card"><h4>理智</h4><p>当前 SAN 用于理智检定。单次损失 5 点或更多可能引发临时疯狂；较长时间内损失达到当前 SAN 的五分之一可能引发不定性疯狂。最大 SAN 为 99 − 克苏鲁神话。</p></div>
+      <div class="rule-card"><h4>成长检定</h4><p>游戏中成功使用技能后勾选。幕间掷 D100，若结果高于当前技能值，则增加 1D10；本工具可批量结算勾选技能。信用评级与克苏鲁神话不参与此自动结算。</p></div>
+      <div class="rule-card"><h4>创角提示</h4><p>快速入门可在八项属性中分配 40、50、50、50、60、60、70、80；Luck 通常为 3D6 × 5。完整创角也可按各属性的标准骰式生成，再按年龄与职业处理。</p></div>
+    </div>
+  </section>
+  <section class="reference-columns" style="margin-top:18px" aria-label="职业与武器速查">
+    <section class="panel reference-panel">
+      <div class="section-head"><div><h3>职业列表速查</h3><p class="sub">收录核心规则公开创角资料中的八项示例职业；可按名称、技能或信用范围筛选。</p></div><span class="kicker">Occupations</span></div>
+      <div class="reference-toolbar"><input id="occupationReferenceSearch" placeholder="搜索职业、技能、公式……" /><span id="occupationReferenceCount">0</span></div>
+      <div class="reference-list" id="occupationReferenceList"></div>
+      <p class="reference-source">职业技能以 Chaosium 的 CoC 7版官方规则速查为基准；具体职业点分配仍以守密人与持有的正式规则书为准。</p>
+    </section>
+    <section class="panel reference-panel">
+      <div class="section-head"><div><h3>武器列表速查</h3><p class="sub">收录核心规则公开装备表中的 1920s 近战、手枪、步枪、霰弹枪、冲锋枪与机枪。</p></div><span class="kicker">Weapons</span></div>
+      <div class="reference-toolbar"><input id="weaponReferenceSearch" placeholder="搜索武器、技能、伤害或类别……" /><select id="weaponReferenceCategory" aria-label="武器类别"><option value="">全部类别</option><option>近战与投掷</option><option>手枪</option><option>步枪</option><option>霰弹枪</option><option>冲锋枪</option><option>机枪</option></select><span id="weaponReferenceCount">0</span></div>
+      <div class="reference-list weapon-reference-list" id="weaponReferenceList"></div>
+      <p class="reference-source">价格为 1920s 标价。极难成功、贯穿、射速、故障与全自动等细节仍须结合正式战斗规则裁定。</p>
+    </section>
+  </section>
+  <section class="panel" style="margin-top:18px"><div class="section-head"><h3>说明</h3><span class="kicker">About</span></div><p class="sub">本文件是非官方、离线、单文件调查员编辑器，角色卡数据储存在你的浏览器缓存中，当完成编辑后，请记得定期导出备份以放置浏览器清空缓存时丢失数据，如有修改建议或者bug，请欢迎反馈至群812839433。</p></section>
+</article>
+</section>
+</div>
+<footer class="app-footer">非官方 CoC 7版调查员工具 · Copyright © megumin · 单文件本机版</footer>
+</div>
+
+<div class="quick-dock" id="quickDock">
+  <button class="quick-toggle" id="quickToggle" aria-expanded="false">快速检定</button>
+  <aside class="quick-dock-panel">
+    <div class="section-head"><h3>百分骰检定</h3><button class="ghost small" id="closeQuickDock">关闭</button></div>
+    <div class="quick-form"><input id="quickRollLabel" placeholder="检定名称" /><label class="quick-modifier-wrap"><span class="quick-modifier-label">奖励骰 · 惩罚骰</span><input id="quickRollModifier" type="number" min="-9" max="9" step="1" inputmode="numeric" value="0" aria-label="奖励骰或惩罚骰数量，正数为奖励骰，负数为惩罚骰" /></label></div>
+    <div class="quick-target"><input id="quickRollTarget" type="number" min="0" max="100" inputmode="numeric" value="50" /><button id="quickRollBtn">掷 D100</button></div>
+    <div class="quick-result contour-card" id="quickResult"><strong>等待检定</strong><small>从属性、技能、理智或幸运卡片点击“检定”，也可手动输入目标值。</small><div class="quick-result-number">—</div></div>
+    <div class="roll-log" id="rollLog"></div>
+  </aside>
+</div>
+
+<div class="overview-resource-popover" id="overviewResourcePopover" role="dialog" aria-modal="false" aria-labelledby="overviewResourcePopoverTitle" data-side="bottom" hidden>
+  <div class="overview-popover-head"><strong id="overviewResourcePopoverTitle">编辑资源</strong><button type="button" aria-label="关闭" data-overview-popover-close>×</button></div>
+  <div class="overview-popover-field"><input id="overviewResourceEditInput" type="number" min="0" inputmode="numeric" /><span id="overviewResourceEditMax">/ 0</span></div>
+  <div class="overview-popover-actions"><button type="button" class="secondary" data-overview-popover-close>取消</button><button type="button" data-overview-popover-save>应用</button></div>
+</div>
+
+<dialog id="customSkillDialog">
+  <form method="dialog" class="dialog-grid" id="customSkillForm">
+    <h3>添加自定义技能</h3>
+    <div class="field"><label for="customSkillName">技能名称</label><input id="customSkillName" required placeholder="例如：爆破" /></div>
+    <div class="field"><label for="customSkillGroup">分类</label><select id="customSkillGroup"><option>调查与感知</option><option>社交</option><option>战斗</option><option>学术</option><option>实用</option><option>体能与潜行</option><option>语言与神话</option><option>其他</option></select></div>
+    <div class="field"><label for="customSkillBase">基础值</label><input id="customSkillBase" type="number" min="0" max="100" value="1" inputmode="numeric" /></div>
+    <div class="dialog-actions"><button value="cancel" class="secondary">取消</button><button value="default" id="confirmCustomSkillBtn">添加</button></div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast"></div>
+<script id="embedded-investigator" type="application/json">null</script>
+<script>
+(()=>{
+'use strict';
+
+const STORAGE_KEY='tott-coc7e-portable:v1:investigators';
+const CURRENT_KEY='tott-coc7e-portable:v1:current';
+const EMBEDDED_ID='embedded-investigator';
+const SCHEMA='tott-coc7e-investigator';
+const VERSION=1;
+
+const $=id=>document.getElementById(id);
+const clamp=(v,min,max)=>Math.min(max,Math.max(min,Number.isFinite(Number(v))?Number(v):min));
+const int=(v,fallback=0)=>Number.isFinite(Number(v))?Math.trunc(Number(v)):fallback;
+const now=()=>new Date().toISOString();
+const uid=(prefix='id')=>`${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,9)}`;
+const deepClone=value=>JSON.parse(JSON.stringify(value));
+const esc=value=>String(value??'').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+const safeName=value=>String(value||'investigator').trim().replace(/[\\/:*?"<>|]+/g,'_').replace(/\s+/g,'_').slice(0,72)||'investigator';
+const rollDie=sides=>1+Math.floor(Math.random()*sides);
+const rollDice=(count,sides)=>Array.from({length:count},()=>rollDie(sides)).reduce((a,b)=>a+b,0);
+
+const CHARACTERISTICS=[
+  {id:'str',abbr:'STR',name:'力量',hint:'Strength'},
+  {id:'con',abbr:'CON',name:'体质',hint:'Constitution'},
+  {id:'siz',abbr:'SIZ',name:'体型',hint:'Size'},
+  {id:'dex',abbr:'DEX',name:'敏捷',hint:'Dexterity'},
+  {id:'app',abbr:'APP',name:'外貌',hint:'Appearance'},
+  {id:'int',abbr:'INT',name:'智力',hint:'Idea'},
+  {id:'pow',abbr:'POW',name:'意志',hint:'Power'},
+  {id:'edu',abbr:'EDU',name:'教育',hint:'Know'},
+  {id:'luck',abbr:'LUCK',name:'幸运',hint:'Luck'}
+];
+
+
+const CORE_OCCUPATIONS=[
+  {id:'antiquarian',name:'文物学家',en:'Antiquarian',formula:'EDU × 4',formulaId:'edu4',credit:'30–70',skills:'估价、艺术/手艺（任一）、历史、图书馆使用、外语、一项社交技能、侦查、任意一项其他技能。',preset:'antiquarian'},
+  {id:'author',name:'作家',en:'Author',formula:'EDU × 4',formulaId:'edu4',credit:'9–30',skills:'艺术（文学）、历史、图书馆使用、博物学或神秘学、外语、母语、心理学、任意一项其他技能。',preset:'author'},
+  {id:'dilettante',name:'业余艺术爱好者',en:'Dilettante',formula:'EDU × 2 + APP × 2',formulaId:'edu2app2',credit:'50–99',skills:'艺术/手艺（任一）、射击、外语、骑术、一项社交技能、任意三项其他技能。',preset:'dilettante'},
+  {id:'doctor',name:'医生',en:'Doctor of Medicine',formula:'EDU × 4',formulaId:'edu4',credit:'30–80',skills:'急救、外语（拉丁语）、医学、心理学、科学（生物学）、科学（药学）、任意两项学术或个人专长。',preset:'doctor'},
+  {id:'journalist',name:'记者',en:'Journalist',formula:'EDU × 4',formulaId:'edu4',credit:'9–30',skills:'艺术/手艺（摄影）、历史、图书馆使用、母语、一项社交技能、心理学、任意两项其他技能。',preset:'journalist'},
+  {id:'police',name:'警探',en:'Police Detective',formula:'EDU × 2 + DEX / STR 较高者 × 2',formulaId:'edu2dexOrStr2',credit:'20–50',skills:'艺术/手艺（表演）或乔装、射击、法律、聆听、一项社交技能、心理学、侦查、任意一项其他技能。',preset:'police'},
+  {id:'private',name:'私家侦探',en:'Private Investigator',formula:'EDU × 2 + DEX / STR 较高者 × 2',formulaId:'edu2dexOrStr2',credit:'9–30',skills:'艺术/手艺（摄影）、乔装、法律、图书馆使用、一项社交技能、心理学、侦查、任意一项其他技能。',preset:'private'},
+  {id:'professor',name:'教授',en:'Professor',formula:'EDU × 4',formulaId:'edu4',credit:'20–70',skills:'图书馆使用、外语、母语、心理学、任意四项学术或个人专长。',preset:'professor'}
+];
+
+const CORE_WEAPONS=[
+  {category:'近战与投掷',name:'弓与箭',en:'Bow and Arrows',skill:'射击（弓）',skillId:'firearms-rifle-shotgun',damage:'1D6 + ½DB',range:'30码',attacks:'1',ammo:'1',cost:'$7',mal:'97',notes:''},
+  {category:'近战与投掷',name:'指虎',en:'Brass Knuckles',skill:'格斗（斗殴）',skillId:'fighting-brawl',damage:'1D3+1+DB',range:'接触',attacks:'1',ammo:'—',cost:'$1',mal:'—',notes:''},
+  {category:'近战与投掷',name:'长鞭',en:'Bullwhip',skill:'格斗（长鞭）',skillId:'fighting-brawl',damage:'1D3 + ½DB',range:'10英尺',attacks:'1',ammo:'—',cost:'$5',mal:'—',notes:'专精技能'},
+  {category:'近战与投掷',name:'燃烧火把',en:'Burning Torch',skill:'格斗（斗殴）',skillId:'fighting-brawl',damage:'1D6 + 燃烧',range:'接触',attacks:'1',ammo:'—',cost:'$0.05',mal:'—',notes:''},
+  {category:'近战与投掷',name:'闷棍',en:'Blackjack / Cosh',skill:'格斗（斗殴）',skillId:'fighting-brawl',damage:'1D8+DB',range:'接触',attacks:'1',ammo:'—',cost:'$2',mal:'—',notes:''},
+  {category:'近战与投掷',name:'大型棍棒',en:'Large Club',skill:'格斗（斗殴）',skillId:'fighting-brawl',damage:'1D8+DB',range:'接触',attacks:'1',ammo:'—',cost:'$3',mal:'—',notes:'球棒、板球棒、拨火棍等'},
+  {category:'近战与投掷',name:'小型棍棒',en:'Small Club',skill:'格斗（斗殴）',skillId:'fighting-brawl',damage:'1D6+DB',range:'接触',attacks:'1',ammo:'—',cost:'$3',mal:'—',notes:'警棍等'},
+  {category:'近战与投掷',name:'弩',en:'Crossbow',skill:'射击（弓）',skillId:'firearms-rifle-shotgun',damage:'1D8+2',range:'50码',attacks:'1/2',ammo:'1',cost:'$10',mal:'96',notes:'贯穿'},
+  {category:'近战与投掷',name:'绞索',en:'Garrote',skill:'格斗（绞索）',skillId:'fighting-brawl',damage:'1D6+DB',range:'接触',attacks:'1',ammo:'—',cost:'$0.50',mal:'—',notes:'贯穿；受害者需用战斗动作挣脱'},
+  {category:'近战与投掷',name:'手斧 / 镰刀',en:'Hatchet / Sickle',skill:'格斗（斧）',skillId:'fighting-brawl',damage:'1D6+1+DB',range:'接触',attacks:'1',ammo:'—',cost:'$3',mal:'—',notes:'贯穿'},
+  {category:'近战与投掷',name:'大型刀具',en:'Large Knife / Machete',skill:'格斗（斗殴）',skillId:'fighting-brawl',damage:'1D8+DB',range:'接触',attacks:'1',ammo:'—',cost:'$4',mal:'—',notes:'贯穿'},
+  {category:'近战与投掷',name:'中型刀具',en:'Medium Knife',skill:'格斗（斗殴）',skillId:'fighting-brawl',damage:'1D4+2+DB',range:'接触',attacks:'1',ammo:'—',cost:'$2',mal:'—',notes:'贯穿'},
+  {category:'近战与投掷',name:'小型刀具',en:'Small Knife',skill:'格斗（斗殴）',skillId:'fighting-brawl',damage:'1D4+DB',range:'接触',attacks:'1',ammo:'—',cost:'$2',mal:'—',notes:'贯穿'},
+  {category:'近战与投掷',name:'双节棍',en:'Nunchaku',skill:'格斗（连枷）',skillId:'fighting-brawl',damage:'1D8+DB',range:'接触',attacks:'1',ammo:'—',cost:'$1',mal:'—',notes:'专精技能'},
+  {category:'近战与投掷',name:'投掷石块',en:'Thrown Rock',skill:'投掷',skillId:'throw',damage:'1D4 + ½DB',range:'STR/5码',attacks:'1',ammo:'—',cost:'—',mal:'—',notes:''},
+  {category:'近战与投掷',name:'手里剑',en:'Shuriken',skill:'投掷',skillId:'throw',damage:'1D3 + ½DB',range:'STR/5码',attacks:'2',ammo:'一次性',cost:'$0.50',mal:'100',notes:'贯穿'},
+  {category:'近战与投掷',name:'长矛 / 骑枪',en:'Spear / Cavalry Lance',skill:'格斗（矛）',skillId:'fighting-brawl',damage:'1D8+1',range:'接触',attacks:'1',ammo:'—',cost:'$25',mal:'—',notes:'贯穿'},
+  {category:'近战与投掷',name:'投掷长矛',en:'Thrown Spear',skill:'投掷',skillId:'throw',damage:'1D8 + ½DB',range:'STR/5码',attacks:'1',ammo:'—',cost:'$1',mal:'—',notes:'贯穿'},
+  {category:'手枪',name:'.22 短弹自动手枪',en:'.22 Short Automatic',skill:'射击（手枪）',skillId:'firearms-handgun',damage:'1D6',range:'10码',attacks:'1（3）',ammo:'6',cost:'$25',mal:'100',notes:'贯穿'},
+  {category:'手枪',name:'.25 单发袖珍手枪',en:'.25 Derringer (1B)',skill:'射击（手枪）',skillId:'firearms-handgun',damage:'1D6',range:'3码',attacks:'1',ammo:'1',cost:'$12',mal:'100',notes:'贯穿'},
+  {category:'手枪',name:'.32 / 7.65mm 左轮',en:'.32 / 7.65mm Revolver',skill:'射击（手枪）',skillId:'firearms-handgun',damage:'1D8',range:'15码',attacks:'1（3）',ammo:'6',cost:'$15',mal:'100',notes:'贯穿'},
+  {category:'手枪',name:'.32 / 7.65mm 自动手枪',en:'.32 / 7.65mm Automatic',skill:'射击（手枪）',skillId:'firearms-handgun',damage:'1D8',range:'15码',attacks:'1（3）',ammo:'8',cost:'$20',mal:'99',notes:'贯穿'},
+  {category:'手枪',name:'P08 鲁格手枪',en:'Model P08 Luger',skill:'射击（手枪）',skillId:'firearms-handgun',damage:'1D10',range:'15码',attacks:'1（3）',ammo:'8',cost:'$75',mal:'99',notes:'贯穿'},
+  {category:'手枪',name:'.45 左轮',en:'.45 Revolver',skill:'射击（手枪）',skillId:'firearms-handgun',damage:'1D10+2',range:'15码',attacks:'1（3）',ammo:'6',cost:'$30',mal:'100',notes:'贯穿'},
+  {category:'手枪',name:'.45 自动手枪',en:'.45 Automatic',skill:'射击（手枪）',skillId:'firearms-handgun',damage:'1D10+2',range:'15码',attacks:'1（3）',ammo:'7',cost:'$40',mal:'100',notes:'贯穿'},
+  {category:'步枪',name:'.22 栓动步枪',en:'.22 Bolt-Action Rifle',skill:'射击（步枪/霰弹枪）',skillId:'firearms-rifle-shotgun',damage:'1D6+1',range:'30码',attacks:'1',ammo:'6',cost:'$13',mal:'99',notes:'贯穿'},
+  {category:'步枪',name:'.30 杠杆式卡宾枪',en:'.30 Lever-Action Carbine',skill:'射击（步枪/霰弹枪）',skillId:'firearms-rifle-shotgun',damage:'2D6',range:'50码',attacks:'1',ammo:'6',cost:'$19',mal:'98',notes:'贯穿'},
+  {category:'步枪',name:'.45 马提尼-亨利步枪',en:'.45 Martini-Henry Rifle',skill:'射击（步枪/霰弹枪）',skillId:'firearms-rifle-shotgun',damage:'1D8+1D6+3',range:'80码',attacks:'1/3',ammo:'1',cost:'$20',mal:'100',notes:'贯穿'},
+  {category:'步枪',name:'莫兰上校气步枪',en:"Col. Moran's Air Rifle",skill:'射击（步枪/霰弹枪）',skillId:'firearms-rifle-shotgun',damage:'2D6+1',range:'20码',attacks:'1/3',ammo:'1',cost:'$200',mal:'88',notes:'贯穿；压缩空气，较安静'},
+  {category:'步枪',name:'.303 李-恩菲尔德步枪',en:'.303 Lee-Enfield',skill:'射击（步枪/霰弹枪）',skillId:'firearms-rifle-shotgun',damage:'2D6+4',range:'110码',attacks:'1',ammo:'10',cost:'$50',mal:'100',notes:'贯穿'},
+  {category:'步枪',name:'.30-06 栓动步枪',en:'.30-06 Bolt-Action Rifle',skill:'射击（步枪/霰弹枪）',skillId:'firearms-rifle-shotgun',damage:'2D6+4',range:'110码',attacks:'1',ammo:'5',cost:'$75',mal:'100',notes:'贯穿'},
+  {category:'步枪',name:'双管象枪',en:'Elephant Gun (2B)',skill:'射击（步枪/霰弹枪）',skillId:'firearms-rifle-shotgun',damage:'3D6+4',range:'100码',attacks:'1 或 2',ammo:'2',cost:'$400',mal:'100',notes:'贯穿'},
+  {category:'霰弹枪',name:'20号双管霰弹枪',en:'20-gauge Shotgun (2B)',skill:'射击（步枪/霰弹枪）',skillId:'firearms-rifle-shotgun',damage:'2D6 / 1D6 / 1D3',range:'10 / 20 / 50码',attacks:'1 或 2',ammo:'2',cost:'$35',mal:'100',notes:'按近 / 中 / 远距离结算'},
+  {category:'霰弹枪',name:'16号双管霰弹枪',en:'16-gauge Shotgun (2B)',skill:'射击（步枪/霰弹枪）',skillId:'firearms-rifle-shotgun',damage:'2D6+2 / 1D6+1 / 1D4',range:'10 / 20 / 50码',attacks:'1 或 2',ammo:'2',cost:'$40',mal:'100',notes:'按近 / 中 / 远距离结算'},
+  {category:'霰弹枪',name:'12号双管霰弹枪',en:'12-gauge Shotgun (2B)',skill:'射击（步枪/霰弹枪）',skillId:'firearms-rifle-shotgun',damage:'4D6 / 2D6 / 1D6',range:'10 / 20 / 50码',attacks:'1 或 2',ammo:'2',cost:'$40',mal:'100',notes:'按近 / 中 / 远距离结算'},
+  {category:'霰弹枪',name:'12号半自动霰弹枪',en:'12-gauge Shotgun (semi-auto)',skill:'射击（步枪/霰弹枪）',skillId:'firearms-rifle-shotgun',damage:'4D6 / 2D6 / 1D6',range:'10 / 20 / 50码',attacks:'1（2）',ammo:'5',cost:'$45',mal:'100',notes:'按近 / 中 / 远距离结算'},
+  {category:'霰弹枪',name:'12号双管短管霰弹枪',en:'12-gauge Shotgun (2B sawed off)',skill:'射击（步枪/霰弹枪）',skillId:'firearms-rifle-shotgun',damage:'4D6 / 1D6',range:'5 / 10码',attacks:'1 或 2',ammo:'2',cost:'N/A',mal:'100',notes:'按近 / 远距离结算'},
+  {category:'冲锋枪',name:'伯格曼 MP18 / MP28',en:'Bergmann MP18 / MP28',skill:'射击（冲锋枪）',skillId:'firearms-handgun',damage:'1D10',range:'20码',attacks:'1（2）或全自动',ammo:'20 / 30 / 32',cost:'$1,000',mal:'96',notes:'贯穿；使用最接近的现有射击技能后可手动调整'},
+  {category:'冲锋枪',name:'汤普森冲锋枪',en:'Thompson',skill:'射击（冲锋枪）',skillId:'firearms-handgun',damage:'1D10+2',range:'20码',attacks:'1 或全自动',ammo:'20 / 30 / 50',cost:'$200+',mal:'96',notes:'贯穿；使用最接近的现有射击技能后可手动调整'},
+  {category:'机枪',name:'M1918 勃朗宁自动步枪',en:'Browning Auto Rifle M1918',skill:'射击（机枪）',skillId:'firearms-rifle-shotgun',damage:'2D6+4',range:'90码',attacks:'1（2）或全自动',ammo:'20',cost:'$800',mal:'100',notes:'贯穿'},
+  {category:'机枪',name:'.30 勃朗宁 M1917A1',en:'.30 Browning M1917A1',skill:'射击（机枪）',skillId:'firearms-rifle-shotgun',damage:'2D6+4',range:'150码',attacks:'全自动',ammo:'250',cost:'$3,000',mal:'96',notes:'贯穿'},
+  {category:'机枪',name:'布伦轻机枪',en:'Bren Gun',skill:'射击（机枪）',skillId:'firearms-rifle-shotgun',damage:'2D6+4',range:'110码',attacks:'1 或全自动',ammo:'30 / 100',cost:'$3,000',mal:'96',notes:'贯穿'},
+  {category:'机枪',name:'Mark I 刘易斯机枪',en:'Mark I Lewis Gun',skill:'射击（机枪）',skillId:'firearms-rifle-shotgun',damage:'2D6+4',range:'110码',attacks:'全自动',ammo:'47 / 97',cost:'$3,000',mal:'96',notes:'贯穿'},
+  {category:'机枪',name:'维克斯 .303 机枪',en:'Vickers .303 Machine Gun',skill:'射击（机枪）',skillId:'firearms-rifle-shotgun',damage:'2D6+4',range:'110码',attacks:'全自动',ammo:'250',cost:'N/A',mal:'—',notes:'贯穿'}
+];
+
+const STANDARD_SKILLS=[
+  {id:'accounting',name:'会计',group:'学术',base:5},
+  {id:'anthropology',name:'人类学',group:'学术',base:1},
+  {id:'appraise',name:'估价',group:'实用',base:5},
+  {id:'archaeology',name:'考古学',group:'学术',base:1},
+  {id:'art-craft-1',name:'艺术/手艺',group:'实用',base:5,specialized:true,specialty:'摄影'},
+  {id:'charm',name:'魅惑',group:'社交',base:15},
+  {id:'climb',name:'攀爬',group:'体能与潜行',base:20},
+  {id:'credit-rating',name:'信用评级',group:'社交',base:0,growthAllowed:false},
+  {id:'cthulhu-mythos',name:'克苏鲁神话',group:'语言与神话',base:0,growthAllowed:false},
+  {id:'disguise',name:'乔装',group:'社交',base:5},
+  {id:'dodge',name:'闪避',group:'战斗',baseMode:'dodge'},
+  {id:'drive-auto',name:'汽车驾驶',group:'实用',base:20},
+  {id:'electrical-repair',name:'电气维修',group:'实用',base:10},
+  {id:'fast-talk',name:'话术',group:'社交',base:5},
+  {id:'fighting-brawl',name:'斗殴',group:'战斗',base:25},
+  {id:'firearms-handgun',name:'射击',group:'战斗',base:20,specialized:true,specialty:'手枪'},
+  {id:'firearms-rifle-shotgun',name:'射击',group:'战斗',base:25,specialized:true,specialty:'步枪/霰弹枪'},
+  {id:'first-aid',name:'急救',group:'实用',base:30},
+  {id:'history',name:'历史',group:'学术',base:5},
+  {id:'intimidate',name:'恐吓',group:'社交',base:15},
+  {id:'jump',name:'跳跃',group:'体能与潜行',base:20},
+  {id:'language-other-1',name:'其他语言',group:'语言与神话',base:1,specialized:true,specialty:''},
+  {id:'language-own',name:'母语',group:'语言与神话',baseMode:'ownLanguage',specialized:true,specialty:''},
+  {id:'law',name:'法律',group:'学术',base:5},
+  {id:'library-use',name:'图书馆使用',group:'调查与感知',base:20},
+  {id:'listen',name:'聆听',group:'调查与感知',base:20},
+  {id:'locksmith',name:'锁匠',group:'实用',base:1},
+  {id:'mechanical-repair',name:'机械维修',group:'实用',base:10},
+  {id:'medicine',name:'医学',group:'学术',base:1},
+  {id:'natural-world',name:'博物学',group:'学术',base:10},
+  {id:'navigate',name:'导航',group:'调查与感知',base:10},
+  {id:'occult',name:'神秘学',group:'学术',base:5},
+  {id:'operate-heavy-machinery',name:'操作重型机械',group:'实用',base:1},
+  {id:'persuade',name:'说服',group:'社交',base:10},
+  {id:'pilot-1',name:'驾驶',group:'实用',base:1,specialized:true,specialty:'飞行器'},
+  {id:'psychoanalysis',name:'精神分析',group:'学术',base:1},
+  {id:'psychology',name:'心理学',group:'调查与感知',base:10},
+  {id:'ride',name:'骑术',group:'体能与潜行',base:5},
+  {id:'science-1',name:'科学',group:'学术',base:1,specialized:true,specialty:'生物学'},
+  {id:'sleight-of-hand',name:'妙手',group:'实用',base:10},
+  {id:'spot-hidden',name:'侦查',group:'调查与感知',base:25},
+  {id:'stealth',name:'潜行',group:'体能与潜行',base:20},
+  {id:'survival-1',name:'生存',group:'体能与潜行',base:10,specialized:true,specialty:'荒野'},
+  {id:'swim',name:'游泳',group:'体能与潜行',base:20},
+  {id:'throw',name:'投掷',group:'战斗',base:20},
+  {id:'track',name:'追踪',group:'调查与感知',base:10}
+];
+
+const OCCUPATION_PRESETS={
+  antiquarian:{label:'文物学家',occupation:'文物学家',formula:'edu4',specialties:{'art-craft-1':'文物修复','language-other-1':'拉丁语'},targets:{appraise:70,'art-craft-1':50,history:60,'library-use':60,'language-other-1':50,persuade:40,'spot-hidden':50,occult:40,'credit-rating':40}},
+  author:{label:'作家',occupation:'作家',formula:'edu4',specialties:{'art-craft-1':'文学','language-other-1':'法语','language-own':'中文'},targets:{'art-craft-1':50,history:50,'library-use':70,'natural-world':40,'language-other-1':50,'language-own':60,psychology:60,persuade:40,'credit-rating':40}},
+  dilettante:{label:'业余艺术爱好者',occupation:'业余艺术爱好者',formula:'edu2app2',specialties:{'art-craft-1':'绘画','language-other-1':'法语'},targets:{'art-craft-1':70,'firearms-handgun':60,'language-other-1':60,ride:50,charm:50,appraise:40,history:40,'spot-hidden':40,'credit-rating':50}},
+  doctor:{label:'医生',occupation:'医生',formula:'edu4',specialties:{'language-other-1':'拉丁语','science-1':'生物学'},targets:{'first-aid':60,'language-other-1':40,medicine:70,psychology:50,'science-1':60,psychoanalysis:50,'library-use':40,'natural-world':50,'credit-rating':40}},
+  journalist:{label:'记者',occupation:'记者',formula:'edu4',specialties:{'art-craft-1':'摄影','language-own':'中文'},targets:{'art-craft-1':50,history:40,'library-use':50,'language-own':60,persuade:70,psychology:40,'spot-hidden':50,stealth:60,'credit-rating':40}},
+  police:{label:'警探',occupation:'警探',formula:'edu2dexOrStr2',targets:{disguise:40,'firearms-handgun':60,law:50,listen:50,intimidate:60,psychology:50,'spot-hidden':70,'fighting-brawl':40,'credit-rating':40}},
+  private:{label:'私家侦探',occupation:'私家侦探',formula:'edu2dexOrStr2',specialties:{'art-craft-1':'摄影'},targets:{'art-craft-1':50,disguise:50,law:40,'library-use':50,'fast-talk':60,psychology:50,'spot-hidden':70,locksmith:60,'credit-rating':40}},
+  professor:{label:'教授',occupation:'教授',formula:'edu4',specialties:{'language-other-1':'拉丁语','language-own':'中文','science-1':'专业学科'},targets:{'library-use':70,'language-other-1':60,'language-own':60,psychology:40,history:50,'science-1':50,anthropology:50,archaeology:40,'credit-rating':40}}
+};
+
+const STATUS_DEFS=[
+  ['temporaryInsanity','临时疯狂'],
+  ['indefiniteInsanity','不定性疯狂'],
+  ['majorWound','重大伤势'],
+  ['unconscious','昏迷'],
+  ['dying','濒死']
+];
+
+function baseSkillRecord(def){
+  return {
+    id:def.id,
+    name:def.name,
+    group:def.group||'其他',
+    base:Number(def.base||0),
+    baseMode:def.baseMode||'fixed',
+    specialized:!!def.specialized,
+    specialty:def.specialty||'',
+    occupation:0,
+    interest:0,
+    growth:0,
+    misc:0,
+    check:false,
+    growthAllowed:def.growthAllowed!==false,
+    custom:false
+  };
+}
+
+function blankInvestigator(id=uid('coc')){
+  const c={
+    schema:SCHEMA,
+    version:VERSION,
+    id,
+    createdAt:now(),
+    updatedAt:now(),
+    profile:{name:'未命名调查员',player:'',occupation:'',age:30,gender:'',era:'1920s',residence:'',birthplace:''},
+    portrait:'',
+    characteristics:{str:50,con:60,siz:60,dex:50,app:50,int:70,pow:40,edu:80,luck:50},
+    resources:{hpCurrent:null,mpCurrent:null,sanCurrent:null,luckCurrent:null,hpAdjust:0,mpAdjust:0,sanStartAdjust:0,moveAdjust:0,armor:'',injuryNotes:'',status:{temporaryInsanity:false,indefiniteInsanity:false,majorWound:false,unconscious:false,dying:false}},
+    occupation:{formula:'edu4',customPoints:0,creditRange:'',notes:''},
+    skills:{},
+    weapons:[{id:uid('weapon'),name:'徒手 / 斗殴',skillId:'fighting-brawl',damage:'1D3 + DB',attacks:'1',range:'接触',ammo:'—',malfunction:'—',notes:''}],
+    gear:[{id:uid('gear'),name:'',qty:'1',location:'随身',notes:''}],
+    wealth:{spendingLevel:'',cash:'',assets:'',notes:''},
+    backstory:{story:'',personalDescription:'',traits:'',ideology:'',injuriesScars:'',significantPeople:'',phobiasManias:'',meaningfulLocations:'',arcaneTomesSpells:'',treasuredPossessions:'',strangeEncounters:'',notes:'',fellows:[]},
+    ui:{skillMode:'dense',skillSearch:'',selectedSkillId:'spot-hidden'},
+    history:[]
+  };
+  STANDARD_SKILLS.forEach(def=>{c.skills[def.id]=baseSkillRecord(def)});
+  const d=computeDerived(c);
+  c.resources.hpCurrent=d.hpMax;
+  c.resources.mpCurrent=d.mpMax;
+  c.resources.sanCurrent=d.sanStart;
+  c.resources.luckCurrent=d.luckStart;
+  return c;
+}
+
+function normalizeSkill(raw,def){
+  const base=def?baseSkillRecord(def):{
+    id:String(raw?.id||uid('skill')),
+    name:String(raw?.name||'自定义技能'),
+    group:String(raw?.group||'其他'),
+    base:clamp(raw?.base??1,0,100),
+    baseMode:'fixed',
+    specialized:!!raw?.specialized,
+    specialty:String(raw?.specialty||''),
+    occupation:0,interest:0,growth:0,misc:0,check:false,growthAllowed:true,custom:true
+  };
+  const s=Object.assign(base,raw||{});
+  s.id=String(s.id||base.id);
+  s.name=String(s.name||base.name);
+  s.group=String(s.group||base.group);
+  s.base=clamp(s.base,0,100);
+  s.baseMode=['fixed','dodge','ownLanguage'].includes(s.baseMode)?s.baseMode:'fixed';
+  s.specialized=!!s.specialized;
+  s.specialty=String(s.specialty||'');
+  s.occupation=int(s.occupation,0);
+  s.interest=int(s.interest,0);
+  s.growth=int(s.growth,0);
+  s.misc=int(s.misc,0);
+  s.check=!!s.check;
+  s.growthAllowed=s.growthAllowed!==false;
+  s.custom=def?false:true;
+  return s;
+}
+
+function normalize(raw={}){
+  const seed=blankInvestigator(String(raw.id||uid('coc')));
+  const c=deepClone(seed);
+  c.schema=SCHEMA;c.version=VERSION;
+  c.id=String(raw.id||c.id);
+  c.createdAt=String(raw.createdAt||c.createdAt);
+  c.updatedAt=String(raw.updatedAt||c.updatedAt);
+  Object.assign(c.profile,raw.profile||{});
+  if(!c.profile.gender&&raw.profile?.pronoun){const legacy=String(raw.profile.pronoun);c.profile.gender=/她|女|she/i.test(legacy)?'女':(/他|男|he/i.test(legacy)?'男':'')}
+  c.profile.gender=['男','女'].includes(c.profile.gender)?c.profile.gender:'';
+  delete c.profile.pronoun;
+  c.profile.name=String(c.profile.name||'未命名调查员');
+  c.profile.age=clamp(c.profile.age||30,15,120);
+  c.portrait=typeof raw.portrait==='string'?raw.portrait:'';
+  Object.assign(c.characteristics,raw.characteristics||{});
+  CHARACTERISTICS.forEach(({id})=>{c.characteristics[id]=clamp(c.characteristics[id],0,100)});
+  Object.assign(c.resources,raw.resources||{});
+  c.resources.status=Object.assign({},seed.resources.status,raw.resources?.status||{});
+  Object.assign(c.occupation,raw.occupation||{});
+  c.occupation.customPoints=Math.max(0,int(c.occupation.customPoints,0));
+  c.skills={};
+  STANDARD_SKILLS.forEach(def=>{c.skills[def.id]=normalizeSkill(raw.skills?.[def.id],def)});
+  Object.values(raw.skills||{}).forEach(s=>{
+    if(!s||c.skills[s.id])return;
+    const normalized=normalizeSkill(s,null);
+    c.skills[normalized.id]=normalized;
+  });
+  c.weapons=Array.isArray(raw.weapons)&&raw.weapons.length?raw.weapons.map(w=>({id:String(w.id||uid('weapon')),name:String(w.name||''),skillId:String(w.skillId||'fighting-brawl'),damage:String(w.damage||''),attacks:String(w.attacks||''),range:String(w.range||''),ammo:String(w.ammo||''),malfunction:String(w.malfunction||''),notes:String(w.notes||'')})):seed.weapons;
+  c.gear=Array.isArray(raw.gear)&&raw.gear.length?raw.gear.map(g=>({id:String(g.id||uid('gear')),name:String(g.name||''),qty:String(g.qty??'1'),location:String(g.location||''),notes:String(g.notes||'')})):seed.gear;
+  Object.assign(c.wealth,raw.wealth||{});
+  Object.assign(c.backstory,raw.backstory||{});
+  c.backstory.fellows=Array.isArray(raw.backstory?.fellows)?raw.backstory.fellows.map(f=>({id:String(f.id||uid('fellow')),name:String(f.name||''),player:String(f.player||'')})):[];
+  Object.assign(c.ui,raw.ui||{});
+  c.ui.skillMode=c.ui.skillMode==='table'?'table':'dense';
+  c.ui.skillSearch=String(c.ui.skillSearch||'');
+  c.ui.selectedSkillId=c.skills[c.ui.selectedSkillId]?c.ui.selectedSkillId:'spot-hidden';
+  c.history=Array.isArray(raw.history)?raw.history.slice(-40):[];
+  const d=computeDerived(c);
+  c.resources.hpCurrent=raw.resources?.hpCurrent==null?d.hpMax:clamp(raw.resources.hpCurrent,0,d.hpMax);
+  c.resources.mpCurrent=raw.resources?.mpCurrent==null?d.mpMax:clamp(raw.resources.mpCurrent,0,d.mpMax);
+  c.resources.sanCurrent=raw.resources?.sanCurrent==null?Math.min(d.sanStart,d.sanMax):clamp(raw.resources.sanCurrent,0,d.sanMax);
+  c.resources.luckCurrent=raw.resources?.luckCurrent==null?d.luckStart:clamp(raw.resources.luckCurrent,0,99);
+  return c;
+}
+
+function baseSkillValue(c,s){
+  if(!s)return 0;
+  if(s.baseMode==='dodge')return Math.floor(clamp(c.characteristics.dex,0,100)/2);
+  if(s.baseMode==='ownLanguage')return clamp(c.characteristics.edu,0,100);
+  return clamp(s.base,0,100);
+}
+
+function skillFinal(c,id){
+  const s=c.skills[id];
+  if(!s)return 0;
+  return clamp(baseSkillValue(c,s)+int(s.occupation)+int(s.interest)+int(s.growth)+int(s.misc),0,100);
+}
+
+function skillDisplayName(s){
+  if(!s)return '未知技能';
+  const spec=String(s.specialty||'').trim();
+  return s.specialized&&spec?`${s.name}（${spec}）`:s.name;
+}
+
+function occupationPointLimit(c){
+  const ch=c.characteristics;
+  switch(c.occupation.formula){
+    case 'edu2app2':return int(ch.edu)*2+int(ch.app)*2;
+    case 'edu2dex2':return int(ch.edu)*2+int(ch.dex)*2;
+    case 'edu2dexOrStr2':return int(ch.edu)*2+Math.max(int(ch.dex),int(ch.str))*2;
+    case 'edu2str2':return int(ch.edu)*2+int(ch.str)*2;
+    case 'edu2pow2':return int(ch.edu)*2+int(ch.pow)*2;
+    case 'custom':return Math.max(0,int(c.occupation.customPoints));
+    case 'edu4':default:return int(ch.edu)*4;
+  }
+}
+
+function damageBonusBuild(sum){
+  sum=Math.max(0,int(sum));
+  if(sum<=64)return{db:'−2',build:-2};
+  if(sum<=84)return{db:'−1',build:-1};
+  if(sum<=124)return{db:'—',build:0};
+  if(sum<=164)return{db:'+1D4',build:1};
+  if(sum<=204)return{db:'+1D6',build:2};
+  const dice=2+Math.floor((sum-205)/80);
+  return{db:`+${dice}D6`,build:dice+1};
+}
+
+function movementRate(c){
+  const str=int(c.characteristics.str),dex=int(c.characteristics.dex),siz=int(c.characteristics.siz);
+  let base=8;
+  if(str<siz&&dex<siz)base=7;
+  else if(str>siz&&dex>siz)base=9;
+  const age=int(c.profile.age,30);
+  let ageMod=0;
+  if(age<20)ageMod=1;
+  else if(age>=80)ageMod=-5;
+  else if(age>=70)ageMod=-4;
+  else if(age>=60)ageMod=-3;
+  else if(age>=50)ageMod=-2;
+  else if(age>=40)ageMod=-1;
+  return Math.max(1,base+ageMod+int(c.resources.moveAdjust));
+}
+
+function computeDerived(c){
+  const ch=c.characteristics;
+  const dbb=damageBonusBuild(int(ch.str)+int(ch.siz));
+  const mythos=skillFinal(c,'cthulhu-mythos');
+  return{
+    hpMax:Math.max(0,Math.floor((int(ch.con)+int(ch.siz))/10)+int(c.resources.hpAdjust)),
+    mpMax:Math.max(0,Math.floor(int(ch.pow)/5)+int(c.resources.mpAdjust)),
+    sanStart:clamp(int(ch.pow)+int(c.resources.sanStartAdjust),0,99),
+    sanMax:clamp(99-mythos,0,99),
+    luckStart:clamp(ch.luck,0,99),
+    move:movementRate(c),
+    db:dbb.db,
+    build:dbb.build,
+    dodge:skillFinal(c,'dodge'),
+    mythos,
+    occupationLimit:occupationPointLimit(c),
+    interestLimit:int(ch.int)*2
+  };
+}
+
+function syncCurrentResources(c,oldD,newD){
+  const r=c.resources;
+  if(r.hpCurrent==null||int(r.hpCurrent)===oldD.hpMax)r.hpCurrent=newD.hpMax;else r.hpCurrent=clamp(r.hpCurrent,0,newD.hpMax);
+  if(r.mpCurrent==null||int(r.mpCurrent)===oldD.mpMax)r.mpCurrent=newD.mpMax;else r.mpCurrent=clamp(r.mpCurrent,0,newD.mpMax);
+  if(r.sanCurrent==null||int(r.sanCurrent)===Math.min(oldD.sanStart,oldD.sanMax))r.sanCurrent=Math.min(newD.sanStart,newD.sanMax);else r.sanCurrent=clamp(r.sanCurrent,0,newD.sanMax);
+  if(r.luckCurrent==null||int(r.luckCurrent)===oldD.luckStart)r.luckCurrent=newD.luckStart;else r.luckCurrent=clamp(r.luckCurrent,0,99);
+}
+
+let characters={};
+let currentId=null;
+let autosaveTimer=null;
+let toastTimer=null;
+let rollHistory=[];
+let overviewResourceEditor=null;
+let overviewHold=null;
+const contourCache=new Map();
+
+function current(){return characters[currentId]||null}
+
+function loadCache(){
+  try{characters=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}')||{}}catch(err){characters={};console.warn('cache parse failed',err)}
+  const normalized={};
+  Object.values(characters).forEach(raw=>{try{const c=normalize(raw);normalized[c.id]=c}catch(err){console.warn('card normalize failed',err)}});
+  characters=normalized;
+  try{currentId=localStorage.getItem(CURRENT_KEY)||null}catch(err){currentId=null}
+  if(currentId&&!characters[currentId])currentId=null;
+}
+
+function saveCache(){
+  try{
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(characters));
+    if(currentId)localStorage.setItem(CURRENT_KEY,currentId);else localStorage.removeItem(CURRENT_KEY);
+    return true;
+  }catch(err){
+    console.warn('cache save failed',err);
+    setStorageStatus(`缓存写入失败：${err.message}`,'bad');
+    return false;
+  }
+}
+
+function saveCurrent(showMessage=true){
+  const c=current();if(!c)return null;
+  c.updatedAt=now();
+  characters[c.id]=normalize(c);
+  currentId=c.id;
+  const ok=saveCache();
+  renderLibrary();
+  if($('page-overview')?.classList.contains('active'))renderOverview();
+  renderQuickInfo();
+  if(showMessage)toast(ok?'调查员已保存到本机库。':'保存失败，请导出文件备份。');
+  return characters[c.id];
+}
+
+function scheduleSave(){
+  clearTimeout(autosaveTimer);
+  autosaveTimer=setTimeout(()=>saveCurrent(false),420);
+  const q=$('quickInfo');if(q)q.dataset.dirty='1';
+}
+
+function toast(message){
+  const el=$('toast');if(!el)return;
+  el.textContent=message;el.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2200);
+}
+
+function setStorageStatus(message,type=''){
+  const el=$('storageStatus');if(!el)return;
+  el.textContent=message;el.className=`status ${type}`.trim();
+}
+
+function setToolStatus(message,type=''){
+  const el=$('toolStatus');if(!el)return;
+  el.textContent=message;el.className=`status ${type}`.trim();
+}
+
+function hashString(value){
+  let h=2166136261>>>0;
+  for(const ch of String(value||'')){
+    h^=ch.codePointAt(0);
+    h=Math.imul(h,16777619)>>>0;
+  }
+  return h>>>0;
+}
+
+function seededRandom(seed){
+  let a=(seed>>>0)||0x6d2b79f5;
+  return()=>{
+    a|=0;a=(a+0x6D2B79F5)|0;
+    let t=Math.imul(a^a>>>15,1|a);
+    t=(t+Math.imul(t^t>>>7,61|t))^t;
+    return((t^t>>>14)>>>0)/4294967296;
+  };
+}
+
+function contourBackground(seedText='coc',options={}){
+  const ringCount=options.rings||12;
+  const key=`v206-stronger-low-frequency-valleys|${seedText}|${ringCount}|${options.line||1}`;
+  if(contourCache.has(key))return contourCache.get(key);
+  const rand=seededRandom(hashString(key));
+  const size=460,cx=420,cy=49;
+  const points=168;
+  const radii=[12,20,29,40,53,68,85,105,128,154,184,218].slice(0,ringCount);
+  const maxRadius=radii[radii.length-1]||1;
+  const phases=Array.from({length:12},()=>rand()*Math.PI*2);
+  const fLow1=2+Math.floor(rand()*2),fLow2=3+Math.floor(rand()*2);
+  const fMid1=6+Math.floor(rand()*3),fMid2=9+Math.floor(rand()*3);
+  const fHigh1=14+Math.floor(rand()*4),fHigh2=20+Math.floor(rand()*5),fHigh3=28+Math.floor(rand()*6),fHigh4=38+Math.floor(rand()*7);
+  const smoothClosed=pts=>{
+    let d='';const n=pts.length;
+    for(let i=0;i<n;i++){
+      const p0=pts[(i-1+n)%n],p1=pts[i],p2=pts[(i+1)%n],p3=pts[(i+2)%n];
+      if(i===0)d+=`M${p1[0].toFixed(1)} ${p1[1].toFixed(1)}`;
+      d+=`C${(p1[0]+(p2[0]-p0[0])/6).toFixed(1)} ${(p1[1]+(p2[1]-p0[1])/6).toFixed(1)},${(p2[0]-(p3[0]-p1[0])/6).toFixed(1)} ${(p2[1]-(p3[1]-p1[1])/6).toFixed(1)},${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;
+    }
+    return d+'Z';
+  };
+  const paths=radii.map((radius,r)=>{
+    // Scale the displacement by the physical size of each ring. This keeps the tight
+    // inner rings calm while letting the larger outer rings carry equally legible peaks.
+    const radiusRatio=radius/maxRadius;
+    const ringScale=.16+1.62*Math.pow(radiusRatio,1.02);
+    const lowAmp=(3.32+r*.235)*ringScale;
+    const midAmp=(1.50+r*.10)*ringScale;
+    const highAmp=(.50+r*.035)*ringScale;
+    const microAmp=(.09+r*.0055)*ringScale;
+    const pts=[];
+    for(let i=0;i<points;i++){
+      const a=i/points*Math.PI*2;
+      const drift=r*.17;
+      const low=.72*Math.sin(a+phases[11]+r*.012)+1.08*Math.sin(a*fLow1+phases[0]+r*.024)+.88*Math.sin(a*fLow2+phases[1]-r*.031);
+      const mid=.98*Math.sin(a*fMid1+phases[2]+drift)+.78*Math.sin(a*fMid2+phases[3]-r*.18);
+      const high=.60*Math.sin(a*fHigh1+phases[4]+r*.31)+.39*Math.sin(a*fHigh2+phases[5]-r*.27)+.20*Math.sin(a*fHigh3+phases[6]+r*.19);
+      const micro=.18*Math.sin(a*fHigh4+phases[7]-r*.16)+.09*Math.sin(a*(fHigh4+11)+phases[8]+r*.25);
+      const envelope=.92+.06*Math.sin(a*3+phases[9])+.03*Math.sin(a*7+phases[10]);
+      const rr=radius+(low*lowAmp+mid*midAmp+high*highAmp+micro*microAmp)*envelope;
+      pts.push([cx+Math.cos(a)*rr,cy+Math.sin(a)*rr]);
+    }
+    const t=r/Math.max(1,radii.length-1);
+    const stroke=t>.67?'#b8b7b3':(t>.44?'#a7bfd5':'#8bb5df');
+    const opacity=Math.max(.10,.72-r*.047).toFixed(3);
+    const width=(1.02+r*.15).toFixed(2);
+    return `<path d="${smoothClosed(pts)}" stroke="${stroke}" stroke-width="${width}" opacity="${opacity}"/>`;
+  }).join('');
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" preserveAspectRatio="xMidYMid meet"><g fill="none" stroke-linecap="round" stroke-linejoin="round">${paths}</g></svg>`;
+  const uri=`url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+  contourCache.set(key,uri);
+  return uri;
+}
+
+function applyContour(el,seed,opacity=.76){
+  if(!el)return;
+  el.style.setProperty('--contour-image',contourBackground(seed));
+  // A single multiplier now controls every card implementation, including skill cards
+  // and the expanded skill editor, so the whole sheet shares the same lighter treatment.
+  el.style.setProperty('--contour-opacity',String(Math.max(0,opacity*.88)));
+}
+
+
+let abilityRadarDisplay=null;
+let abilityRadarFrame=0;
+function radarSvgEl(name,attrs={}){const el=document.createElementNS('http://www.w3.org/2000/svg',name);Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,String(v)));return el}
+function radarPolar(r,a){return[210+Math.cos(a)*r,210+Math.sin(a)*r]}
+function radarPoints(values,radius=132){return values.map((value,i)=>radarPolar(radius*clamp(value,0,100)/100,-Math.PI/2+i*Math.PI*2/values.length))}
+function radarPointString(points){return points.map(p=>`${p[0].toFixed(2)},${p[1].toFixed(2)}`).join(' ')}
+function radarExpandPoints(points,scale=1.28){return points.map(([x,y])=>[210+(x-210)*scale,210+(y-210)*scale])}
+function radarSmoothPath(points,closed=true){let d='';const n=points.length;if(n<2)return d;for(let i=0;i<(closed?n:n-1);i++){const p0=closed?points[(i-1+n)%n]:points[Math.max(0,i-1)],p1=points[i],p2=closed?points[(i+1)%n]:points[Math.min(n-1,i+1)],p3=closed?points[(i+2)%n]:points[Math.min(n-1,i+2)];if(i===0)d+=`M${p1[0].toFixed(2)} ${p1[1].toFixed(2)}`;d+=` C${(p1[0]+(p2[0]-p0[0])/6).toFixed(2)} ${(p1[1]+(p2[1]-p0[1])/6).toFixed(2)},${(p2[0]-(p3[0]-p1[0])/6).toFixed(2)} ${(p2[1]-(p3[1]-p1[1])/6).toFixed(2)},${p2[0].toFixed(2)} ${p2[1].toFixed(2)}`}return d+(closed?' Z':'')}
+function radarWavePath(basePoints,time,ring=0){const all=[],steps=7;for(let i=0;i<basePoints.length;i++){const a=basePoints[i],b=basePoints[(i+1)%basePoints.length];for(let s=0;s<steps;s++){const u=s/steps,x=a[0]+(b[0]-a[0])*u,y=a[1]+(b[1]-a[1])*u,dx=x-210,dy=y-210,len=Math.hypot(dx,dy)||1,nx=dx/len,ny=dy/len,tx=b[0]-a[0],ty=b[1]-a[1],tl=Math.hypot(tx,ty)||1,phase=i*.91+s*.37+time*.0021;const localSize=.72+.28*Math.min(1.15,len/132),ringSize=.60+ring*.34,amplitude=localSize*ringSize;const high=(Math.sin(phase*5.1+i*.43-ring)*1.7+Math.sin(phase*8.3+s*.66+ring)*.82)*amplitude;const broad=(Math.sin(phase+ring)*3.05+Math.sin(phase*.52-ring*.7)*1.18)*amplitude;const offset=5.5+ring*6.1+broad+high;const side=(Math.sin(phase*1.7+ring*1.8)*1.15+Math.sin(phase*6.2-ring)*.72)*amplitude;all.push([x+nx*offset+tx/tl*side,y+ny*offset+ty/tl*side])}}return radarSmoothPath(all,true)}
+function ensureAbilityRadarWaveLoop(){if(window.__cocAbilityRadarLoop)return;window.__cocAbilityRadarLoop=true;let last=0;const frame=time=>{if(time-last>30){last=time;const svg=$('abilityRadar'),c=current();if(svg&&c){const values=CHARACTERISTICS.map(def=>abilityRadarDisplay?.[def.id]??clamp(c.characteristics[def.id],0,100));const base=radarPoints(values);svg.querySelectorAll('.ability-wave').forEach(path=>{const ring=Number(path.dataset.ring)||0;path.setAttribute('d',radarWavePath(base,time+ring*173,ring))})}}requestAnimationFrame(frame)};requestAnimationFrame(frame)}
+function drawAbilityRadar(valueMap){const svg=$('abilityRadar');if(!svg)return;svg.innerHTML='';const defs=radarSvgEl('defs');const grad=radarSvgEl('radialGradient',{id:'cocAbilityFill',gradientUnits:'userSpaceOnUse',cx:210,cy:210,r:170});[['0%','rgba(255,177,61,.42)'],['42%','rgba(255,177,61,.25)'],['72%','rgba(255,177,61,.13)'],['100%','rgba(255,177,61,.01)']].forEach(([offset,color])=>grad.appendChild(radarSvgEl('stop',{offset,'stop-color':color})));defs.appendChild(grad);svg.appendChild(defs);
+  const dots=radarSvgEl('g',{opacity:.38});for(let y=64;y<=356;y+=16)for(let x=64;x<=356;x+=16)if(Math.hypot(x-210,y-210)<164)dots.appendChild(radarSvgEl('circle',{cx:x,cy:y,r:Math.hypot(x-210,y-210)<139?1.08:.72,fill:'rgba(31,35,40,.22)'}));svg.appendChild(dots);
+  CHARACTERISTICS.forEach((def,i)=>{const angle=-Math.PI/2+i*Math.PI*2/CHARACTERISTICS.length,end=radarPolar(132,angle),label=radarPolar(172,angle);svg.appendChild(radarSvgEl('line',{x1:210,y1:210,x2:end[0],y2:end[1],class:'axis'}));const t=radarSvgEl('text',{x:label[0],y:label[1]-4,class:'label'});t.textContent=def.name;svg.appendChild(t);const sub=radarSvgEl('text',{x:label[0],y:label[1]+9,class:'label-sub'});sub.textContent=def.abbr;svg.appendChild(sub)});
+  const values=CHARACTERISTICS.map(def=>valueMap[def.id]??0),base=radarPoints(values),aura=radarExpandPoints(base,1.28);svg.appendChild(radarSvgEl('path',{d:radarSmoothPath(aura,true),class:'poly-aura'}));svg.appendChild(radarSvgEl('polygon',{points:radarPointString(base),class:'poly'}));const waves=radarSvgEl('g',{class:'radar-waves'});[0,.65,1.3,2.05].forEach((ring,index)=>waves.appendChild(radarSvgEl('path',{class:`ability-wave ${index<3?'soft':'main'}`,'data-ring':ring,d:radarWavePath(base,performance.now()+index*160,ring)})));svg.appendChild(waves);base.forEach(point=>svg.appendChild(radarSvgEl('circle',{cx:point[0],cy:point[1],r:4.2,class:'pt'})));ensureAbilityRadarWaveLoop()}
+function renderAbilityRadar(immediate=false){const c=current();if(!c)return;const target=Object.fromEntries(CHARACTERISTICS.map(def=>[def.id,clamp(c.characteristics[def.id],0,100)]));putText('abilityRadarMean',`平均 ${Math.round(CHARACTERISTICS.reduce((sum,def)=>sum+target[def.id],0)/CHARACTERISTICS.length)}`);if(!abilityRadarDisplay||immediate){abilityRadarDisplay={...target};drawAbilityRadar(abilityRadarDisplay);return}const start={...abilityRadarDisplay},started=performance.now(),duration=300;cancelAnimationFrame(abilityRadarFrame);const step=now=>{const p=Math.min(1,(now-started)/duration),e=1-Math.pow(1-p,3);CHARACTERISTICS.forEach(def=>abilityRadarDisplay[def.id]=start[def.id]+(target[def.id]-start[def.id])*e);drawAbilityRadar(abilityRadarDisplay);if(p<1)abilityRadarFrame=requestAnimationFrame(step);else abilityRadarDisplay={...target}};abilityRadarFrame=requestAnimationFrame(step)}
+
+function initNavWaves(){
+  const tabs=[...document.querySelectorAll('.navbtn')];
+  tabs.forEach(tab=>{if(tab.querySelector(':scope > .wave'))return;const svg=radarSvgEl('svg',{viewBox:'0 0 120 120','aria-hidden':'true'});svg.classList.add('wave');for(let i=0;i<4;i++){const path=radarSvgEl('path');path.classList.add(i?'soft':'main');path.dataset.ring=String(i);svg.appendChild(path)}const hi=radarSvgEl('path');hi.classList.add('hi');hi.dataset.highlight='1';svg.appendChild(hi);tab.prepend(svg)});
+  function point(a,time,index,ring){const topBias=Math.max(0,-Math.sin(a)),sideBias=Math.abs(Math.cos(a)),base=39+ring*1.55;const value=Math.sin(a*3+time*.0024+index*.83+ring*.8)*.62+Math.sin(a*5-time*.0019+index*1.2)*.28+Math.sin(a*2+time*.0011+ring*2.1)*.16;const radius=base+value*(3.1+ring*.62)*(.62+topBias*1.35+sideBias*.25);return[60+Math.cos(a)*radius,60+Math.sin(a)*radius]}
+  function ringPath(time,index,ring){return radarSmoothPath(Array.from({length:34},(_,i)=>point(i/34*Math.PI*2,time+ring*240,index,ring)),true)}
+  function highlightPath(time,index){const len=Math.PI*.72,center=(time*.00145+index*1.35)%(Math.PI*2);return radarSmoothPath(Array.from({length:24},(_,i)=>point(center-len/2+len*i/23,time+90,index,0)),false)}
+  const animate=()=>{const time=performance.now();tabs.forEach((tab,index)=>{if(!tab.classList.contains('active'))return;tab.querySelectorAll('[data-ring]').forEach(path=>path.setAttribute('d',ringPath(time,index,Number(path.dataset.ring))));tab.querySelector('[data-highlight]')?.setAttribute('d',highlightPath(time,index))});requestAnimationFrame(animate)};animate();
+}
+
+function initAmbientDots(){
+  const canvas=$('ambientDots');if(!canvas)return;const ctx=canvas.getContext('2d',{alpha:true});let w=0,h=0,dpr=1,dots=[],active={x:-900,y:-900},target={x:-900,y:-900};
+  const updateTarget=()=>{const tab=document.querySelector('.navbtn.active');if(!tab)return;const rect=tab.getBoundingClientRect();target.x=rect.left+rect.width/2;target.y=rect.top+rect.height/2};
+  const resize=()=>{dpr=Math.min(window.devicePixelRatio||1,2);w=innerWidth;h=innerHeight;canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);canvas.style.width=w+'px';canvas.style.height=h+'px';ctx.setTransform(dpr,0,0,dpr,0,0);dots=[];const gap=w<640?25:23;const rand=seededRandom(hashString(`ambient:${w}:${h}`));for(let y=-gap;y<h+gap;y+=gap)for(let x=-gap;x<w+gap;x+=gap)dots.push({x:x+(rand()-.5)*3,y:y+(rand()-.5)*3,phase:rand()*Math.PI*2,speed:.004+rand()*.006,base:.035+rand()*.045});updateTarget();active={...target}};
+  const draw=()=>{const time=performance.now();active.x+=(target.x-active.x)*.08;active.y+=(target.y-active.y)*.08;ctx.clearRect(0,0,w,h);for(const dot of dots){const dx=dot.x-active.x,dy=dot.y-active.y,dist=Math.hypot(dx,dy),influence=Math.max(0,1-dist/(w<640?170:220)),breath=(Math.sin(time*dot.speed+dot.phase)+1)/2,wave=Math.sin(dist*.072-time*.0036+dot.phase*.65),inv=dist?1/dist:0,displace=influence*wave*10.5,x=dot.x+dx*inv*displace,y=dot.y+dy*inv*displace,alpha=Math.min(.38,dot.base+breath*.045+influence*(.075+.095*Math.max(0,wave))),radius=.8+breath*.34+influence*.95;ctx.beginPath();ctx.fillStyle=`rgba(31,35,40,${alpha})`;ctx.arc(x,y,radius,0,Math.PI*2);ctx.fill()}requestAnimationFrame(draw)};
+  addEventListener('resize',resize,{passive:true});addEventListener('scroll',updateTarget,{passive:true});window.__updateAmbientTabPoint=updateTarget;resize();draw();
+}
+
+function putValue(id,value,force=false){
+  const el=$(id);if(!el)return;
+  if(!force&&document.activeElement===el)return;
+  const next=value==null?'':String(value);
+  if(el.value!==next)el.value=next;
+}
+
+function putText(id,value){const el=$(id);if(el)el.textContent=String(value??'')}
+
+function renderProfile(force=false){
+  const c=current();if(!c)return;
+  Object.entries({
+    profileName:c.profile.name,
+    profilePlayer:c.profile.player,
+    profileOccupation:c.profile.occupation,
+    profileAge:c.profile.age,
+    profileGender:c.profile.gender,
+    profileEra:c.profile.era,
+    profileResidence:c.profile.residence,
+    profileBirthplace:c.profile.birthplace
+  }).forEach(([id,value])=>putValue(id,value,force));
+  const box=$('portraitBox');
+  if(box){
+    box.innerHTML=c.portrait?`<img src="${esc(c.portrait)}" alt="${esc(c.profile.name)}的肖像" />`:'<span>调查员肖像<br>选择本地图片后会压缩并写入文件</span>';
+  }
+}
+
+function renderCharacteristics(){
+  const c=current(),root=$('characteristicsGrid');if(!c||!root)return;
+  root.innerHTML=CHARACTERISTICS.map(def=>{
+    const value=clamp(c.characteristics[def.id],0,100);
+    return `<article class="char-card contour-card" data-char-card="${def.id}">
+      <div class="char-title"><i class="char-accent"></i><div><strong>${esc(def.name)}</strong><small>${esc(def.abbr)} · ${esc(def.hint)}</small></div></div>
+      <div class="char-input"><input aria-label="${esc(def.name)}" data-char="${def.id}" type="number" min="0" max="100" inputmode="numeric" value="${value}" /></div>
+      <div class="char-thresholds"><div class="threshold"><span>常规</span><b data-char-level="regular">${value}</b></div><div class="threshold"><span>困难</span><b data-char-level="hard">${Math.floor(value/2)}</b></div><div class="threshold"><span>极难</span><b data-char-level="extreme">${Math.floor(value/5)}</b></div></div>
+      <button class="roll-dot secondary" type="button" data-roll-char="${def.id}">检定</button>
+    </article>`;
+  }).join('');
+  root.querySelectorAll('[data-char-card]').forEach(el=>applyContour(el,`${c.profile.name}:${el.dataset.charCard}`,.69));
+}
+
+function refreshCharacteristicCard(id){
+  const c=current(),card=document.querySelector(`[data-char-card="${CSS.escape(id)}"]`);if(!c||!card)return;
+  const value=clamp(c.characteristics[id],0,100);
+  const regular=card.querySelector('[data-char-level="regular"]');
+  const hard=card.querySelector('[data-char-level="hard"]');
+  const extreme=card.querySelector('[data-char-level="extreme"]');
+  if(regular)regular.textContent=value;if(hard)hard.textContent=Math.floor(value/2);if(extreme)extreme.textContent=Math.floor(value/5);
+}
+
+function renderConditions(){
+  const c=current(),root=$('conditionGrid');if(!c||!root)return;
+  root.innerHTML=STATUS_DEFS.map(([id,label])=>`<label class="condition${c.resources.status[id]?' active':''}"><input type="checkbox" data-status="${id}" ${c.resources.status[id]?'checked':''}/><span>${esc(label)}</span></label>`).join('');
+}
+
+function renderDerived(){
+  const c=current();if(!c)return;const d=computeDerived(c);
+  putText('moveView',d.move);putText('buildView',d.build>0?`+${d.build}`:d.build);putText('dbView',d.db);putText('dodgeView',d.dodge);putText('maxSanView',d.sanMax);
+  putText('combatDexView',int(c.characteristics.dex));putText('combatDodgeView',d.dodge);putText('combatBuildView',d.build>0?`+${d.build}`:d.build);putText('combatDbView',d.db);putText('combatMoveView',d.move);
+  putValue('moveAdjust',c.resources.moveAdjust);
+}
+
+function setBar(id,value,max){
+  const el=$(id);if(!el)return;
+  const pct=max>0?clamp(value/max*100,0,100):0;
+  el.style.width=`${pct}%`;
+}
+
+function renderResources(){
+  const c=current();if(!c)return;const d=computeDerived(c),r=c.resources;
+  r.hpCurrent=clamp(r.hpCurrent,0,d.hpMax);r.mpCurrent=clamp(r.mpCurrent,0,d.mpMax);r.sanCurrent=clamp(r.sanCurrent,0,d.sanMax);r.luckCurrent=clamp(r.luckCurrent,0,99);
+  putText('hpMaxView',d.hpMax);putText('mpMaxView',d.mpMax);putText('sanMaxNumber',d.sanMax);putText('luckStartView',d.luckStart);
+  putValue('hpCurrent',r.hpCurrent);putValue('mpCurrent',r.mpCurrent);putValue('sanCurrent',r.sanCurrent);putValue('luckCurrent',r.luckCurrent);
+  putValue('hpAdjust',r.hpAdjust);putValue('mpAdjust',r.mpAdjust);putValue('sanStartAdjust',r.sanStartAdjust);putValue('luckStartRead',d.luckStart,true);
+  putValue('armorField',r.armor);putValue('injuryNotes',r.injuryNotes);
+  putText('hpCaption',`${r.hpCurrent} / ${d.hpMax}`);putText('mpCaption',`${r.mpCurrent} / ${d.mpMax}`);putText('sanCaption',`${r.sanCurrent} / ${d.sanMax}`);putText('sanStartCaption',`初始 ${d.sanStart}`);putText('luckCaption',`${r.luckCurrent} / 99`);
+  setBar('hpBar',r.hpCurrent,d.hpMax);setBar('mpBar',r.mpCurrent,d.mpMax);setBar('sanBar',r.sanCurrent,d.sanMax);setBar('luckBar',r.luckCurrent,99);
+  applyContour($('hpCard'),`${c.profile.name}:HP`,.64);applyContour($('mpCard'),`${c.profile.name}:MP`,.64);applyContour($('sanCard'),`${c.profile.name}:SAN`,.68);applyContour($('luckCard'),`${c.profile.name}:LUCK`,.64);
+}
+
+function pointUsage(c,field){return Object.values(c.skills).reduce((sum,s)=>sum+Math.max(0,int(s[field])),0)}
+
+function renderOccupationBudgets(){
+  const c=current();if(!c)return;const d=computeDerived(c);
+  const occ=pointUsage(c,'occupation'),interest=pointUsage(c,'interest');
+  putValue('occupationFormula',c.occupation.formula);putValue('customOccupationPoints',c.occupation.customPoints);putValue('creditRange',c.occupation.creditRange);putValue('occupationNotes',c.occupation.notes);
+  const custom=$('customOccupationPoints');if(custom)custom.disabled=c.occupation.formula!=='custom';
+  putText('occupationPointText',`${occ} / ${d.occupationLimit}`);putText('interestPointText',`${interest} / ${d.interestLimit}`);
+  setBar('occupationPointBar',occ,d.occupationLimit);setBar('interestPointBar',interest,d.interestLimit);
+  $('occupationPointCard')?.classList.toggle('over',occ>d.occupationLimit);
+  $('interestPointCard')?.classList.toggle('over',interest>d.interestLimit);
+}
+
+function skillEditorMarkup(c,s){
+  if(!s)return '<div class="status">选择一项技能开始编辑。</div>';
+  const final=skillFinal(c,s.id),base=baseSkillValue(c,s);
+  const dynamicBase=s.baseMode!=='fixed';
+  return `<section class="skill-editor" data-editor-skill="${esc(s.id)}">
+    <div class="skill-editor-head"><div><strong>${esc(skillDisplayName(s))}</strong><span>${esc(s.group)} · 常规 ${final} / 困难 ${Math.floor(final/2)} / 极难 ${Math.floor(final/5)}</span></div></div>
+    <div class="skill-editor-score" data-editor-final>${final}</div>
+    <div class="skill-editor-fields">
+      <label>${s.specialized?'专长名称':'技能名称'}<input data-skill-editor-field="${s.specialized?'specialty':'name'}" value="${esc(s.specialized?s.specialty:s.name)}" ${!s.custom&&!s.specialized?'readonly':''}/></label>
+      <label>基础值<input data-skill-editor-field="base" type="number" min="0" max="100" value="${base}" ${dynamicBase?'readonly':''}/></label>
+      <label>职业点<input data-skill-editor-field="occupation" type="number" min="0" max="100" value="${int(s.occupation)}" /></label>
+      <label>兴趣点<input data-skill-editor-field="interest" type="number" min="0" max="100" value="${int(s.interest)}" /></label>
+      <label>成长<input data-skill-editor-field="growth" type="number" min="0" max="100" value="${int(s.growth)}" /></label>
+      <label>其他<input data-skill-editor-field="misc" type="number" min="-100" max="100" value="${int(s.misc)}" /></label>
+    </div>
+    <div class="skill-editor-actions"><button type="button" data-roll-skill="${esc(s.id)}">进行检定</button><button type="button" class="secondary" data-toggle-selected-check>${s.check?'取消成长勾选':'勾选成长'}</button>${s.custom?'<button type="button" class="danger" data-delete-selected-skill>删除自定义技能</button>':''}</div>
+  </section>`;
+}
+
+function renderSkillEditor(){
+  const c=current(),root=$('skillEditor');if(!c||!root)return;
+  const s=c.skills[c.ui.selectedSkillId]||Object.values(c.skills)[0];
+  if(s)c.ui.selectedSkillId=s.id;
+  root.innerHTML=skillEditorMarkup(c,s);
+  applyContour(root.querySelector('.skill-editor'),`${c.profile.name}:${skillDisplayName(s)}`,.72);
+}
+
+function filteredSkills(c){
+  const q=String(c.ui.skillSearch||'').trim().toLowerCase();
+  const groupOrder={'调查与感知':0,'社交':1,'战斗':2,'学术':3,'实用':4,'体能与潜行':5,'语言与神话':6,'其他':7};
+  return Object.values(c.skills).filter(s=>{
+    if(!q)return true;
+    return `${skillDisplayName(s)} ${s.group}`.toLowerCase().includes(q);
+  }).sort((a,b)=>(groupOrder[a.group]??99)-(groupOrder[b.group]??99)||skillDisplayName(a).localeCompare(skillDisplayName(b),'zh-CN'));
+}
+
+function denseSkillMarkup(c,s){
+  const value=skillFinal(c,s.id);
+  return `<article class="skill-card${c.ui.selectedSkillId===s.id?' selected':''}" data-skill-select="${esc(s.id)}" tabindex="0" role="button" aria-label="编辑${esc(skillDisplayName(s))}">
+    <button type="button" class="skill-check${s.check?' checked':''}${!s.growthAllowed?' disabled':''}" data-skill-check="${esc(s.id)}" aria-label="${s.growthAllowed?'切换成长勾选':'此技能不参与成长'}" ${!s.growthAllowed?'disabled':''}>${s.check?'✓':''}</button>
+    <i class="skill-accent"></i><div class="skill-name">${esc(skillDisplayName(s))}<small>${esc(s.group)}</small></div>
+    <button type="button" class="skill-value" data-roll-skill="${esc(s.id)}" aria-label="以 ${value} 进行${esc(skillDisplayName(s))}检定">${value}</button>
+    <div class="skill-levels">½ ${Math.floor(value/2)} · ⅕ ${Math.floor(value/5)}</div>
+  </article>`;
+}
+
+function tableSkillMarkup(c,skills){
+  return `<div class="skill-table-wrap"><table class="skill-table"><thead><tr><th>勾选</th><th>技能</th><th>基础</th><th>职业</th><th>兴趣</th><th>成长</th><th>其他</th><th>常规</th><th>困难</th><th>极难</th><th>检定</th></tr></thead><tbody>${skills.map(s=>{
+    const value=skillFinal(c,s.id),base=baseSkillValue(c,s);
+    return `<tr data-skill-select="${esc(s.id)}" class="${c.ui.selectedSkillId===s.id?'selected':''}"><td class="num"><input type="checkbox" data-skill-check-input="${esc(s.id)}" ${s.check?'checked':''} ${!s.growthAllowed?'disabled':''}/></td><td class="name-cell">${s.specialized?`${esc(s.name)}：<input aria-label="专长" data-skill-specialty="${esc(s.id)}" value="${esc(s.specialty)}" style="width:112px;display:inline-block;text-align:left"/>`:esc(s.name)}<small>${esc(s.group)}${s.custom?' · 自定义':''}</small></td><td><input data-skill-table-field="base" data-skill-id="${esc(s.id)}" type="number" min="0" max="100" value="${base}" ${s.baseMode!=='fixed'?'readonly':''}/></td><td><input data-skill-table-field="occupation" data-skill-id="${esc(s.id)}" type="number" min="0" max="100" value="${int(s.occupation)}"/></td><td><input data-skill-table-field="interest" data-skill-id="${esc(s.id)}" type="number" min="0" max="100" value="${int(s.interest)}"/></td><td><input data-skill-table-field="growth" data-skill-id="${esc(s.id)}" type="number" min="0" max="100" value="${int(s.growth)}"/></td><td><input data-skill-table-field="misc" data-skill-id="${esc(s.id)}" type="number" min="-100" max="100" value="${int(s.misc)}"/></td><td class="num" data-table-final="${esc(s.id)}"><b>${value}</b></td><td class="num">${Math.floor(value/2)}</td><td class="num">${Math.floor(value/5)}</td><td><button type="button" class="small" data-roll-skill="${esc(s.id)}">检定</button></td></tr>`;
+  }).join('')}</tbody></table></div>`;
+}
+
+function renderSkills(){
+  const c=current(),root=$('skillsRoot');if(!c||!root)return;
+  const skills=filteredSkills(c);
+  putValue('skillSearch',c.ui.skillSearch);
+  $('skillModeDense')?.classList.toggle('active',c.ui.skillMode==='dense');
+  $('skillModeTable')?.classList.toggle('active',c.ui.skillMode==='table');
+  if(!skills.length){root.innerHTML='<div class="status warn">没有符合搜索条件的技能。</div>';return}
+  if(c.ui.skillMode==='table')root.innerHTML=tableSkillMarkup(c,skills);
+  else{
+    root.innerHTML=`<div class="skill-dense-grid">${skills.map(s=>denseSkillMarkup(c,s)).join('')}</div>`;
+    root.querySelectorAll('.skill-card').forEach(el=>{
+      const s=c.skills[el.dataset.skillSelect];
+      applyContour(el,`${c.profile.name}:${skillDisplayName(s)}`,.68);
+    });
+  }
+}
+
+function updateSkillEditorSummary(){
+  const c=current(),s=c?.skills[c.ui.selectedSkillId];if(!c||!s)return;
+  const value=skillFinal(c,s.id),editor=$('skillEditor')?.querySelector('.skill-editor');
+  if(!editor)return;
+  const score=editor.querySelector('[data-editor-final]');if(score)score.textContent=value;
+  const info=editor.querySelector('.skill-editor-head span');if(info)info.textContent=`${s.group} · 常规 ${value} / 困难 ${Math.floor(value/2)} / 极难 ${Math.floor(value/5)}`;
+  const title=editor.querySelector('.skill-editor-head strong');if(title)title.textContent=skillDisplayName(s);
+}
+
+function skillOptions(c,selected){
+  return Object.values(c.skills).sort((a,b)=>skillDisplayName(a).localeCompare(skillDisplayName(b),'zh-CN')).map(s=>`<option value="${esc(s.id)}" ${s.id===selected?'selected':''}>${esc(skillDisplayName(s))}</option>`).join('');
+}
+
+function renderWeapons(){
+  const c=current(),root=$('weaponList');if(!c||!root)return;
+  if(!c.weapons.length){root.innerHTML='<div class="status warn">尚未添加武器。点击右上角“添加武器”建立记录。</div>';return}
+  root.innerHTML=c.weapons.map(w=>`<div class="weapon-row" data-weapon-id="${esc(w.id)}">
+    <label>武器 / 备注<input data-weapon-field="name" value="${esc(w.name)}" placeholder="武器名称"/><input data-weapon-field="notes" value="${esc(w.notes)}" placeholder="备注"/></label>
+    <label>使用技能<select data-weapon-field="skillId">${skillOptions(c,w.skillId)}</select></label>
+    <label>技能值<div class="weapon-skill-view" data-weapon-skill-value>${skillFinal(c,w.skillId)}</div></label>
+    <label>伤害<input data-weapon-field="damage" value="${esc(w.damage)}" placeholder="1D6 + DB"/></label>
+    <label>攻击数<input data-weapon-field="attacks" value="${esc(w.attacks)}"/></label>
+    <label>射程<input data-weapon-field="range" value="${esc(w.range)}"/></label>
+    <label>弹药<input data-weapon-field="ammo" value="${esc(w.ammo)}"/></label>
+    <label>故障值<input data-weapon-field="malfunction" value="${esc(w.malfunction)}"/></label>
+    <div class="remove-cell"><button type="button" class="danger iconbtn" data-remove-weapon="${esc(w.id)}" aria-label="删除武器">×</button></div>
+  </div>`).join('');
+}
+
+function creditTier(value){
+  value=clamp(value,0,99);
+  if(value===0)return['赤贫','没有可支配收入，几乎没有可记录的资产。'];
+  if(value<=9)return['贫穷','生活拮据，日常花费需要谨慎安排。'];
+  if(value<=49)return['普通','具备合理的生活舒适度与有限资产。'];
+  if(value<=89)return['富裕','拥有可观收入、资产与社会影响力。'];
+  if(value<=98)return['豪富','属于社会中的极富阶层，可调动大量资源。'];
+  return['巨富','财富规模极其罕见，通常拥有广泛资产与关系网。'];
+}
+
+function renderCredit(){
+  const c=current();if(!c)return;const score=skillFinal(c,'credit-rating'),[tier,desc]=creditTier(score);
+  putText('creditScore',score);putText('creditTier',tier);putText('creditDescription',desc);
+  putValue('spendingLevel',c.wealth.spendingLevel);putValue('cashField',c.wealth.cash);putValue('assetsField',c.wealth.assets);putValue('wealthNotes',c.wealth.notes);
+  applyContour($('creditCard'),`${c.profile.name}:credit:${score}`,.69);
+}
+
+function renderGear(){
+  const c=current(),root=$('gearList');if(!c||!root)return;
+  if(!c.gear.length){root.innerHTML='<div class="status warn">尚未记录装备。</div>';return}
+  root.innerHTML=c.gear.map(g=>`<div class="gear-row" data-gear-id="${esc(g.id)}"><label>物品<input data-gear-field="name" value="${esc(g.name)}"/></label><label>数量<input data-gear-field="qty" value="${esc(g.qty)}"/></label><label>位置<input data-gear-field="location" value="${esc(g.location)}"/></label><label>备注<input data-gear-field="notes" value="${esc(g.notes)}"/></label><div class="remove-cell"><button type="button" class="danger iconbtn" data-remove-gear="${esc(g.id)}">×</button></div></div>`).join('');
+}
+
+function renderStory(){
+  const c=current();if(!c)return;
+  const map={storyText:'story',personalDescription:'personalDescription',traitsText:'traits',ideologyText:'ideology',injuriesScarsText:'injuriesScars',significantPeopleText:'significantPeople',phobiasManiasText:'phobiasManias',meaningfulLocationsText:'meaningfulLocations',arcaneText:'arcaneTomesSpells',treasuredText:'treasuredPossessions',strangeText:'strangeEncounters',backstoryNotes:'notes'};
+  Object.entries(map).forEach(([id,key])=>putValue(id,c.backstory[key]));
+}
+
+function renderFellows(){
+  const c=current(),root=$('fellowList');if(!c||!root)return;
+  if(!c.backstory.fellows.length){root.innerHTML='<div class="status">可记录同桌调查员姓名与玩家，便于长期团追踪。</div>';return}
+  root.innerHTML=c.backstory.fellows.map(f=>`<div class="fellow-row" data-fellow-id="${esc(f.id)}"><label>调查员<input data-fellow-field="name" value="${esc(f.name)}"/></label><label>玩家<input data-fellow-field="player" value="${esc(f.player)}"/></label><div class="remove-cell"><button type="button" class="danger iconbtn" data-remove-fellow="${esc(f.id)}">×</button></div></div>`).join('');
+}
+
+function formatDate(value){
+  try{return new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(value))}catch{return String(value||'')}
+}
+
+function overviewInitial(c){
+  const name=String(c?.profile?.name||'?').trim();
+  return esc((name.match(/[\p{L}\p{N}]/u)||['?'])[0]);
+}
+
+function overviewSkillRows(c,query='',mode='major'){
+  const q=String(query||'').trim().toLowerCase();
+  const rows=Object.values(c.skills||{}).map(s=>({s,value:skillFinal(c,s.id),name:skillDisplayName(s),invested:!!s.custom||int(s.occupation)!==0||int(s.interest)!==0||int(s.growth)!==0||int(s.misc)!==0}));
+  if(q)return rows.filter(row=>`${row.name} ${row.s.group}`.toLowerCase().includes(q)).sort((a,b)=>b.value-a.value||a.name.localeCompare(b.name,'zh-CN'));
+  if(mode==='all')return rows.sort((a,b)=>String(a.s.group).localeCompare(String(b.s.group),'zh-CN')||a.name.localeCompare(b.name,'zh-CN'));
+  const invested=rows.filter(row=>row.invested);
+  return (invested.length?invested:rows).sort((a,b)=>b.value-a.value||a.name.localeCompare(b.name,'zh-CN')).slice(0,14);
+}
+
+const OVERVIEW_RESOURCE_LABELS={hp:'HP',mp:'MP',san:'SAN',luck:'Luck'};
+
+function overviewResourceLimit(c,key){
+  const d=computeDerived(c);
+  return {hp:d.hpMax,mp:d.mpMax,san:d.sanMax,luck:99}[key]??0;
+}
+
+function overviewResourceMarkup(c,key,label,currentValue,maxValue){
+  const value=clamp(currentValue,0,maxValue),pct=maxValue>0?clamp(value/maxValue*100,0,100):0;
+  return `<div class="overview-resource" data-overview-kind="${esc(key)}" data-card-id="${esc(c.id)}"><div class="overview-resource-head"><strong>${esc(label)}</strong><button type="button" class="overview-resource-value" aria-haspopup="dialog" aria-label="编辑${esc(c.profile.name)}的${esc(label)}当前值，当前${value}，上限${maxValue}" data-overview-edit="${esc(key)}" data-card-id="${esc(c.id)}">${value} / ${maxValue}</button></div><div class="overview-stepper"><button type="button" aria-label="${esc(label)}减少1，长按连续减少" data-overview-step="${esc(key)}" data-card-id="${esc(c.id)}" data-delta="-1">−</button><button type="button" aria-label="${esc(label)}增加1，长按连续增加" data-overview-step="${esc(key)}" data-card-id="${esc(c.id)}" data-delta="1">+</button></div><div class="overview-mini-bar"><i style="width:${pct.toFixed(2)}%"></i></div></div>`;
+}
+
+function updateOverviewResourceView(id,key){
+  const c=characters[id];if(!c)return;
+  const max=overviewResourceLimit(c,key),value=clamp(c.resources[`${key}Current`],0,max),pct=max>0?clamp(value/max*100,0,100):0,label=OVERVIEW_RESOURCE_LABELS[key]||key.toUpperCase();
+  document.querySelectorAll('.overview-resource').forEach(el=>{
+    if(el.dataset.cardId!==id||el.dataset.overviewKind!==key)return;
+    const valueButton=el.querySelector('[data-overview-edit]'),bar=el.querySelector('.overview-mini-bar i');
+    if(valueButton){valueButton.textContent=`${value} / ${max}`;valueButton.setAttribute('aria-label',`编辑${c.profile.name}的${label}当前值，当前${value}，上限${max}`)}
+    if(bar)bar.style.width=`${pct.toFixed(2)}%`;
+  });
+}
+
+function positionOverviewResourcePopover(anchor){
+  const pop=$('overviewResourcePopover');if(!pop||pop.hidden||!anchor?.isConnected)return;
+  pop.style.visibility='hidden';pop.style.left='10px';pop.style.top='10px';
+  requestAnimationFrame(()=>{
+    if(pop.hidden||!anchor.isConnected)return;
+    const rect=anchor.getBoundingClientRect(),box=pop.getBoundingClientRect(),margin=10,gap=9;
+    let side='bottom',top=rect.bottom+gap;
+    if(top+box.height>window.innerHeight-margin&&rect.top-box.height-gap>=margin){side='top';top=rect.top-box.height-gap}
+    const maxLeft=Math.max(margin,window.innerWidth-box.width-margin);
+    const left=Math.min(maxLeft,Math.max(margin,rect.left+rect.width/2-box.width/2));
+    const arrowX=clamp(rect.left+rect.width/2-left,16,box.width-16);
+    pop.dataset.side=side;pop.style.left=`${left}px`;pop.style.top=`${Math.max(margin,top)}px`;pop.style.setProperty('--popover-arrow-x',`${arrowX}px`);pop.style.visibility='visible';
+  });
+}
+
+function closeOverviewResourceEditor(){
+  const pop=$('overviewResourcePopover');
+  if(overviewResourceEditor?.anchor?.isConnected)overviewResourceEditor.anchor.setAttribute('aria-expanded','false');
+  overviewResourceEditor=null;if(pop){pop.hidden=true;pop.style.visibility=''}
+}
+
+function openOverviewResourceEditor(anchor){
+  const id=anchor?.dataset.cardId,key=anchor?.dataset.overviewEdit,c=characters[id];if(!c||!['hp','mp','san','luck'].includes(key))return;
+  closeOverviewResourceEditor();
+  const max=overviewResourceLimit(c,key),value=clamp(c.resources[`${key}Current`],0,max),label=OVERVIEW_RESOURCE_LABELS[key]||key.toUpperCase(),pop=$('overviewResourcePopover'),input=$('overviewResourceEditInput');if(!pop||!input)return;
+  overviewResourceEditor={id,key,anchor};anchor.setAttribute('aria-expanded','true');putText('overviewResourcePopoverTitle',`编辑 ${label} · ${c.profile.name}`);putText('overviewResourceEditMax',`/ ${max}`);
+  input.min='0';input.max=String(max);input.value=String(value);pop.hidden=false;positionOverviewResourcePopover(anchor);
+  requestAnimationFrame(()=>{input.focus();input.select()});
+}
+
+function applyOverviewResourceEditor(){
+  const editor=overviewResourceEditor,input=$('overviewResourceEditInput');if(!editor||!input)return;
+  const {id,key}=editor;closeOverviewResourceEditor();setOverviewResource(id,key,input.value);toast(`${OVERVIEW_RESOURCE_LABELS[key]} 已更新。`);
+}
+
+function stepOverviewResourceButton(button,options={}){
+  const card=characters[button?.dataset.cardId],key=button?.dataset.overviewStep;if(!card||!['hp','mp','san','luck'].includes(key))return false;
+  const currentValue=card.resources[`${key}Current`],next=int(currentValue)+int(button.dataset.delta);
+  return setOverviewResource(card.id,key,next,{rerender:false,refreshLibrary:options.refreshLibrary===true});
+}
+
+function stopOverviewHold(){
+  if(!overviewHold)return;
+  clearTimeout(overviewHold.delayTimer);clearInterval(overviewHold.repeatTimer);overviewHold.button?.classList.remove('holding');
+  overviewHold=null;renderLibrary();
+}
+
+function handleOverviewPointerDown(event){
+  const step=event.target.closest?.('[data-overview-step]');
+  if(step){
+    if(event.pointerType==='mouse'&&event.button!==0)return;
+    event.preventDefault();closeOverviewResourceEditor();stopOverviewHold();step.classList.add('holding');
+    stepOverviewResourceButton(step,{refreshLibrary:false});
+    const hold={button:step,pointerId:event.pointerId,delayTimer:null,repeatTimer:null};overviewHold=hold;
+    try{step.setPointerCapture(event.pointerId)}catch{}
+    hold.delayTimer=setTimeout(()=>{if(overviewHold!==hold)return;hold.repeatTimer=setInterval(()=>stepOverviewResourceButton(step,{refreshLibrary:false}),95)},390);
+    return;
+  }
+  if(overviewResourceEditor){
+    const pop=$('overviewResourcePopover'),edit=event.target.closest?.('[data-overview-edit]');
+    if(!pop?.contains(event.target)&&!edit)closeOverviewResourceEditor();
+  }
+}
+
+function renderOverview(){
+  const root=$('overviewRoot');if(!root)return;
+  const q=String($('overviewSearch')?.value||'').trim().toLowerCase(),skillQuery=String($('overviewSkillSearch')?.value||'').trim(),mode=$('overviewSkillMode')?.value==='all'?'all':'major';
+  const list=Object.values(characters).filter(c=>`${c.profile.name} ${c.profile.player} ${c.profile.occupation} ${c.profile.era}`.toLowerCase().includes(q)).sort((a,b)=>String(a.profile.name||'').localeCompare(String(b.profile.name||''),'zh-CN'));
+  putText('overviewCount',`${list.length} / ${Object.keys(characters).length} 张`);
+  if(!list.length){root.innerHTML='<div class="status warn overview-empty">没有符合条件的调查员。</div>';return}
+  root.innerHTML=list.map(c=>{
+    const d=computeDerived(c),status=STATUS_DEFS.filter(([id])=>c.resources.status?.[id]),skills=overviewSkillRows(c,skillQuery,mode);
+    const profileBits=[c.profile.player?`玩家：${c.profile.player}`:'未填写玩家',c.profile.occupation||'未设职业',c.profile.era||'未设时代'];
+    const badges=[`年龄 ${int(c.profile.age,30)}`,c.profile.gender||'性别未设'];
+    const attributes=CHARACTERISTICS.map(def=>`<div class="overview-attribute" title="${esc(def.name)}"><span>${esc(def.abbr)}</span><b>${clamp(c.characteristics[def.id],0,100)}</b></div>`).join('');
+    const skillMarkup=skills.length?skills.map(row=>`<div class="overview-skill${row.invested?' trained':''}" role="button" tabindex="0" aria-label="进行${esc(c.profile.name)}的${esc(row.name)}检定，目标值${Number.isFinite(Number(row.value))?row.value:0}" data-overview-roll-skill="${esc(row.s.id)}" data-card-id="${esc(c.id)}" title="点击进行检定 · ${esc(row.name)} · ${esc(row.s.group)}"><div class="overview-skill-main"><span class="overview-skill-name">${esc(row.name)||'未命名技能'}</span><small class="overview-skill-group">${esc(row.s.group)||'其他'}</small></div><b class="overview-skill-value">${Number.isFinite(Number(row.value))?row.value:0}</b></div>`).join(''):'<div class="overview-no-skills">没有匹配的技能。</div>';
+    const statusMarkup=status.length?status.map(([id,label])=>`<span class="overview-status-tag alert" data-status-id="${esc(id)}">${esc(label)}</span>`).join(''):'<span class="overview-status-tag normal">状态正常</span>';
+    return `<article class="overview-card${c.id===currentId?' active':''}" data-overview-card="${esc(c.id)}"><aside class="overview-identity"><div class="overview-portrait">${c.portrait?`<img src="${esc(c.portrait)}" alt="${esc(c.profile.name)}的肖像"/>`:`<span class="overview-monogram">${overviewInitial(c)}</span>`}</div><div class="overview-name"><strong title="${esc(c.profile.name)}">${esc(c.profile.name)}</strong><small>${profileBits.map(esc).join(' · ')}<br>更新：${esc(formatDate(c.updatedAt))}</small></div><div class="overview-badges">${badges.map((text,index)=>`<span class="overview-badge${index>=2&&status.some(([,label])=>label===text)?' alert':''}">${esc(text)}</span>`).join('')}</div><button type="button" class="overview-open" data-open-overview-card="${esc(c.id)}">打开人物卡</button></aside><section class="overview-core"><div class="overview-section-title"><strong>资源快捷调整</strong><span>即时写入缓存</span></div><div class="overview-resources">${overviewResourceMarkup(c,'hp','HP',c.resources.hpCurrent,d.hpMax)}${overviewResourceMarkup(c,'mp','MP',c.resources.mpCurrent,d.mpMax)}${overviewResourceMarkup(c,'san','SAN',c.resources.sanCurrent,d.sanMax)}${overviewResourceMarkup(c,'luck','Luck',c.resources.luckCurrent,99)}</div><div class="overview-section-title"><strong>九项属性</strong><span>常规值</span></div><div class="overview-attributes">${attributes}</div><div class="overview-derived"><div><span>MOV</span><b>${d.move}</b></div><div><span>Build</span><b>${d.build>0?`+${d.build}`:d.build}</b></div><div><span>DB</span><b>${esc(d.db)}</b></div><div><span>Dodge</span><b>${d.dodge}</b></div></div></section><section class="overview-skills"><div class="overview-section-title"><strong>${skillQuery?'匹配技能':mode==='all'?'全部技能':'主要技能'}</strong><span>${skills.length} 项 · 点击检定</span></div><div class="overview-skill-list">${skillMarkup}</div><div class="overview-status-panel"><span class="overview-status-title">当前状态</span><div class="overview-status-tags">${statusMarkup}</div></div></section></article>`;
+  }).join('');
+}
+
+function setOverviewResource(id,key,value,options={}){
+  const c=characters[id];if(!c||!['hp','mp','san','luck'].includes(key))return false;
+  const max=overviewResourceLimit(c,key),resourceKey=`${key}Current`,next=clamp(int(value),0,max),changed=int(c.resources[resourceKey])!==next;
+  c.resources[resourceKey]=next;c.updatedAt=now();characters[id]=c;saveCache();
+  if(id===currentId){renderResources();renderQuickInfo()}
+  if(options.rerender===false)updateOverviewResourceView(id,key);else renderOverview();
+  if(options.refreshLibrary!==false)renderLibrary();
+  return changed;
+}
+
+function renderLibrary(){
+  const root=$('libraryList');if(!root)return;
+  const q=String($('librarySearch')?.value||'').trim().toLowerCase();
+  const list=Object.values(characters).filter(c=>`${c.profile.name} ${c.profile.occupation} ${c.profile.era} ${c.profile.player}`.toLowerCase().includes(q)).sort((a,b)=>String(b.updatedAt).localeCompare(String(a.updatedAt)));
+  putText('libraryCount',`${list.length} / ${Object.keys(characters).length}`);
+  if(!list.length){root.innerHTML='<div class="status warn">没有符合条件的调查员。</div>';return}
+  root.innerHTML=list.map(c=>{
+    const d=computeDerived(c);
+    return `<article class="library-card${c.id===currentId?' active':''}" data-library-id="${esc(c.id)}"><div><strong>${esc(c.profile.name)}</strong><div class="library-meta">${esc(c.profile.occupation||'未设职业')} · ${esc(c.profile.era||'未设时代')} · SAN ${int(c.resources.sanCurrent)}/${d.sanMax}<br>更新：${esc(formatDate(c.updatedAt))}</div></div><div class="actions"><button type="button" class="small" data-load-card="${esc(c.id)}">读取</button><button type="button" class="secondary small" data-duplicate-card="${esc(c.id)}">复制</button><button type="button" class="secondary small" data-export-card="${esc(c.id)}">导出</button><button type="button" class="danger small" data-delete-card="${esc(c.id)}">删除</button></div></article>`;
+  }).join('');
+}
+
+function renderQuickInfo(){
+  const c=current(),el=$('quickInfo');if(!el||!c)return;const d=computeDerived(c);
+  el.textContent=`${c.profile.name} · ${c.profile.occupation||'未设职业'} · HP ${c.resources.hpCurrent}/${d.hpMax} · SAN ${c.resources.sanCurrent}/${d.sanMax} · Luck ${c.resources.luckCurrent}`;
+  el.dataset.dirty='0';
+}
+
+function renderQuickLog(){
+  const root=$('rollLog');if(!root)return;
+  if(!rollHistory.length){root.innerHTML='<div class="sub">本次打开期间的检定记录会显示在这里。</div>';return}
+  root.innerHTML=rollHistory.slice(0,12).map(r=>`<div class="roll-log-item"><span><strong>${esc(r.label)}</strong> ${esc(r.level)}</span><span>${r.roll} / ${r.target}</span></div>`).join('');
+}
+
+function resetQuickSession(){
+  rollHistory=[];
+  const quick=$('quickResult');
+  if(quick){
+    quick.innerHTML='<strong>等待检定</strong><small>本次打开不会沿用上一次检定历史。</small><div class="quick-result-number">—</div>';
+    quick.removeAttribute('data-rank');
+    applyContour(quick,`${current()?.profile.name||'investigator'}:quick:session`,.67);
+  }
+  renderQuickLog();
+}
+
+
+function renderOccupationReference(){
+  const root=$('occupationReferenceList');if(!root)return;
+  const q=String($('occupationReferenceSearch')?.value||'').trim().toLowerCase();
+  const rows=CORE_OCCUPATIONS.filter(item=>`${item.name} ${item.en} ${item.formula} ${item.credit} ${item.skills}`.toLowerCase().includes(q));
+  putText('occupationReferenceCount',rows.length);
+  root.innerHTML=rows.length?rows.map(item=>`<article class="reference-card contour-card"><div class="reference-card-head"><div><strong>${esc(item.name)}</strong><small>${esc(item.en)}</small></div><button type="button" class="secondary small" data-use-occupation="${esc(item.id)}">填入</button></div><div class="reference-tags"><span class="reference-tag">${esc(item.formula)}</span><span class="reference-tag">信用 ${esc(item.credit)}</span></div><p>${esc(item.skills)}</p></article>`).join(''):'<div class="status warn">没有匹配的职业。</div>';
+  root.querySelectorAll('.reference-card').forEach((el,index)=>applyContour(el,`occupation-reference:${rows[index]?.id||index}`,.29));
+}
+
+function renderWeaponReference(){
+  const root=$('weaponReferenceList');if(!root)return;
+  const q=String($('weaponReferenceSearch')?.value||'').trim().toLowerCase(),category=String($('weaponReferenceCategory')?.value||'');
+  const rows=CORE_WEAPONS.filter(item=>(!category||item.category===category)&&`${item.category} ${item.name} ${item.en} ${item.skill} ${item.damage} ${item.range} ${item.notes}`.toLowerCase().includes(q));
+  putText('weaponReferenceCount',rows.length);
+  root.innerHTML=rows.length?rows.map((item,index)=>`<article class="reference-card contour-card"><div class="reference-card-head"><div><strong>${esc(item.name)}</strong><small>${esc(item.en)} · ${esc(item.category)}</small></div><button type="button" class="secondary small" data-add-reference-weapon="${CORE_WEAPONS.indexOf(item)}">加入</button></div><div class="reference-tags"><span class="reference-tag">${esc(item.skill)}</span>${item.notes?`<span class="reference-tag">${esc(item.notes)}</span>`:''}</div><div class="weapon-reference-grid"><div class="weapon-reference-stat"><span>伤害</span><b title="${esc(item.damage)}">${esc(item.damage)}</b></div><div class="weapon-reference-stat"><span>射程</span><b title="${esc(item.range)}">${esc(item.range)}</b></div><div class="weapon-reference-stat"><span>攻击数</span><b title="${esc(item.attacks)}">${esc(item.attacks)}</b></div><div class="weapon-reference-stat"><span>弹药</span><b>${esc(item.ammo)}</b></div><div class="weapon-reference-stat"><span>故障</span><b>${esc(item.mal)}</b></div><div class="weapon-reference-stat"><span>价格</span><b>${esc(item.cost)}</b></div></div></article>`).join(''):'<div class="status warn">没有匹配的武器。</div>';
+  root.querySelectorAll('.reference-card').forEach((el,index)=>applyContour(el,`weapon-reference:${rows[index]?.category}:${rows[index]?.name}`,.25));
+}
+
+function useOccupationReference(id){
+  const c=current(),item=CORE_OCCUPATIONS.find(x=>x.id===id);if(!c||!item)return;
+  c.profile.occupation=item.name;c.occupation.formula=item.formulaId;c.occupation.creditRange=item.credit;c.occupation.notes=`核心职业技能：${item.skills}`;
+  renderProfile(true);renderOccupationBudgets();renderQuickInfo();scheduleSave();toast(`已将职业栏设为“${item.name}”。`);
+}
+
+function addReferenceWeapon(index){
+  const c=current(),item=CORE_WEAPONS[int(index,-1)];if(!c||!item)return;
+  c.weapons.push({id:uid('weapon'),name:item.name,skillId:item.skillId,damage:item.damage.replace('½DB','半数 DB'),attacks:item.attacks,range:item.range,ammo:item.ammo,malfunction:item.mal,notes:[item.en,item.skill,item.notes].filter(Boolean).join(' · ')});
+  renderWeapons();scheduleSave();toast(`已将“${item.name}”加入武器列表。`);
+}
+
+function renderAll(force=false){
+  const c=current();if(!c)return;
+  renderProfile(force);renderDerived();renderConditions();renderCharacteristics();renderAbilityRadar(true);renderResources();renderOccupationBudgets();renderSkillEditor();renderSkills();renderWeapons();renderCredit();renderGear();renderStory();renderFellows();renderOverview();renderLibrary();renderQuickInfo();renderQuickLog();renderOccupationReference();renderWeaponReference();
+  applyContour($('quickResult'),`${c.profile.name}:quick`,.67);
+}
+
+function showPage(name){
+  const target=document.querySelector(`#page-${CSS.escape(name)}`);if(!target)return;
+  if(name==='overview')renderOverview();
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p===target));
+  document.querySelectorAll('[data-page]').forEach(btn=>btn.classList.toggle('active',btn.dataset.page===name));
+  if(window.__updateAmbientTabPoint)requestAnimationFrame(window.__updateAmbientTabPoint);
+}
+
+function renderDependent(){
+  renderDerived();renderResources();renderOccupationBudgets();renderSkillEditor();renderSkills();renderWeapons();renderCredit();renderQuickInfo();
+}
+
+function findRecord(list,id){return list.find(item=>item.id===id)}
+
+function selectSkill(id){
+  const c=current();if(!c||!c.skills[id])return;
+  c.ui.selectedSkillId=id;
+  renderSkillEditor();renderSkills();scheduleSave();
+}
+
+function setSkillField(s,field,value){
+  if(!s)return;
+  if(['base','occupation','interest','growth','misc'].includes(field)){
+    const min=field==='misc'?-100:0;
+    s[field]=clamp(int(value),min,100);
+  }else if(field==='specialty')s.specialty=String(value||'');
+  else if(field==='name'&&s.custom)s.name=String(value||'自定义技能');
+}
+
+function refreshTableSkillRow(id){
+  const c=current(),row=document.querySelector(`tr[data-skill-select="${CSS.escape(id)}"]`);if(!c||!row)return;
+  const value=skillFinal(c,id),cells=row.querySelectorAll('td.num');
+  const finalCell=row.querySelector(`[data-table-final="${CSS.escape(id)}"]`);if(finalCell)finalCell.innerHTML=`<b>${value}</b>`;
+  if(cells.length>=4){cells[cells.length-3].textContent=value;cells[cells.length-2].textContent=Math.floor(value/2);cells[cells.length-1].textContent=Math.floor(value/5)}
+}
+
+function addWeapon(){
+  const c=current();if(!c)return;
+  c.weapons.push({id:uid('weapon'),name:'新武器',skillId:'fighting-brawl',damage:'1D6 + DB',attacks:'1',range:'接触',ammo:'—',malfunction:'—',notes:''});
+  renderWeapons();scheduleSave();
+}
+
+function addGear(){
+  const c=current();if(!c)return;c.gear.push({id:uid('gear'),name:'',qty:'1',location:'随身',notes:''});renderGear();scheduleSave();
+}
+
+function addFellow(){
+  const c=current();if(!c)return;c.backstory.fellows.push({id:uid('fellow'),name:'',player:''});renderFellows();scheduleSave();
+}
+
+function applyOccupationPreset(key){
+  const c=current(),preset=OCCUPATION_PRESETS[key];if(!c||!preset){toast('请先选择职业模板。');return}
+  Object.values(c.skills).forEach(s=>{s.occupation=0});
+  Object.entries(preset.specialties||{}).forEach(([id,specialty])=>{if(c.skills[id])c.skills[id].specialty=specialty});
+  Object.entries(preset.targets).forEach(([id,target])=>{
+    const s=c.skills[id];if(!s)return;
+    const withoutOccupation=baseSkillValue(c,s)+int(s.interest)+int(s.growth)+int(s.misc);
+    s.occupation=Math.max(0,int(target)-withoutOccupation);
+  });
+  c.profile.occupation=preset.occupation;
+  c.occupation.formula='custom';
+  c.occupation.customPoints=pointUsage(c,'occupation');
+  c.ui.selectedSkillId=Object.keys(preset.targets)[0]||'spot-hidden';
+  renderProfile();renderDependent();scheduleSave();toast(`已应用“${preset.label}”快速入门模板；职业点上限已匹配最终值法。`);
+}
+
+function rollCharacteristics(){
+  const c=current();if(!c)return;const oldD=computeDerived(c);
+  ['str','con','dex','app','pow','luck'].forEach(id=>{c.characteristics[id]=rollDice(3,6)*5});
+  ['siz','int','edu'].forEach(id=>{c.characteristics[id]=(rollDice(2,6)+6)*5});
+  const newD=computeDerived(c);syncCurrentResources(c,oldD,newD);
+  renderAll();scheduleSave();toast('已按 7版基础骰式生成属性；年龄调整请按守密人流程处理。');
+}
+
+function applyStandardArray(){
+  const c=current();if(!c)return;const oldD=computeDerived(c);
+  const values={str:50,con:60,siz:60,dex:50,app:50,int:70,pow:40,edu:80,luck:50};
+  Object.assign(c.characteristics,values);const newD=computeDerived(c);syncCurrentResources(c,oldD,newD);
+  renderAll();scheduleSave();toast('已填入一组可直接使用的标准数组示例。');
+}
+
+function resetCurrents(){
+  const c=current();if(!c)return;const d=computeDerived(c);
+  c.resources.hpCurrent=d.hpMax;c.resources.mpCurrent=d.mpMax;c.resources.sanCurrent=Math.min(d.sanStart,d.sanMax);c.resources.luckCurrent=d.luckStart;
+  renderResources();renderQuickInfo();scheduleSave();toast('当前 HP、MP、SAN 与 Luck 已恢复为起始值。');
+}
+
+function resolveRoll(target,modifier=0){
+  target=clamp(target,0,100);modifier=clamp(int(modifier),-9,9);
+  const ones=Math.floor(Math.random()*10);
+  const tens=Array.from({length:Math.abs(modifier)+1},()=>Math.floor(Math.random()*10));
+  const candidates=tens.map(t=>{const n=t*10+ones;return n===0?100:n});
+  const roll=modifier>0?Math.min(...candidates):modifier<0?Math.max(...candidates):candidates[0];
+  let level='失败',rank=0;
+  const fumble=(target<50&&roll>=96)||(target>=50&&roll===100);
+  if(roll===1){level='大成功';rank=4}
+  else if(fumble){level='大失败';rank=-1}
+  else if(roll<=Math.floor(target/5)){level='极难成功';rank=3}
+  else if(roll<=Math.floor(target/2)){level='困难成功';rank=2}
+  else if(roll<=target){level='常规成功';rank=1}
+  return{target,modifier,ones,tens,candidates,roll,level,rank};
+}
+
+function performRoll(label,target,modifier=null){
+  const dock=$('quickDock');if(dock&&!dock.classList.contains('open')){resetQuickSession();dock.classList.add('open')}
+  const mod=modifier==null?int($('quickRollModifier')?.value):int(modifier);
+  const result=resolveRoll(target,mod),appliedMod=result.modifier;
+  putValue('quickRollLabel',label,true);putValue('quickRollTarget',result.target,true);putValue('quickRollModifier',appliedMod,true);
+  const quick=$('quickResult');
+  if(quick){
+    const modifierText=appliedMod>0?`${appliedMod} 个奖励骰`:appliedMod<0?`${Math.abs(appliedMod)} 个惩罚骰`:'无奖励 / 惩罚骰';
+    const dice=result.candidates.length>1?`${modifierText}；候选：${result.candidates.join('、')}（${appliedMod>0?'取低':'取高'}）`:'单次百分骰';
+    quick.innerHTML=`<strong>${esc(label)} · ${esc(result.level)}</strong><small>目标 ${result.target}；${esc(dice)}</small><div class="quick-result-number">${result.roll}</div>`;
+    quick.dataset.rank=String(result.rank);
+    applyContour(quick,`${current()?.profile.name}:${label}:${result.roll}`,.70);
+  }
+  rollHistory.unshift({label:String(label||'检定'),target:result.target,roll:result.roll,level:result.level,time:now()});
+  rollHistory=rollHistory.slice(0,30);renderQuickLog();
+  return result;
+}
+
+function runGrowthChecks(){
+  const c=current();if(!c)return;
+  const checked=Object.values(c.skills).filter(s=>s.check&&s.growthAllowed&&s.id!=='credit-rating'&&s.id!=='cthulhu-mythos');
+  if(!checked.length){toast('没有可结算的成长勾选。');return}
+  const results=[];
+  checked.forEach(s=>{
+    const before=skillFinal(c,s.id),roll=rollDie(100);
+    let gain=0;
+    if(roll>before||roll>=96){gain=rollDie(10);s.growth=int(s.growth)+gain}
+    s.check=false;
+    results.push(`${skillDisplayName(s)}：${roll}${gain?`，+${gain}`:'，未成长'}`);
+  });
+  c.history.push({type:'growth',at:now(),results:results.slice()});c.history=c.history.slice(-40);
+  renderOccupationBudgets();renderSkillEditor();renderSkills();renderWeapons();renderCredit();scheduleSave();
+  const message=`成长结算完成：\n${results.join('\n')}`;
+  setToolStatus(message,'ok');toast(`已结算 ${checked.length} 项成长检定。`);
+}
+
+function clearSkillChecks(){
+  const c=current();if(!c)return;Object.values(c.skills).forEach(s=>{s.check=false});renderSkillEditor();renderSkills();scheduleSave();toast('已清除技能成长勾选。');
+}
+
+function createNewInvestigator(){
+  saveCurrent(false);
+  const c=blankInvestigator();characters[c.id]=c;currentId=c.id;saveCache();renderAll(true);showPage('sheet');toast('已建立空白调查员。');
+}
+
+function loadInvestigator(id){
+  if(!characters[id]){toast('未找到该调查员。');renderLibrary();return}
+  if(currentId&&characters[currentId])saveCurrent(false);
+  currentId=id;characters[id]=normalize(characters[id]);saveCache();renderAll(true);showPage('sheet');renderLibrary();toast(`已读取 ${characters[id].profile.name}。`);
+}
+
+function duplicateInvestigator(id){
+  const source=characters[id];if(!source)return;
+  const copy=normalize(deepClone(source));copy.id=uid('coc');copy.createdAt=now();copy.updatedAt=now();copy.profile.name=`${source.profile.name} · 副本`;
+  characters[copy.id]=copy;currentId=copy.id;saveCache();renderAll(true);showPage('sheet');toast('已复制并读取调查员副本。');
+}
+
+function deleteInvestigator(id,ask=true){
+  const c=characters[id];if(!c)return;
+  if(ask&&!window.confirm(`确定删除“${c.profile.name}”吗？此操作无法撤销。`))return;
+  delete characters[id];
+  if(currentId===id){
+    const next=Object.values(characters).sort((a,b)=>String(b.updatedAt).localeCompare(String(a.updatedAt)))[0];
+    if(next)currentId=next.id;
+    else{const blank=blankInvestigator();characters[blank.id]=blank;currentId=blank.id}
+  }
+  saveCache();renderAll(true);renderLibrary();toast('调查员已删除，当前人物卡与列表已刷新。');
+}
+
+function clearAllInvestigators(){
+  if(!window.confirm('确定清空本机库中的全部调查员吗？请先导出重要人物卡。'))return;
+  characters={};const blank=blankInvestigator();characters[blank.id]=blank;currentId=blank.id;saveCache();renderAll(true);showPage('sheet');toast('本机库已清空并建立空白调查员。');
+}
+
+function exportableDocument(c){
+  const clone=document.documentElement.cloneNode(true);
+  const embedded=clone.querySelector(`#${EMBEDDED_ID}`);
+  if(embedded)embedded.textContent=JSON.stringify(normalize(c)).replace(/</g,'\\u003c');
+  const clearIds=['overviewRoot','characteristicsGrid','conditionGrid','skillEditor','skillsRoot','weaponList','gearList','fellowList','libraryList','rollLog','occupationReferenceList','weaponReferenceList'];
+  clearIds.forEach(id=>{const el=clone.querySelector(`#${id}`);if(el)el.innerHTML=''});
+  const portrait=clone.querySelector('#portraitBox');if(portrait)portrait.innerHTML='<span>调查员肖像</span>';
+  const quick=clone.querySelector('#quickResult');if(quick)quick.innerHTML='<strong>等待检定</strong><small>打开文件后可继续使用。</small><div class="quick-result-number">—</div>';
+  clone.querySelectorAll('.open').forEach(el=>el.classList.remove('open'));
+  const overviewPopover=clone.querySelector('#overviewResourcePopover');if(overviewPopover){overviewPopover.hidden=true;overviewPopover.style.cssText=''}
+  clone.querySelectorAll('[style]').forEach(el=>{el.style.removeProperty('--contour-image');el.style.removeProperty('--contour-opacity')});
+  clone.querySelectorAll('.page').forEach(el=>el.classList.toggle('active',el.id==='page-sheet'));
+  clone.querySelectorAll('[data-page]').forEach(el=>el.classList.toggle('active',el.dataset.page==='sheet'));
+  const notice=clone.querySelector('#exportNotice');if(notice)notice.hidden=true;
+  return '<!doctype html>\n'+clone.outerHTML;
+}
+
+function makeExportFile(c){
+  const text=exportableDocument(c);
+  const filename=`CoC7_${safeName(c.profile.name)}_${new Date().toISOString().slice(0,10)}.mdice.html`;
+  return{blob:new Blob([text],{type:'text/html;charset=utf-8'}),filename,text};
+}
+
+function downloadBlob(blob,filename){
+  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+
+function exportInvestigator(c=current()){
+  if(!c)return;saveCurrent(false);const file=makeExportFile(c);downloadBlob(file.blob,file.filename);toast('已导出可继续编辑的 MDICE 人物卡。');
+}
+
+async function shareInvestigator(c=current()){
+  if(!c)return;saveCurrent(false);const out=makeExportFile(c);
+  try{
+    const file=new File([out.blob],out.filename,{type:'text/html'});
+    if(navigator.canShare?.({files:[file]})&&navigator.share){await navigator.share({title:`CoC 7版：${c.profile.name}`,files:[file]});toast('已打开系统分享面板。')}
+    else{downloadBlob(out.blob,out.filename);toast('当前环境不支持文件分享，已改为下载。')}
+  }catch(err){if(err?.name!=='AbortError'){downloadBlob(out.blob,out.filename);toast('分享失败，已改为下载。')}}
+}
+
+function parseImportedText(text){
+  const trimmed=String(text||'').trim();if(!trimmed)throw new Error('文件为空');
+  if(trimmed.startsWith('{')||trimmed.startsWith('[')){
+    const obj=JSON.parse(trimmed);const raw=Array.isArray(obj)?obj[0]:obj;
+    if(!raw||raw.schema!==SCHEMA)throw new Error('JSON 不是本工具的 CoC 7版调查员数据');
+    return raw;
+  }
+  const doc=new DOMParser().parseFromString(trimmed,'text/html');
+  const embedded=doc.getElementById(EMBEDDED_ID);
+  if(!embedded){
+    if(doc.getElementById('embedded-character'))throw new Error('这是旧版通用人物卡，数据结构与 CoC 7版人物卡不兼容');
+    throw new Error('未找到可识别的内嵌调查员数据');
+  }
+  const raw=JSON.parse(embedded.textContent||'null');
+  if(!raw||raw.schema!==SCHEMA)throw new Error('内嵌数据不是本工具的 CoC 7版格式');
+  return raw;
+}
+
+function importInvestigator(raw){
+  const c=normalize(raw);characters[c.id]=c;currentId=c.id;saveCache();renderAll(true);showPage('sheet');
+  setToolStatus(`已导入：${c.profile.name}\n更新时间：${formatDate(c.updatedAt)}`,'ok');toast(`已导入并读取 ${c.profile.name}。`);
+}
+
+async function importFile(file){
+  try{const text=await file.text();importInvestigator(parseImportedText(text))}
+  catch(err){setToolStatus(`导入失败：${err.message}`,'bad');toast('导入失败，请查看工具页提示。')}
+}
+
+function copyJson(){
+  const c=current();if(!c)return;const text=JSON.stringify(c,null,2);putValue('jsonBox',text,true);
+  if(navigator.clipboard?.writeText)navigator.clipboard.writeText(text).then(()=>toast('调查员 JSON 已复制。')).catch(()=>toast('已填入文本框，请手动复制。'));
+  else toast('已填入文本框，请手动复制。');
+}
+
+function importJsonBox(){
+  try{importInvestigator(parseImportedText($('jsonBox')?.value||''))}
+  catch(err){setToolStatus(`导入失败：${err.message}`,'bad');toast('文本导入失败。')}
+}
+
+function compressPortrait(file){
+  return new Promise((resolve,reject)=>{
+    if(!file||!file.type.startsWith('image/')){reject(new Error('请选择图像文件'));return}
+    const reader=new FileReader();
+    reader.onerror=()=>reject(new Error('无法读取图像'));
+    reader.onload=()=>{
+      const img=new Image();
+      img.onerror=()=>reject(new Error('无法解析图像'));
+      img.onload=()=>{
+        const max=720,scale=Math.min(1,max/Math.max(img.width,img.height));
+        const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));
+        const ctx=canvas.getContext('2d');ctx.fillStyle='#fffdf8';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
+        resolve(canvas.toDataURL('image/jpeg',.84));
+      };
+      img.src=String(reader.result);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function requestPersistentStorage(){
+  if(!navigator.storage?.persist){setStorageStatus('当前浏览器不支持 Storage Persistence API。','warn');return}
+  try{
+    const already=await navigator.storage.persisted?.();
+    const granted=already||await navigator.storage.persist();
+    setStorageStatus(granted?'浏览器已允许当前来源尽量长期保留本机库。':'浏览器未授予长期保存；请定期导出 MDICE 备份。',granted?'ok':'warn');
+  }catch(err){setStorageStatus(`请求长期保存失败：${err.message}`,'bad')}
+}
+
+async function showStorageEstimate(){
+  if(!navigator.storage?.estimate){setStorageStatus('当前浏览器无法查询缓存占用。','warn');return}
+  try{
+    const {usage=0,quota=0}=await navigator.storage.estimate();
+    const fmt=n=>n<1024?`${n} B`:n<1048576?`${(n/1024).toFixed(1)} KB`:`${(n/1048576).toFixed(2)} MB`;
+    const persisted=await navigator.storage.persisted?.();
+    setStorageStatus(`本工具调查员：${Object.keys(characters).length} 张\n站点已用：${fmt(usage)}\n可用配额：${fmt(quota)}\n长期保存：${persisted?'已授予':'未授予 / 未知'}`,'ok');
+  }catch(err){setStorageStatus(`读取占用失败：${err.message}`,'bad')}
+}
+
+function handleInput(event){
+  const el=event.target,c=current();if(!c)return;
+  if(el.matches('[data-profile]')){
+    const key=el.dataset.profile;c.profile[key]=key==='age'?clamp(el.value,15,120):String(el.value||'');
+    if(key==='age')renderDerived();
+    renderQuickInfo();scheduleSave();return;
+  }
+  if(el.matches('[data-char]')){
+    const id=el.dataset.char,oldD=computeDerived(c);c.characteristics[id]=clamp(el.value,0,100);const newD=computeDerived(c);syncCurrentResources(c,oldD,newD);refreshCharacteristicCard(id);renderAbilityRadar();renderDependent();scheduleSave();return;
+  }
+  if(el.matches('[data-current]')){
+    const key=`${el.dataset.current}Current`;c.resources[key]=Math.max(0,int(el.value));renderResources();renderQuickInfo();scheduleSave();return;
+  }
+  if(el.matches('[data-resource]')){
+    const key=el.dataset.resource;
+    if(['armor','injuryNotes'].includes(key))c.resources[key]=String(el.value||'');
+    else{const oldD=computeDerived(c);c.resources[key]=int(el.value);const newD=computeDerived(c);syncCurrentResources(c,oldD,newD);renderDerived();renderResources()}
+    renderQuickInfo();scheduleSave();return;
+  }
+  if(el.matches('[data-status]')){
+    c.resources.status[el.dataset.status]=!!el.checked;renderConditions();scheduleSave();return;
+  }
+  if(el.matches('[data-occupation]')){
+    const key=el.dataset.occupation;c.occupation[key]=key==='customPoints'?Math.max(0,int(el.value)):String(el.value||'');renderOccupationBudgets();scheduleSave();return;
+  }
+  if(el.matches('[data-wealth]')){c.wealth[el.dataset.wealth]=String(el.value||'');scheduleSave();return}
+  if(el.matches('[data-backstory]')){c.backstory[el.dataset.backstory]=String(el.value||'');scheduleSave();return}
+  if(el.id==='occupationReferenceSearch'){renderOccupationReference();return}
+  if(el.id==='weaponReferenceSearch'){renderWeaponReference();return}
+  if(el.id==='skillSearch'){c.ui.skillSearch=String(el.value||'');renderSkills();scheduleSave();return}
+  if(el.matches('[data-skill-editor-field]')){
+    const s=c.skills[c.ui.selectedSkillId];setSkillField(s,el.dataset.skillEditorField,el.value);updateSkillEditorSummary();renderOccupationBudgets();renderSkills();renderWeapons();renderCredit();scheduleSave();return;
+  }
+  if(el.matches('[data-skill-table-field]')){
+    const s=c.skills[el.dataset.skillId];setSkillField(s,el.dataset.skillTableField,el.value);renderOccupationBudgets();refreshTableSkillRow(s.id);renderWeapons();renderCredit();scheduleSave();return;
+  }
+  if(el.matches('[data-skill-specialty]')){
+    const s=c.skills[el.dataset.skillSpecialty];if(s)s.specialty=String(el.value||'');scheduleSave();return;
+  }
+  if(el.matches('[data-skill-check-input]')){
+    const s=c.skills[el.dataset.skillCheckInput];if(s&&s.growthAllowed)s.check=!!el.checked;renderSkillEditor();scheduleSave();return;
+  }
+  const weaponRow=el.closest('[data-weapon-id]');
+  if(weaponRow&&el.matches('[data-weapon-field]')){
+    const w=findRecord(c.weapons,weaponRow.dataset.weaponId);if(w){w[el.dataset.weaponField]=String(el.value||'');const value=weaponRow.querySelector('[data-weapon-skill-value]');if(value)value.textContent=skillFinal(c,w.skillId)}scheduleSave();return;
+  }
+  const gearRow=el.closest('[data-gear-id]');
+  if(gearRow&&el.matches('[data-gear-field]')){const g=findRecord(c.gear,gearRow.dataset.gearId);if(g)g[el.dataset.gearField]=String(el.value||'');scheduleSave();return}
+  const fellowRow=el.closest('[data-fellow-id]');
+  if(fellowRow&&el.matches('[data-fellow-field]')){const f=findRecord(c.backstory.fellows,fellowRow.dataset.fellowId);if(f)f[el.dataset.fellowField]=String(el.value||'');scheduleSave();return}
+}
+
+function handleChange(event){
+  const el=event.target,c=current();if(!c)return;
+  if(el.id==='overviewSkillMode'){renderOverview();return}
+  if(el.matches('[data-profile="name"]')){renderQuickInfo();renderLibrary();scheduleSave()}
+  if(el.id==='occupationPreset'){
+    const preset=OCCUPATION_PRESETS[el.value];putValue('presetNote',preset?`将建立：${preset.label} · ${preset.occupation}`:'选择模板后可一键建立可玩的起始技能',true);
+  }
+  if(el.id==='weaponReferenceCategory')renderWeaponReference();
+}
+
+function handleClick(event){
+  const target=event.target.closest('button,[data-skill-select],[data-overview-roll-skill]');if(!target)return;
+  const c=current();
+  if(target.matches('[data-page]')){closeOverviewResourceEditor();showPage(target.dataset.page);return}
+  if(target.matches('[data-overview-edit]')){openOverviewResourceEditor(target);return}
+  if(target.matches('[data-overview-popover-save]')){applyOverviewResourceEditor();return}
+  if(target.matches('[data-overview-popover-close]')){closeOverviewResourceEditor();return}
+  if(target.matches('[data-overview-step]')){if(event.detail===0)stepOverviewResourceButton(target,{refreshLibrary:true});return}
+  if(target.matches('[data-overview-roll-skill]')){const card=characters[target.dataset.cardId],skill=card?.skills[target.dataset.overviewRollSkill];if(skill)performRoll(`${card.profile.name} · ${skillDisplayName(skill)}`,skillFinal(card,skill.id));return}
+  if(target.matches('[data-open-overview-card]')){closeOverviewResourceEditor();loadInvestigator(target.dataset.openOverviewCard);return}
+  if(target.id==='refreshOverviewBtn'){renderOverview();toast('KP 总览已刷新。');return}
+  if(target.id==='overviewSaveBtn'){saveCurrent(true);renderOverview();return}
+  if(target.id==='saveBtn'||target.id==='saveSkillsBtn'||target.id==='saveStoryBtn'){saveCurrent(true);return}
+  if(target.matches('[data-export-current]')){exportInvestigator();return}
+  if(target.id==='shareCurrentBtn'){shareInvestigator();return}
+  if(target.id==='quickToggle'||target.id==='openQuickDockBtn'){const dock=$('quickDock');if(!dock)return;const opening=!dock.classList.contains('open');dock.classList.toggle('open');if(opening)resetQuickSession();target.setAttribute('aria-expanded',String(dock.classList.contains('open')));return}
+  if(target.id==='closeQuickDock'){$('quickDock')?.classList.remove('open');return}
+  if(target.id==='quickRollBtn'){performRoll($('quickRollLabel')?.value||'快速检定',int($('quickRollTarget')?.value));return}
+  if(target.id==='toolRollBtn'){performRoll($('toolRollLabel')?.value||'临时检定',int($('toolRollTarget')?.value),0);return}
+  if(target.matches('[data-roll-char]')){const id=target.dataset.rollChar,def=CHARACTERISTICS.find(x=>x.id===id);performRoll(def?.name||id,c?.characteristics[id]||0);return}
+  if(target.matches('[data-roll-resource]')){const key=target.dataset.rollResource;performRoll(key==='san'?'理智检定':'幸运检定',key==='san'?c?.resources.sanCurrent:c?.resources.luckCurrent);return}
+  if(target.matches('[data-roll-skill]')){const id=target.dataset.rollSkill,s=c?.skills[id];if(s)performRoll(skillDisplayName(s),skillFinal(c,id));return}
+  if(target.matches('[data-skill-check]')){event.stopPropagation();const s=c?.skills[target.dataset.skillCheck];if(s&&s.growthAllowed){s.check=!s.check;renderSkillEditor();renderSkills();scheduleSave()}return}
+  if(target.matches('[data-toggle-selected-check]')){const s=c?.skills[c.ui.selectedSkillId];if(s&&s.growthAllowed){s.check=!s.check;renderSkillEditor();renderSkills();scheduleSave()}return}
+  if(target.matches('[data-delete-selected-skill]')){
+    const id=c?.ui.selectedSkillId,s=c?.skills[id];if(s?.custom&&window.confirm(`删除自定义技能“${skillDisplayName(s)}”吗？`)){delete c.skills[id];c.ui.selectedSkillId='spot-hidden';c.weapons.forEach(w=>{if(w.skillId===id)w.skillId='fighting-brawl'});renderDependent();scheduleSave()}return;
+  }
+  if(target.matches('[data-skill-select]')){if(!event.target.closest('input,select,button'))selectSkill(target.dataset.skillSelect);return}
+  if(target.id==='skillModeDense'){c.ui.skillMode='dense';renderSkills();scheduleSave();return}
+  if(target.id==='skillModeTable'){c.ui.skillMode='table';renderSkills();scheduleSave();return}
+  if(target.id==='addCustomSkillBtn'){$('customSkillDialog')?.showModal();setTimeout(()=>$('customSkillName')?.focus(),0);return}
+  if(target.id==='clearSkillChecksBtn'){clearSkillChecks();return}
+  if(target.id==='growthBtn'){runGrowthChecks();return}
+  if(target.id==='applyOccupationPresetBtn'){applyOccupationPreset($('occupationPreset')?.value||'');return}
+  if(target.matches('[data-use-occupation]')){useOccupationReference(target.dataset.useOccupation);return}
+  if(target.matches('[data-add-reference-weapon]')){addReferenceWeapon(target.dataset.addReferenceWeapon);return}
+  if(target.id==='quickArrayBtn'){applyStandardArray();return}
+  if(target.id==='rollCharacteristicsBtn'){rollCharacteristics();return}
+  if(target.id==='resetCurrentsBtn'){resetCurrents();return}
+  if(target.id==='pickPortraitBtn'){$('portraitInput')?.click();return}
+  if(target.id==='clearPortraitBtn'){if(c){c.portrait='';renderProfile();scheduleSave();toast('肖像已清除。')}return}
+  if(target.id==='addWeaponBtn'){addWeapon();return}
+  if(target.matches('[data-remove-weapon]')){c.weapons=c.weapons.filter(w=>w.id!==target.dataset.removeWeapon);renderWeapons();scheduleSave();return}
+  if(target.id==='addGearBtn'){addGear();return}
+  if(target.matches('[data-remove-gear]')){c.gear=c.gear.filter(g=>g.id!==target.dataset.removeGear);renderGear();scheduleSave();return}
+  if(target.id==='addFellowBtn'){addFellow();return}
+  if(target.matches('[data-remove-fellow]')){c.backstory.fellows=c.backstory.fellows.filter(f=>f.id!==target.dataset.removeFellow);renderFellows();scheduleSave();return}
+  if(target.id==='newInvestigatorBtn'){createNewInvestigator();return}
+  if(target.id==='refreshLibraryBtn'){renderLibrary();toast('人物卡列表已刷新。');return}
+  if(target.matches('[data-load-card]')){loadInvestigator(target.dataset.loadCard);return}
+  if(target.matches('[data-duplicate-card]')){duplicateInvestigator(target.dataset.duplicateCard);return}
+  if(target.matches('[data-export-card]')){exportInvestigator(characters[target.dataset.exportCard]);return}
+  if(target.matches('[data-delete-card]')){deleteInvestigator(target.dataset.deleteCard,true);return}
+  if(target.id==='deleteCurrentBtn'){deleteInvestigator(currentId,true);return}
+  if(target.id==='clearAllBtn'){clearAllInvestigators();return}
+  if(target.id==='persistBtn'){requestPersistentStorage();return}
+  if(target.id==='storageEstimateBtn'){showStorageEstimate();return}
+  if(target.id==='pickImportBtn'){$('importFileInput')?.click();return}
+  if(target.id==='copyJsonBtn'){copyJson();return}
+  if(target.id==='importJsonBtn'){importJsonBox();return}
+  if(target.id==='printBtn'){window.print();return}
+}
+
+function bindEvents(){
+  document.addEventListener('input',handleInput);
+  document.addEventListener('change',handleChange);
+  document.addEventListener('pointerdown',handleOverviewPointerDown);
+  document.addEventListener('pointerup',stopOverviewHold,true);
+  document.addEventListener('pointercancel',stopOverviewHold,true);
+  document.addEventListener('click',handleClick);
+  document.addEventListener('contextmenu',event=>{if(event.target.closest?.('[data-overview-step]'))event.preventDefault()});
+  document.addEventListener('keydown',event=>{
+    if(event.target.id==='overviewResourceEditInput'){
+      if(event.key==='Enter'){event.preventDefault();applyOverviewResourceEditor();return}
+      if(event.key==='Escape'){event.preventDefault();closeOverviewResourceEditor();return}
+    }
+    if(event.key==='Escape'&&overviewResourceEditor){closeOverviewResourceEditor();return}
+    const overviewSkill=event.target.closest?.('[data-overview-roll-skill]');
+    if(overviewSkill&&(event.key==='Enter'||event.key===' ')){event.preventDefault();overviewSkill.click();return}
+    const card=event.target.closest?.('[data-skill-select]');
+    if(card&&(event.key==='Enter'||event.key===' ')){event.preventDefault();selectSkill(card.dataset.skillSelect)}
+  });
+  $('librarySearch')?.addEventListener('input',renderLibrary);
+  $('overviewSearch')?.addEventListener('input',renderOverview);
+  $('overviewSkillSearch')?.addEventListener('input',renderOverview);
+  $('portraitInput')?.addEventListener('change',async event=>{
+    const file=event.target.files?.[0];if(!file)return;
+    try{const data=await compressPortrait(file);const c=current();if(c){c.portrait=data;renderProfile();scheduleSave();toast('肖像已压缩并写入人物卡。')}}catch(err){toast(`肖像处理失败：${err.message}`)}finally{event.target.value=''}
+  });
+  $('importFileInput')?.addEventListener('change',event=>{const file=event.target.files?.[0];if(file)importFile(file);event.target.value=''});
+  $('confirmCustomSkillBtn')?.addEventListener('click',event=>{
+    event.preventDefault();const c=current();if(!c)return;
+    const name=String($('customSkillName')?.value||'').trim();if(!name){toast('请输入技能名称。');return}
+    const id=uid('skill'),s=normalizeSkill({id,name,group:$('customSkillGroup')?.value||'其他',base:clamp($('customSkillBase')?.value,0,100),custom:true},null);
+    c.skills[id]=s;c.ui.selectedSkillId=id;$('customSkillDialog')?.close();putValue('customSkillName','',true);putValue('customSkillBase',1,true);renderDependent();scheduleSave();toast(`已添加自定义技能“${name}”。`);
+  });
+  window.addEventListener('blur',stopOverviewHold);
+  window.addEventListener('resize',()=>{if(overviewResourceEditor)positionOverviewResourcePopover(overviewResourceEditor.anchor)});
+  window.addEventListener('scroll',()=>{if(overviewResourceEditor)positionOverviewResourcePopover(overviewResourceEditor.anchor)},true);
+  window.addEventListener('beforeunload',()=>{clearTimeout(autosaveTimer);saveCurrent(false)});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){clearTimeout(autosaveTimer);saveCurrent(false)}});
+}
+
+function readEmbedded(){
+  const el=$(EMBEDDED_ID);if(!el)return null;
+  try{const raw=JSON.parse(el.textContent||'null');return raw&&raw.schema===SCHEMA?raw:null}catch(err){console.warn('embedded data parse failed',err);return null}
+}
+
+function initialize(){
+  loadCache();
+  const embedded=readEmbedded();
+  if(embedded){
+    const c=normalize(embedded);characters[c.id]=c;currentId=c.id;
+    const notice=$('exportNotice');if(notice)notice.hidden=false;
+  }
+  if(!currentId||!characters[currentId]){const c=blankInvestigator();characters[c.id]=c;currentId=c.id}
+  saveCache();bindEvents();initNavWaves();initAmbientDots();renderAll(true);showPage('sheet');
+  setStorageStatus(`本机库已载入 ${Object.keys(characters).length} 张调查员。\n当前：${current().profile.name}`,'ok');
+  putValue('jsonBox',JSON.stringify(current(),null,2),true);
+}
+
+initialize();
+})();
+</script>
+</body>
+</html>

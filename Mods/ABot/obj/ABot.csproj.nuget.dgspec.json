@@ -4,14 +4,14 @@
     "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\Mods\\ABot\\ABot.csproj": {}
   },
   "projects": {
-    "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj": {
-      "version": "0.2.7",
+    "c:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj": {
+      "version": "0.3.1",
       "restore": {
-        "projectUniqueName": "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj",
+        "projectUniqueName": "c:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj",
         "projectName": "MDiceV2.Abstractions",
-        "projectPath": "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj",
+        "projectPath": "c:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj",
         "packagesPath": "C:\\Users\\49405\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\obj\\",
+        "outputPath": "c:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\49405\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -98,7 +98,7 @@
       }
     },
     "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Core\\MDiceV2.Core.csproj": {
-      "version": "0.2.7",
+      "version": "0.3.1",
       "restore": {
         "projectUniqueName": "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Core\\MDiceV2.Core.csproj",
         "projectName": "MDiceV2.Core",
@@ -120,8 +120,8 @@
             "framework": "net10.0-windows7.0",
             "targetAlias": "net10.0-windows",
             "projectReferences": {
-              "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj": {
-                "projectPath": "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj"
+              "c:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj": {
+                "projectPath": "c:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj"
               },
               "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Interfaces\\MDiceV2.Interfaces.csproj": {
                 "projectPath": "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Interfaces\\MDiceV2.Interfaces.csproj"
@@ -526,7 +526,7 @@
       }
     },
     "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Interfaces\\MDiceV2.Interfaces.csproj": {
-      "version": "0.2.7",
+      "version": "0.3.1",
       "restore": {
         "projectUniqueName": "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Interfaces\\MDiceV2.Interfaces.csproj",
         "projectName": "MDiceV2.Interfaces",
@@ -867,7 +867,7 @@
       }
     },
     "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\Mods\\ABot\\ABot.csproj": {
-      "version": "0.2.7",
+      "version": "0.3.1",
       "restore": {
         "projectUniqueName": "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\Mods\\ABot\\ABot.csproj",
         "projectName": "ABot",

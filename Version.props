@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <AssemblyVersion>0.2.7</AssemblyVersion>
+    <AssemblyVersion>0.3.1</AssemblyVersion>
     <!-- 填写 beta/alpha/rc 等预发行标识，留空则不追加后缀 -->
     <InformationalVersion>beta</InformationalVersion>
   </PropertyGroup>

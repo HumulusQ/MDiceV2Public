@@ -172,7 +172,8 @@ public class AIModSlimPackageTests
         scriptContent.Should().Contain("if not exist \"%PAYLOAD%\\mod.json\" goto missing_payload");
         scriptContent.Should().Contain("if not exist \"%PAYLOAD%\\%DLL_FILE%\" goto missing_payload");
         scriptContent.Should().Contain("move \"%TARGET%\" \"%BACKUP%\"");
-        scriptContent.Should().Contain("start \"\" \"%EXE_PATH%\"");
+        scriptContent.Should().Contain("set \"RESTART_WORKDIR=");
+        scriptContent.Should().Contain("start \"\" /D \"%RESTART_WORKDIR%\" \"%EXE_PATH%\"");
 
         scriptContent.IndexOf("runtimes", StringComparison.OrdinalIgnoreCase).Should().Be(-1);
         scriptContent.IndexOf("Avalonia", StringComparison.OrdinalIgnoreCase).Should().Be(-1);

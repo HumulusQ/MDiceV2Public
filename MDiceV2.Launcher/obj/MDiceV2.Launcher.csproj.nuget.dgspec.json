@@ -4,14 +4,14 @@
     "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Launcher\\MDiceV2.Launcher.csproj": {}
   },
   "projects": {
-    "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj": {
-      "version": "0.2.7",
+    "c:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj": {
+      "version": "0.3.1",
       "restore": {
-        "projectUniqueName": "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj",
+        "projectUniqueName": "c:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj",
         "projectName": "MDiceV2.Abstractions",
-        "projectPath": "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj",
+        "projectPath": "c:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj",
         "packagesPath": "C:\\Users\\49405\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\obj\\",
+        "outputPath": "c:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\49405\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -98,7 +98,7 @@
       }
     },
     "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Launcher\\MDiceV2.Launcher.csproj": {
-      "version": "0.2.7",
+      "version": "0.3.1",
       "restore": {
         "projectUniqueName": "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Launcher\\MDiceV2.Launcher.csproj",
         "projectName": "MDiceV2.Launcher",
@@ -120,8 +120,8 @@
             "framework": "net10.0-windows7.0",
             "targetAlias": "net10.0-windows",
             "projectReferences": {
-              "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj": {
-                "projectPath": "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj"
+              "c:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj": {
+                "projectPath": "c:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj"
               }
             }
           }

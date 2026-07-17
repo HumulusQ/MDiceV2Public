@@ -11,6 +11,7 @@ namespace MDiceV2.Core.UI.ViewModels;
 public partial class ConfigContainerViewModel : ObservableObject
 {
     private readonly MDiceV2.Abstractions.IDispatcher? _dispatcher;
+    private int _bulkUpdateDepth;
     
     /// <summary>
     /// 【修复】追踪最后一次推送的值，用于检测真实的值变化
@@ -143,10 +144,33 @@ public partial class ConfigContainerViewModel : ObservableObject
     {
         _dispatcher = dispatcher;
         FilteredItems = new ObservableCollection<ConfigItem>(Items);
-        Items.CollectionChanged += (s, e) => UpdateFilteredItems();
+        Items.CollectionChanged += (s, e) =>
+        {
+            if (_bulkUpdateDepth == 0)
+                UpdateFilteredItems();
+        };
 
         // 监听配置项值变化，用于同步到GlobalFeedbackMessages
         PropertyChanged += OnPropertyChanged;
+    }
+
+    /// <summary>
+    /// Defers filtering while a large set of items is populated so the UI list
+    /// is rebuilt only once instead of once per configuration item.
+    /// </summary>
+    public void BeginBulkUpdate() => _bulkUpdateDepth++;
+
+    /// <summary>
+    /// Completes a deferred update and rebuilds the visible collection once.
+    /// </summary>
+    public void EndBulkUpdate()
+    {
+        if (_bulkUpdateDepth == 0)
+            return;
+
+        _bulkUpdateDepth--;
+        if (_bulkUpdateDepth == 0)
+            UpdateFilteredItems();
     }
 
     /// <summary>

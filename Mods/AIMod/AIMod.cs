@@ -1433,6 +1433,17 @@ namespace AIMod
             }
         }
 
+        private bool AreAllGroupSessionsOff(long groupId)
+        {
+            lock (_activeSessions)
+            {
+                if (!_activeSessions.TryGetValue(groupId, out var sessions) || sessions == null || sessions.Count == 0)
+                    return false;
+
+                return sessions.All(session => session.RuntimeMode == AiRuntimeMode.Off);
+            }
+        }
+
         private static string FormatInventoryForCommand(IReadOnlyList<CharacterInventoryItem> items)
         {
             if (items == null || items.Count == 0)
@@ -2274,6 +2285,14 @@ namespace AIMod
                 }
                 if (sessions == null || sessions.Count == 0) return null;
 
+                if (sessions.All(session => session.RuntimeMode == AiRuntimeMode.Off))
+                {
+                    _context.Log(
+                        LogLevel.Debug,
+                        $"[AIMod:TRPG] All sessions are off, skip message dispatch and API planning (Group={groupId})");
+                    return null;
+                }
+
             // 2. 确定发送者所在的队伍（用于消息分类）
             var teamName = _teamDataProvider.GetUserDefaultTeamName(groupId, userId);
             if (string.IsNullOrEmpty(teamName))
@@ -2612,18 +2631,12 @@ namespace AIMod
 
         private void TryNotifyUserApiFallback(ActiveGroupApiContext? apiContext, string warning)
         {
-            if (apiContext == null || !apiContext.OwnerHasElevatedPermission)
+            if (apiContext == null || string.IsNullOrWhiteSpace(warning))
                 return;
 
-            var now = DateTime.UtcNow;
-            if (_apiWarningCooldown.TryGetValue(apiContext.GroupId, out var last) &&
-                now - last < TimeSpan.FromMinutes(3))
-            {
-                return;
-            }
-
-            _apiWarningCooldown[apiContext.GroupId] = now;
-            TryNotifyGroupMessage(apiContext.GroupId, warning);
+            _context.Log(
+                LogLevel.Info,
+                $"[AIMod:TRPG] Suppressed fallback warning for Group={apiContext.GroupId}: {warning}");
         }
 
         /// <summary>
@@ -3105,6 +3118,16 @@ namespace AIMod
         private async Task<string?> CallTrpgApiWithFallbackAsync(List<ChatMessage> messages)
         {
             var apiContext = GetCurrentActiveApiContext();
+            var scopedGroupId = _trpgApiGroupScope.Value ?? apiContext?.GroupId;
+            if (scopedGroupId.HasValue && AreAllGroupSessionsOff(scopedGroupId.Value))
+            {
+                ClearLastTrpgActualUsage();
+                _context.Log(
+                    LogLevel.Debug,
+                    $"[AIMod:TRPG] All sessions are off, skip outbound chat API request (Group={scopedGroupId.Value})");
+                return null;
+            }
+
             var userSetting = apiContext == null ? new UserApiSetting() : GetUserApiSetting(apiContext.OwnerUserId);
             var secConfig = _config.TrpgConfig;
             var userPrimarySpecified = !string.IsNullOrWhiteSpace(userSetting.ApiKey);
@@ -3217,10 +3240,6 @@ namespace AIMod
                 }
             }
 
-            if (userPrimaryFailed)
-            {
-                TryNotifyGroupMessage(apiContext?.GroupId, "调用失败，通用API的token额度已经用尽。");
-            }
             return null;
         }
 
@@ -3305,6 +3324,15 @@ namespace AIMod
         {
             ClearLastTrpgActualUsage();
             var apiContext = GetCurrentActiveApiContext();
+            var scopedGroupId = _trpgApiGroupScope.Value ?? apiContext?.GroupId;
+            if (scopedGroupId.HasValue && AreAllGroupSessionsOff(scopedGroupId.Value))
+            {
+                _context.Log(
+                    LogLevel.Debug,
+                    $"[AIMod:TRPG] All sessions are off, skip outbound embedding API request (Group={scopedGroupId.Value})");
+                return null;
+            }
+
             var userSetting = apiContext == null ? new UserApiSetting() : GetUserApiSetting(apiContext.OwnerUserId);
             var secConfig = _config.TrpgConfig;
             var userPrimarySpecified = !string.IsNullOrWhiteSpace(userSetting.ApiKey);
@@ -3435,10 +3463,6 @@ namespace AIMod
                 }
             }
 
-            if (userPrimaryFailed)
-            {
-                TryNotifyGroupMessage(apiContext?.GroupId, "调用失败，通用API的token额度已经用尽。");
-            }
             ClearLastTrpgActualUsage();
             return null;
         }
@@ -4669,7 +4693,7 @@ namespace AIMod
 
                 _context.Log(LogLevel.Info, $"[AIMod.Update] 下载目标: {targetPath}");
 
-                await DownloadAssetAsync(modAsset, tempPath);
+                await DownloadAssetAsync(modAsset, tempPath, owner, repo, latest.TagName);
 
                 if (File.Exists(targetPath))
                 {
@@ -4734,54 +4758,25 @@ namespace AIMod
             public string? AssetName { get; set; }
         }
 
-        private static async Task<List<GitHubReleaseDto>> GetAllReleasesAsync(string owner, string repo)
+        private CustomUpdateManager CreateModUpdateDownloader()
         {
-            var url = $"https://api.github.com/repos/{owner}/{repo}/releases";
-
-            using var client = new HttpClient();
-            client.Timeout = TimeSpan.FromSeconds(30);
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("MDiceV2-AIModUpdater");
-            client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
-
-            var response = await client.GetAsync(url);
-            if (!response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                throw new Exception($"获取 GitHub releases 失败: {response.StatusCode} - {content}");
-            }
-
-            var json = await response.Content.ReadAsStringAsync();
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                AllowTrailingCommas = true
-            };
-
-            var releases = JsonSerializer.Deserialize<List<GitHubReleaseDto>>(json, options) ?? new List<GitHubReleaseDto>();
-            return releases;
+            return new CustomUpdateManager(message =>
+                _context.Log(LogLevel.Info, "[AIMod.Update.Downloader] " + message));
         }
 
-        private static async Task DownloadAssetAsync(GitHubAssetDto asset, string targetPath)
+        private Task<List<GitHubRelease>> GetAllReleasesAsync(string owner, string repo)
         {
-            using var client = new HttpClient();
-            client.Timeout = TimeSpan.FromSeconds(300);
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("MDiceV2-AIModUpdater");
+            return CreateModUpdateDownloader().GetGitHubReleasesAsync(owner, repo);
+        }
 
-            var response = await client.GetAsync(asset.BrowserDownloadUrl);
-            if (!response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                throw new Exception($"下载资源失败: {response.StatusCode} - {content}");
-            }
-
-            var dir = Path.GetDirectoryName(targetPath);
-            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-            {
-                Directory.CreateDirectory(dir);
-            }
-
-            await using var fs = File.Create(targetPath);
-            await response.Content.CopyToAsync(fs);
+        private Task DownloadAssetAsync(
+            GitHubAsset asset,
+            string targetPath,
+            string owner,
+            string repo,
+            string? releaseTag = null)
+        {
+            return CreateModUpdateDownloader().DownloadGitHubAssetAsync(asset, targetPath, owner, repo, releaseTag);
         }
 
         private static string? ExtractNumericVersion(string? versionText)

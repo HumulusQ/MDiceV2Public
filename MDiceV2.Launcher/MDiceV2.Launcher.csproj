@@ -20,9 +20,9 @@
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-    <Version>0.2.7</Version>
-    <AssemblyVersion>0.2.7</AssemblyVersion>
-    <FileVersion>0.2.7</FileVersion>
+    <Version>0.3.1</Version>
+    <AssemblyVersion>0.3.1</AssemblyVersion>
+    <FileVersion>0.3.1</FileVersion>
     <InformationalVersion>beta</InformationalVersion>
   </PropertyGroup>
   <ItemGroup>
@@ -61,13 +61,13 @@
       <CoreCopyDestination Condition="'$(PublishDir)' != '' and '$(IsCopyingPublishFiles)' == 'true'">$(PublishDir)</CoreCopyDestination>
       <DepsCopyDestination>$(CoreCopyDestination)deps</DepsCopyDestination>
     </PropertyGroup>
-    <Message Text="[CopyCoreToOutputRoot] 姝ｅ湪鍒嗙渚濊禆锟?deps 瀛愭枃浠跺す..." Importance="high" />
+    <Message Text="[CopyCoreToOutputRoot] 濮濓絽婀崚鍡欘瀲娓氭繆绂嗛敓?deps 鐎涙劖鏋冩禒璺恒仚..." Importance="high" />
     <ItemGroup>
-      <!-- 鏍稿績涓氬姟 DLL 澶嶅埗鍒版牴鐩綍 -->
+      <!-- 閺嶇绺炬稉姘 DLL 婢跺秴鍩楅崚鐗堢壌閻╊喖缍?-->
       <CoreDlls Include="$(CoreBuildDir)MDiceV2.Core.dll" />
       <CoreDlls Include="$(CoreBuildDir)MDiceV2.Abstractions.dll" />
       <CoreDlls Include="$(CoreBuildDir)MDiceV2.Interfaces.dll" />
-      <!-- 鍏朵粬鎵€锟?DLL 鍜岃繍琛屾椂閰嶇疆澶嶅埗锟?deps -->
+      <!-- 閸忔湹绮幍鈧敓?DLL 閸滃矁绻嶇悰灞炬闁板秶鐤嗘径宥呭煑閿?deps -->
       <DepsDlls Include="$(CoreBuildDir)*.dll" Exclude="$(CoreBuildDir)MDiceV2.Core.dll;$(CoreBuildDir)MDiceV2.Abstractions.dll;$(CoreBuildDir)MDiceV2.Interfaces.dll" />
       <DepsJsons Include="$(CoreBuildDir)*.json" />
       <NativeDlls Include="$(MSBuildThisFileDirectory)..\MDiceV2.Core\bin\$(Configuration)\net10.0-windows\runtimes\win-x64\native\*.dll" />
@@ -75,13 +75,13 @@
     <MakeDir Directories="$(CoreCopyDestination)" />
     <MakeDir Directories="$(DepsCopyDestination)" />
     <MakeDir Directories="$(DepsCopyDestination)\native" />
-    <!-- 澶嶅埗鏍稿績 DLL 鍒版牴鐩綍 -->
+    <!-- 婢跺秴鍩楅弽绋跨妇 DLL 閸掔増鐗撮惄顔肩秿 -->
     <Copy SourceFiles="@(CoreDlls)" DestinationFolder="$(CoreCopyDestination)" SkipUnchangedFiles="true" />
-    <!-- 澶嶅埗鍏朵粬渚濊禆锟?deps 瀛愭枃浠跺す -->
+    <!-- 婢跺秴鍩楅崗鏈电铂娓氭繆绂嗛敓?deps 鐎涙劖鏋冩禒璺恒仚 -->
     <Copy SourceFiles="@(DepsDlls)" DestinationFolder="$(DepsCopyDestination)" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(DepsJsons)" DestinationFolder="$(DepsCopyDestination)" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(NativeDlls)" DestinationFolder="$(DepsCopyDestination)\native" SkipUnchangedFiles="true" />
-    <Message Text="[CopyCoreToOutputRoot] 鏍稿績DLL: @(CoreDlls-&gt;Count()) 涓埌鏍圭洰锟? 渚濊禆: @(DepsDlls-&gt;Count())+@(DepsJsons-&gt;Count())+@(NativeDlls-&gt;Count()) 涓埌 deps/" Importance="high" />
+    <Message Text="[CopyCoreToOutputRoot] 閺嶇绺綝LL: @(CoreDlls-&gt;Count()) 娑擃亜鍩岄弽鍦窗閿? 娓氭繆绂? @(DepsDlls-&gt;Count())+@(DepsJsons-&gt;Count())+@(NativeDlls-&gt;Count()) 娑擃亜鍩?deps/" Importance="high" />
   </Target>
   <!-- DISABLED: Do NOT copy Core.dll for PublishSingleFile=true - everything must be in the single file exe -->
   <!-- When PublishSingleFile=true is used, all dependencies are embedded in the exe, root must be clean -->

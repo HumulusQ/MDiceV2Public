@@ -49,6 +49,15 @@ namespace MDiceV2.Core
                 
                 // 解析启动参数，提取父进程PID
                 ParseArgs(args);
+
+                var messageTestOptions = MessageTestCliRunner.Parse(args);
+                if (messageTestOptions.Enabled)
+                {
+                    Console.WriteLine("[Core.Program] Starting message test CLI mode...");
+                    Console.Out.Flush();
+                    Environment.Exit(MessageTestCliRunner.Run(messageTestOptions));
+                    return;
+                }
                 
                 // 检查 --headless 参数（检查任何参数，不仅仅是args[0]）
                 bool isHeadlessMode = args.Any(arg => arg.Contains("--headless"));

@@ -1,11 +1,16 @@
 using Avalonia.Controls;
+using Avalonia.Animation;
+using Avalonia;
 using Avalonia.Media;
 using Avalonia.LogicalTree;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using MDiceV2.Models;
 using MDiceV2.Core.Mod;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace MDiceV2.Core.UI.Views;
@@ -17,6 +22,13 @@ namespace MDiceV2.Core.UI.Views;
 public partial class MainView : UserControl
 {
     private ListBox? _navigationListBox;
+    private Bitmap? _workspaceBackground;
+    private static readonly string BackgroundDataDirectory = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MDiceV2", "Backgrounds");
+    private static readonly string BackgroundPreferencePath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MDiceV2", "workspace-background.txt");
+    private static readonly PaneOpenToIconAlignmentConverter IconAlignmentConverter = new();
+    private static readonly PaneOpenToIconMarginConverter IconMarginConverter = new();
 
     /// <summary>
     /// 菜单项图片资源字典
@@ -151,6 +163,7 @@ public partial class MainView : UserControl
         try
         {
             InitializeComponent();
+            LoadWorkspaceBackground();
             DataContext = new ViewModels.MainViewModel();
 
             // 获取导航列表框
@@ -165,7 +178,11 @@ public partial class MainView : UserControl
             // 订阅选中项变化事件，用于更新菜单项图标状态
             if (_navigationListBox != null)
             {
-                _navigationListBox.SelectionChanged += (s, e) => UpdateMenuItemIconState();
+                _navigationListBox.SelectionChanged += (s, e) =>
+                {
+                    UpdateMenuItemIconState();
+                    UpdateWorkspaceTitle();
+                };
             }
 
             // 添加五个内置菜单项
@@ -173,6 +190,13 @@ public partial class MainView : UserControl
             
             // 加载 Mod 导航项
             AddModNavigationItems();
+            NavigationPanelRegistry.Instance.PanelChanged += OnNavigationPanelChanged;
+
+            // The ListBox reports -1 while its items are being added. Select the
+            // initial page only after all built-in and mod entries exist so the
+            // two-way binding keeps a valid workspace index.
+            if (_navigationListBox?.Items?.Count > 0 && _navigationListBox.SelectedIndex < 0)
+                _navigationListBox.SelectedIndex = 0;
         }
         catch (Exception ex)
         {
@@ -242,18 +266,22 @@ public partial class MainView : UserControl
         {
             var item = new ListBoxItem
             {
-                Height = 48,
-                Margin = new Avalonia.Thickness(0, 2),
-                CornerRadius = new Avalonia.CornerRadius(6),
+                Height = 52,
+                Margin = new Avalonia.Thickness(0),
+                CornerRadius = new Avalonia.CornerRadius(2),
                 BorderThickness = new Avalonia.Thickness(0),
                 Name = itemName,
-                Background = isBuiltin 
-                    ? new SolidColorBrush(Avalonia.Media.Color.Parse("#2A2A2A")) 
-                    : new SolidColorBrush(Avalonia.Media.Color.Parse("#FFFDD0"))
+                Background = Brushes.Transparent
             };
 
-            // 创建 Grid 作为内容容器，包含图标和文字
-            var contentGrid = new Avalonia.Controls.Grid();
+            // Keep the icon and caption as one centered unit in both rail states.
+            var contentPanel = new StackPanel
+            {
+                Orientation = Avalonia.Layout.Orientation.Horizontal,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                Spacing = 12
+            };
             
             // 规范化图标路径
             string normalizedIconPath = string.IsNullOrEmpty(iconPath) 
@@ -266,11 +294,10 @@ public partial class MainView : UserControl
             var icon = new Avalonia.Controls.Image
             {
                 Source = iconBitmap,
-                Width = 32,
-                Height = 32,
-                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
+                Width = 24,
+                Height = 24,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
                 VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                Margin = new Avalonia.Thickness(3, 0, 0, 0),
                 Name = $"{itemName}Icon"
             };
             
@@ -279,9 +306,11 @@ public partial class MainView : UserControl
             {
                 Text = displayName,
                 VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                FontWeight = Avalonia.Media.FontWeight.Medium,
-                Margin = new Avalonia.Thickness(52, 0, 10, 0),
-                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left
+                FontWeight = Avalonia.Media.FontWeight.SemiBold,
+                FontSize = 11,
+                LetterSpacing = 1,
+                Margin = new Avalonia.Thickness(0),
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
             };
             
             // 绑定文字的显示/隐藏到 IsPaneOpen
@@ -290,10 +319,10 @@ public partial class MainView : UserControl
                 Path = "IsPaneOpen"
             });
             
-            contentGrid.Children.Add(icon);
-            contentGrid.Children.Add(text);
+            contentPanel.Children.Add(icon);
+            contentPanel.Children.Add(text);
             
-            item.Content = contentGrid;
+            item.Content = contentPanel;
             
             // 添加事件处理器
             item.PointerEntered += MenuItem_PointerEntered;
@@ -336,7 +365,7 @@ public partial class MainView : UserControl
             {
                 Console.WriteLine($"[MainView] >>> Adding navigation item: {panelProvider.PanelName} (ID: {panelProvider.PanelId})");
                 Log.InfoFormat($"AddModNavigationItems: Adding panel '{panelProvider.PanelName}' (ID: {panelProvider.PanelId})");
-                var item = CreateModNavigationItem(panelProvider.PanelName, panelProvider.IconSource);
+                var item = CreateModNavigationItem(panelProvider.PanelName, panelProvider.IconSource, panelProvider.PanelId);
                 _navigationListBox.Items?.Add(item);
                 Console.WriteLine($"[MainView] >>> ✓ Navigation item added: {panelProvider.PanelName}");
                 Log.InfoFormat($"AddModNavigationItems: Successfully added panel '{panelProvider.PanelName}'");
@@ -358,10 +387,79 @@ public partial class MainView : UserControl
     /// <summary>
     /// 创建 Mod 导航项（使用淡黄色背景）
     /// </summary>
-    private ListBoxItem CreateModNavigationItem(string displayName, string? iconPath)
+    private ListBoxItem CreateModNavigationItem(string displayName, string? iconPath, string panelId)
     {
         // 使用通用方法创建，传入 isBuiltin=false 以应用 Mod 的淡黄色背景
-        return CreateNavigationItem(displayName, iconPath, displayName.Replace(" ", ""), isBuiltin: false);
+        var item = CreateNavigationItem(displayName, iconPath, displayName.Replace(" ", ""), isBuiltin: false);
+        item.Tag = panelId;
+        return item;
+    }
+
+    private void OnNavigationPanelChanged(object? sender, NavigationPanelChangedEventArgs e)
+    {
+        Dispatcher.UIThread.Post(async () =>
+        {
+            if (_navigationListBox == null)
+                return;
+
+            // Keep the user on the Mod Manager while its enabled-panel list is
+            // being refreshed; index 4 is the built-in Mods page.
+            _navigationListBox.SelectedIndex = 4;
+            if (DataContext is ViewModels.MainViewModel viewModel)
+            {
+                viewModel.SelectedIndex = 4;
+                viewModel.RefreshModPanelFactories();
+            }
+
+            if (e.IsRegistered)
+                AddLiveModNavigationItem(e.Provider);
+            else
+                await RemoveLiveModNavigationItemAsync(e.Provider.PanelId);
+        }, DispatcherPriority.Normal);
+    }
+
+    private void AddLiveModNavigationItem(MDiceV2.Interfaces.INavigationPanelProvider provider)
+    {
+        var items = _navigationListBox?.Items;
+        if (items == null || items.OfType<ListBoxItem>().Any(item => string.Equals(item.Tag as string, provider.PanelId, StringComparison.Ordinal)))
+            return;
+
+        var item = CreateModNavigationItem(provider.PanelName, provider.IconSource, provider.PanelId);
+        item.Opacity = 0;
+        item.Transitions = new Transitions
+        {
+            new DoubleTransition
+            {
+                Property = Visual.OpacityProperty,
+                Duration = TimeSpan.FromMilliseconds(180)
+            }
+        };
+
+        var panelOrder = NavigationPanelRegistry.Instance.GetRegisteredPanels().ToList();
+        var position = panelOrder.FindIndex(panel => string.Equals(panel.PanelId, provider.PanelId, StringComparison.Ordinal));
+        items.Insert(Math.Max(5, 5 + position), item);
+        Dispatcher.UIThread.Post(() => item.Opacity = 1, DispatcherPriority.Render);
+    }
+
+    private async Task RemoveLiveModNavigationItemAsync(string panelId)
+    {
+        var items = _navigationListBox?.Items;
+        var item = items?.OfType<ListBoxItem>().FirstOrDefault(candidate => string.Equals(candidate.Tag as string, panelId, StringComparison.Ordinal));
+        if (item == null || items == null)
+            return;
+
+        item.Transitions = new Transitions
+        {
+            new DoubleTransition
+            {
+                Property = Visual.OpacityProperty,
+                Duration = TimeSpan.FromMilliseconds(180)
+            }
+        };
+        item.IsHitTestVisible = false;
+        item.Opacity = 0;
+        await Task.Delay(180);
+        items.Remove(item);
     }
 
     /// <summary>
@@ -396,11 +494,116 @@ public partial class MainView : UserControl
     {
         return state switch
         {
-            IconState.Normal => new IconStateConfig(32, 32, 3, IconState.Normal),      // 未选中，无悬浮：32x32，margin 3
-            IconState.Hover => new IconStateConfig(34, 34, 1, IconState.Hover),        // 未选中，悬浮：34x34，margin 1
-            IconState.Selected => new IconStateConfig(38, 38, -1, IconState.Selected), // 选中：38x38，margin -1
-            _ => new IconStateConfig(32, 32, 3, IconState.Normal)
+            IconState.Normal => new IconStateConfig(24, 24, 12, IconState.Normal),
+            IconState.Hover => new IconStateConfig(26, 26, 11, IconState.Hover),
+            IconState.Selected => new IconStateConfig(26, 26, 11, IconState.Selected),
+            _ => new IconStateConfig(24, 24, 12, IconState.Normal)
         };
+    }
+
+    private void LoadWorkspaceBackground()
+    {
+        try
+        {
+            var savedPath = File.Exists(BackgroundPreferencePath) ? File.ReadAllText(BackgroundPreferencePath).Trim() : null;
+            if (!string.IsNullOrWhiteSpace(savedPath) && File.Exists(savedPath))
+            {
+                // Migrate preferences from earlier releases that only referenced
+                // the user's source file instead of retaining an application copy.
+                var managedPath = StoreUserBackground(savedPath);
+                SetWorkspaceBackground(managedPath);
+            }
+            else
+            {
+                SetWorkspaceBackground(null);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"Unable to load workspace background: {ex.Message}");
+            SetWorkspaceBackground(null);
+        }
+    }
+
+    private void SetWorkspaceBackground(string? filePath)
+    {
+        var backgroundImage = this.FindControl<Avalonia.Controls.Image>("WorkspaceBackgroundImage");
+        if (backgroundImage == null)
+            return;
+
+        try
+        {
+            _workspaceBackground?.Dispose();
+            _workspaceBackground = string.IsNullOrWhiteSpace(filePath)
+                ? new Bitmap(AssetLoader.Open(new Uri("avares://MDiceV2.Core/Assets/Sprite/Background.png")))
+                : new Bitmap(filePath);
+            backgroundImage.Source = _workspaceBackground;
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"Unable to apply workspace background: {ex.Message}");
+        }
+    }
+
+    private static string StoreUserBackground(string sourcePath)
+    {
+        var extension = Path.GetExtension(sourcePath).ToLowerInvariant();
+        if (extension is not ".png" and not ".jpg" and not ".jpeg" and not ".webp" and not ".bmp")
+            throw new InvalidOperationException("Unsupported background image format.");
+
+        Directory.CreateDirectory(BackgroundDataDirectory);
+        var destinationPath = Path.Combine(BackgroundDataDirectory, "workspace-background" + extension);
+        if (!string.Equals(Path.GetFullPath(sourcePath), Path.GetFullPath(destinationPath), StringComparison.OrdinalIgnoreCase))
+            File.Copy(sourcePath, destinationPath, overwrite: true);
+        Directory.CreateDirectory(Path.GetDirectoryName(BackgroundPreferencePath)!);
+        File.WriteAllText(BackgroundPreferencePath, destinationPath);
+        return destinationPath;
+    }
+
+    private async void ChooseBackgroundButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel?.StorageProvider == null)
+            return;
+
+        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Choose workspace background",
+            AllowMultiple = false,
+            FileTypeFilter = new[]
+            {
+                new FilePickerFileType("Image files") { Patterns = new[] { "*.png", "*.jpg", "*.jpeg", "*.webp", "*.bmp" } }
+            }
+        });
+
+        var selectedFile = files.FirstOrDefault();
+        if (selectedFile == null)
+            return;
+
+        try
+        {
+            var managedPath = StoreUserBackground(selectedFile.Path.LocalPath);
+            SetWorkspaceBackground(managedPath);
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"Unable to save workspace background: {ex.Message}");
+        }
+    }
+
+    private void UpdateWorkspaceTitle()
+    {
+        var title = this.FindControl<TextBlock>("WorkspaceTitle");
+        if (title != null && _navigationListBox?.SelectedItem is ListBoxItem item)
+        {
+            var label = item.Content switch
+            {
+                Grid grid => grid.Children.OfType<TextBlock>().FirstOrDefault()?.Text,
+                StackPanel panel => panel.Children.OfType<TextBlock>().FirstOrDefault()?.Text,
+                _ => null
+            };
+            title.Text = label?.ToUpperInvariant() ?? "WORKSPACE";
+        }
     }
 
     /// <summary>
@@ -413,12 +616,29 @@ public partial class MainView : UserControl
 
         image.Width = config.Width;
         image.Height = config.Height;
-        image.Margin = new Avalonia.Thickness(config.MarginLeft, 0, 0, 0);
         
         string iconPath = GetMenuIconPath(itemName, config.State);
         var bitmap = LoadBitmapFromAvares(iconPath);
         if (bitmap != null)
             image.Source = bitmap;
+    }
+
+    private sealed class PaneOpenToIconAlignmentConverter : Avalonia.Data.Converters.IValueConverter
+    {
+        public object Convert(object? value, global::System.Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+            => value is true ? Avalonia.Layout.HorizontalAlignment.Left : Avalonia.Layout.HorizontalAlignment.Center;
+
+        public object ConvertBack(object? value, global::System.Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+            => throw new global::System.NotSupportedException();
+    }
+
+    private sealed class PaneOpenToIconMarginConverter : Avalonia.Data.Converters.IValueConverter
+    {
+        public object Convert(object? value, global::System.Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+            => value is true ? new Avalonia.Thickness(12, 0, 0, 0) : new Avalonia.Thickness(0);
+
+        public object ConvertBack(object? value, global::System.Type targetType, object? parameter, global::System.Globalization.CultureInfo culture)
+            => throw new global::System.NotSupportedException();
     }
 
     private void PanelExpandButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)

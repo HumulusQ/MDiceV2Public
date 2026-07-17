@@ -19,9 +19,9 @@
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-    <Version>0.2.7</Version>
-    <AssemblyVersion>0.2.7</AssemblyVersion>
-    <FileVersion>0.2.7</FileVersion>
+    <Version>0.3.1</Version>
+    <AssemblyVersion>0.3.1</AssemblyVersion>
+    <FileVersion>0.3.1</FileVersion>
     <InformationalVersion>beta</InformationalVersion>
   </PropertyGroup>
   <ItemGroup>
@@ -47,6 +47,9 @@
   <!-- Include Assets folder as Avalonia resources -->
   <ItemGroup>
     <AvaloniaResource Include="Assets\**\*.*" />
+    <!-- The workspace default is maintained in the shared project asset folder. -->
+    <AvaloniaResource Remove="Assets\Sprite\Background.png" />
+    <AvaloniaResource Include="..\Assets\Sprite\Background.png" Link="Assets\Sprite\Background.png" />
     <!-- Also include top-level repository Assets/Font so Playfair and other fonts
          are embedded into the Core assembly and available via avares:// MDiceV2.Core URIs -->
     <AvaloniaResource Include="..\Assets\Font\**\*.*" />

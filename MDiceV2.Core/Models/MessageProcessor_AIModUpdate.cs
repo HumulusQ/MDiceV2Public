@@ -173,6 +173,8 @@ public partial class MessageProcessor
         var startupMode = ServiceBootstrapper.CurrentStartupMode;
         var restartTarget = ResolveRestartTargetForUpdate(appRoot, startupMode, log);
         var exePath = restartTarget.ExePath;
+        var restartWorkingDirectory = restartTarget.WorkingDirectory;
+        log($"AIMod 更新后重启目标使用主程序同款设置: mode={startupMode}, exePath={exePath}, exists={File.Exists(exePath)}");
 
         var modsRoot = Path.Combine(appRoot, "mods");
         var targetDir = Path.Combine(modsRoot, "AIMod");
@@ -197,6 +199,7 @@ public partial class MessageProcessor
         bat.AppendLine($"set \"ZIP_PATH={downloadedZipPath}\"");
         bat.AppendLine($"set \"CACHE_FILE={cacheFile}\"");
         bat.AppendLine($"set \"EXE_PATH={exePath}\"");
+        bat.AppendLine($"set \"RESTART_WORKDIR={restartWorkingDirectory}\"");
         bat.AppendLine($"set \"LOGFILE={logPath}\"");
         bat.AppendLine($"set \"ERROR_LOGFILE={errorLogPath}\"");
         bat.AppendLine($"set \"DLL_FILE={batchDllFileName}\"");
@@ -257,13 +260,13 @@ public partial class MessageProcessor
         bat.AppendLine("echo Restarting MDiceV2 after AIMod update. >> \"%LOGFILE%\"");
         bat.AppendLine("echo APP_ROOT=%APP_ROOT% >> \"%LOGFILE%\"");
         bat.AppendLine("echo EXE_PATH=%EXE_PATH% >> \"%LOGFILE%\"");
-        bat.AppendLine("echo Working directory: %APP_ROOT% >> \"%LOGFILE%\"");
+        bat.AppendLine("echo Working directory: %RESTART_WORKDIR% >> \"%LOGFILE%\"");
         bat.AppendLine("echo Current script directory: %CD% >> \"%LOGFILE%\"");
         bat.AppendLine("REM ==== Delay to let file locks fully release ====");
         bat.AppendLine("timeout /t 2 /nobreak >nul");
         bat.AppendLine("if exist \"%EXE_PATH%\" (");
         bat.AppendLine("  echo Restart target exists. Starting... >> \"%LOGFILE%\"");
-        bat.AppendLine("  start \"\" /D \"%APP_ROOT%\" \"%EXE_PATH%\"");
+        bat.AppendLine("  start \"\" /D \"%RESTART_WORKDIR%\" \"%EXE_PATH%\"");
         bat.AppendLine("  echo Start command issued. >> \"%LOGFILE%\"");
         bat.AppendLine(") else (");
         bat.AppendLine("  echo ERROR: restart target not found: %EXE_PATH% >> \"%LOGFILE%\"");
@@ -278,13 +281,13 @@ public partial class MessageProcessor
         bat.AppendLine("echo Restarting MDiceV2 after AIMod update failure/recovery. >> \"%LOGFILE%\"");
         bat.AppendLine("echo APP_ROOT=%APP_ROOT% >> \"%LOGFILE%\"");
         bat.AppendLine("echo EXE_PATH=%EXE_PATH% >> \"%LOGFILE%\"");
-        bat.AppendLine("echo Working directory: %APP_ROOT% >> \"%LOGFILE%\"");
+        bat.AppendLine("echo Working directory: %RESTART_WORKDIR% >> \"%LOGFILE%\"");
         bat.AppendLine("echo Current script directory: %CD% >> \"%LOGFILE%\"");
         bat.AppendLine("REM ==== Delay to let file locks fully release ====");
         bat.AppendLine("timeout /t 2 /nobreak >nul");
         bat.AppendLine("if exist \"%EXE_PATH%\" (");
         bat.AppendLine("  echo Restart target exists. Starting... >> \"%LOGFILE%\"");
-        bat.AppendLine("  start \"\" /D \"%APP_ROOT%\" \"%EXE_PATH%\"");
+        bat.AppendLine("  start \"\" /D \"%RESTART_WORKDIR%\" \"%EXE_PATH%\"");
         bat.AppendLine("  echo Start command issued. >> \"%LOGFILE%\"");
         bat.AppendLine(") else (");
         bat.AppendLine("  echo ERROR: restart target not found: %EXE_PATH% >> \"%LOGFILE%\"");
@@ -314,12 +317,7 @@ public partial class MessageProcessor
             throw new FileNotFoundException("AIMod 更新脚本不存在", scriptPath);
         }
 
-        var process = Process.Start(new ProcessStartInfo
-        {
-            FileName = scriptPath,
-            UseShellExecute = true,
-            CreateNoWindow = false
-        });
+        var process = Process.Start(CustomUpdateManager.CreateStandardUpdateScriptStartInfo(scriptPath));
 
         if (process == null)
         {

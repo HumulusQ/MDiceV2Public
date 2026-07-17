@@ -5,7 +5,7 @@
   },
   "projects": {
     "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj": {
-      "version": "0.2.7",
+      "version": "0.3.1",
       "restore": {
         "projectUniqueName": "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Abstractions\\MDiceV2.Abstractions.csproj",
         "projectName": "MDiceV2.Abstractions",
@@ -98,7 +98,7 @@
       }
     },
     "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Core\\MDiceV2.Core.csproj": {
-      "version": "0.2.7",
+      "version": "0.3.1",
       "restore": {
         "projectUniqueName": "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Core\\MDiceV2.Core.csproj",
         "projectName": "MDiceV2.Core",
@@ -526,7 +526,7 @@
       }
     },
     "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Interfaces\\MDiceV2.Interfaces.csproj": {
-      "version": "0.2.7",
+      "version": "0.3.1",
       "restore": {
         "projectUniqueName": "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Interfaces\\MDiceV2.Interfaces.csproj",
         "projectName": "MDiceV2.Interfaces",

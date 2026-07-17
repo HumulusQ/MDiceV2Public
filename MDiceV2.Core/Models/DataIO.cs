@@ -403,6 +403,67 @@ public partial class DataIO : ObservableObject
     }
 
     /// <summary>
+    /// Writes only values that differ from the currently persisted value. All changes are
+    /// committed atomically so callers can safely apply an imported configuration set.
+    /// </summary>
+    public int SaveDataBatchIfChanged(string tableName, IEnumerable<(string Key, string Value)> dataItems)
+    {
+        string sanitizedTableName = SanitizeTableName(tableName);
+        var items = dataItems
+            .Where(item => !string.IsNullOrWhiteSpace(item.Key))
+            .GroupBy(item => item.Key, StringComparer.Ordinal)
+            .Select(group => group.Last())
+            .ToList();
+
+        if (_connection == null || _connection.State != System.Data.ConnectionState.Open)
+            throw new InvalidOperationException("SQLite connection is not open");
+        if (items.Count == 0)
+            return 0;
+
+        using var transaction = _connection.BeginTransaction(System.Data.IsolationLevel.Serializable);
+        try
+        {
+            using (var createTableCommand = new SQLiteCommand(
+                $"CREATE TABLE IF NOT EXISTS {sanitizedTableName} (key TEXT PRIMARY KEY, value TEXT, updated_at INTEGER DEFAULT 0)",
+                _connection, transaction))
+                createTableCommand.ExecuteNonQuery();
+
+            var changed = 0;
+            var timestamp = DateTime.UtcNow.Ticks;
+            foreach (var (key, value) in items)
+            {
+                string? existingValue;
+                using (var readCommand = new SQLiteCommand(
+                    $"SELECT value FROM {sanitizedTableName} WHERE key = @key", _connection, transaction))
+                {
+                    readCommand.Parameters.AddWithValue("@key", key);
+                    existingValue = readCommand.ExecuteScalar() as string;
+                }
+
+                if (string.Equals(existingValue, value, StringComparison.Ordinal))
+                    continue;
+
+                using var writeCommand = new SQLiteCommand(
+                    $"INSERT OR REPLACE INTO {sanitizedTableName} (key, value, updated_at) VALUES (@key, @value, @updatedAt)",
+                    _connection, transaction);
+                writeCommand.Parameters.AddWithValue("@key", key);
+                writeCommand.Parameters.AddWithValue("@value", value);
+                writeCommand.Parameters.AddWithValue("@updatedAt", timestamp);
+                writeCommand.ExecuteNonQuery();
+                changed++;
+            }
+
+            transaction.Commit();
+            return changed;
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+
+    /// <summary>
     /// 从数据库读取数据
     /// </summary>
     /// <param name="tableName">表名</param>

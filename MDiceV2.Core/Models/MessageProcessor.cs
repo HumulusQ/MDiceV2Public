@@ -2281,6 +2281,7 @@ public partial class MessageProcessor : ObservableObject
                 }
                 MessageDistribution.MessageProcessor = this;
                 InitializeQqUpdatePackageReceiver();
+                InitializeDatabaseImportCoordinator();
                 
                 // 从基础设置加载URL
                 string configuredUrl = GlobalFeedbackMessages.GetBasicSetting("Url");
@@ -2372,7 +2373,11 @@ public partial class MessageProcessor : ObservableObject
                 Log.InfoFormat("[MessageProcessor] 所有数据加载完成");
 
                 // 在所有设置加载完成后自动建立WebSocket连接
-                if (MessageDistribution?.WSconnection != null)
+                if (ServiceBootstrapper.IsMessageTestMode)
+                {
+                    Log.InfoFormat("[MessageProcessor] Message test mode: skip automatic WebSocket connection.");
+                }
+                else if (MessageDistribution?.WSconnection != null)
                 {
                     Log.InfoFormat("[MessageProcessor] 开始自动建立WebSocket连接...");
                     try
@@ -2519,6 +2524,12 @@ public partial class MessageProcessor : ObservableObject
     /// </summary>
     private void InitializeGrpcInfrastructure()
     {
+        if (ServiceBootstrapper.IsMessageTestMode)
+        {
+            Log.InfoFormat("[MessageProcessor] Message test mode: skip gRPC infrastructure initialization.");
+            return;
+        }
+
         try
         {
             // 1. 创建ConfigSyncDispatcher和SyncConfigManager

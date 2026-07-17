@@ -62,6 +62,7 @@ public class ModPluginLoader
     /// Key: Mod ID，Value: (IModPlugin 实例, 元数据)
     /// </summary>
     private readonly Dictionary<string, (IModPlugin Plugin, IModMetadata Metadata)> _loadedMods = new();
+    private readonly HashSet<string> _disabledModIds = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// 加载失败的 Mod 列表（用于日志记录和调试）
@@ -205,6 +206,7 @@ public class ModPluginLoader
     public List<(IModPlugin Plugin, IModMetadata Metadata)> LoadAllMods()
     {
         _loadedMods.Clear();
+        _disabledModIds.Clear();
         _failedMods.Clear();
 
         try
@@ -294,13 +296,13 @@ public class ModPluginLoader
         //     throw new InvalidOperationException(errorMsg);
         // }
 
-        // 3. 检查是否已禁用
+        // 3. Retain disabled modules in the runtime so Mod Manager can enable
+        // them immediately, without a process restart.
         var disabledMarkerPath = Path.Combine(modDirectory, ".disabled");
         if (File.Exists(disabledMarkerPath))
         {
-            Console.WriteLine($"[ModPluginLoader] >>> [LoadModFromDirectory] Skipping disabled mod: {metadata.Name}");
-            LogInfo($"Skipping disabled mod: {metadata.Name}");
-            return;
+            Console.WriteLine($"[ModPluginLoader] >>> [LoadModFromDirectory] Loading disabled mod for runtime toggle: {metadata.Name}");
+            _disabledModIds.Add(metadata.Id);
         }
 
         // 4. 加载 DLL 文件
@@ -437,6 +439,12 @@ public class ModPluginLoader
     public bool IsModLoaded(string modId)
     {
         return _loadedMods.ContainsKey(modId);
+    }
+
+    /// <summary>Returns whether the mod was marked disabled when it was discovered.</summary>
+    public bool IsModDisabled(string modId)
+    {
+        return _disabledModIds.Contains(modId);
     }
 
     /// <summary>

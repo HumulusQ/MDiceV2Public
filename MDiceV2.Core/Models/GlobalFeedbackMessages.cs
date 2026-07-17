@@ -155,7 +155,7 @@ public static class GlobalFeedbackMessages
         {"MainPartFormatError", "{0} 指令主干部分格式错误或为空。" },
         {"SkillNotFound", "技能 '{0}' 不存在于角色字典中" },
         {"DiceRollError", "掷骰失败: {0}" },
-        {"CoCCheckResult", "{4}的检定:D100={0}/{1}{2} -> {3}" },
+        {"CoCCheckResult", "<name>的{4}检定:D100={0}/{1}{2} -> {3}" },
         {"ETCheckResult", "{0}检定:{1}->{2} \n检定数值:{3}{4}"},
         
         // CoC7 检定结果个性化文本
@@ -377,7 +377,9 @@ public static class GlobalFeedbackMessages
                         {
                             if (savedTemplates.TryGetValue(kvp.Key, out var savedValue) && !string.IsNullOrEmpty(savedValue))
                             {
-                                mergedTemplates[kvp.Key] = savedValue;
+                                mergedTemplates[kvp.Key] = IsLegacyDefaultTemplate(kvp.Key, savedValue)
+                                    ? kvp.Value
+                                    : savedValue;
                                 //Log.InfoFormat($"[GlobalFeedbackMessages] Using saved template for key: {kvp.Key} = '{savedValue}'");
                                 loadedCount++;
                             }
@@ -422,6 +424,33 @@ public static class GlobalFeedbackMessages
         Log.Error("[GlobalFeedbackMessages]ERRRRRORRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR");
         // 触发UI更新事件
         RaiseFeedbackTemplatesLoaded();
+    }
+
+    /// <summary>
+    /// Reloads both template collections from the active database without restarting the bot.
+    /// </summary>
+    public static void ReloadTemplatesFromDatabase()
+    {
+        if (_dataIO == null)
+        {
+            Log.Warn("DataIO is null, cannot reload templates");
+            return;
+        }
+
+        LoadTemplates();
+        LoadHelpTemplates();
+        Log.Normal("[GlobalFeedbackMessages] Templates reloaded from database");
+    }
+
+    private static bool IsLegacyDefaultTemplate(string key, string value)
+    {
+        if (key != "CoCCheckResult")
+        {
+            return false;
+        }
+
+        return value == "{4}的检定:D100={0}/{1}{2} -> {3}"
+               || value == "{4}鐨勬瀹?D100={0}/{1}{2} -> {3}";
     }
 
     // 添加UI更新事件 - 使用通用Action，避免循环依赖

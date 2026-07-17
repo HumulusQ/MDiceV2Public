@@ -1,5 +1,20 @@
 <Project>
-  <Target Name="AutoVersion" BeforeTargets="CoreCompile" Condition="'$(AssemblyVersion)' != ''">
+  <!-- Apply the central values after project-local package metadata has been evaluated. -->
+  <PropertyGroup>
+    <Version>$(CentralAssemblyVersion)</Version>
+    <AssemblyVersion>$(CentralAssemblyVersion)</AssemblyVersion>
+    <FileVersion>$(CentralAssemblyVersion)</FileVersion>
+    <InformationalVersion>$(CentralInformationalVersion)</InformationalVersion>
+  </PropertyGroup>
+
+  <!-- Run once from the Core project to avoid concurrent solution builds rewriting the same project files. -->
+  <Target Name="SyncProjectVersions"
+          BeforeTargets="CoreCompile"
+          Condition="'$(MSBuildProjectName)' == 'MDiceV2.Core' and '$(DesignTimeBuild)' != 'true' and '$(RunVersionSyncOnBuild)' != 'false'">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)tools\sync-versions.ps1&quot;" />
+  </Target>
+
+  <Target Name="AutoVersion" BeforeTargets="CoreCompile" DependsOnTargets="SyncProjectVersions" Condition="'$(AssemblyVersion)' != ''">
     <PropertyGroup>
       <CounterFile>$(MSBuildThisFileDirectory)build.counter</CounterFile>
       <BaseFile>$(CounterFile).base</BaseFile>

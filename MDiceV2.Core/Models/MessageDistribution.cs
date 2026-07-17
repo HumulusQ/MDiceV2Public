@@ -78,6 +78,16 @@ public partial class MessageDistribution : ObservableObject
     public Action<OneBotFileInfo>? OnFileMessage;
 
     /// <summary>
+    /// 专用于群文件人物卡导入确认的焦点消息。处理器负责决定何时清除焦点。
+    /// </summary>
+    public Action<Msg, string>? OnCharacterCardImportConfirmation;
+
+    /// <summary>
+    /// Database-import confirmation for the focused master user.
+    /// </summary>
+    public Action<Msg, string>? OnDatabaseImportConfirmation;
+
+    /// <summary>
     /// 群管理员变动事件委托
     /// </summary>
     public Action<long, long, bool>? OnGroupAdmin;
@@ -1334,6 +1344,18 @@ public partial class MessageDistribution : ObservableObject
     /// </summary>
     private void HandleFocusedMessage(string userId, string focusType, Msg msg, string message, bool isSimulationMode = false)
     {
+        if (focusType.StartsWith(CharacterCards.CharacterCardFileImportCoordinator.FocusPrefix, StringComparison.Ordinal))
+        {
+            OnCharacterCardImportConfirmation?.Invoke(msg, message);
+            return;
+        }
+
+        if (focusType.StartsWith(DatabaseImportCoordinator.FocusPrefix, StringComparison.Ordinal))
+        {
+            OnDatabaseImportConfirmation?.Invoke(msg, message);
+            return;
+        }
+
         // 处理人物卡删除确认焦点
         if (focusType.StartsWith("com_del_confirm:"))
         {

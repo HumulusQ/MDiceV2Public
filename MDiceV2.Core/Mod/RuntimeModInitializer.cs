@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using MDiceV2.Interfaces.Mod;
 using MDiceV2.Models;
+using MDiceV2.Models.CharacterCards;
 
 namespace MDiceV2.Core.Mod;
 
@@ -15,6 +16,7 @@ public static class RuntimeModInitializer
 {
     private static readonly object SyncRoot = new();
     private static RuntimeModInitializationResult? _current;
+    private static CharacterCardFileImportCoordinator? _characterCardImporter;
 
     public static RuntimeModInitializationResult InitializeModsForRuntime(
         string runtimeMode,
@@ -32,6 +34,7 @@ public static class RuntimeModInitializer
             {
                 Log.Normal($"[RuntimeModInitializer] Reusing existing Mod runtime mode={runtimeMode} bridgeId={GetObjectId(_current.ModEventBridge)} mods={string.Join(",", _current.Mods.Select(m => m.Id))}");
                 AttachBridgeToProcessor(_current.ModEventBridge, messageProcessor);
+                EnsureCharacterCardImporter(messageDistribution: MessageDistribution.GetInstance(), messageProcessor);
                 return _current;
             }
 
@@ -51,6 +54,7 @@ public static class RuntimeModInitializer
             foreach (var (plugin, metadata) in loadedMods)
             {
                 var record = new RuntimeModRecord(metadata.Id, metadata.Name, plugin.GetType().FullName ?? plugin.GetType().Name);
+                var isEnabled = !loader.IsModDisabled(metadata.Id);
 
                 try
                 {
@@ -62,17 +66,20 @@ public static class RuntimeModInitializer
                     record.OnLoadExecuted = true;
                     Log.Normal($"[ModLoad] {record.TypeName}.OnLoad END id={metadata.Id}");
 
-                    bridge.RegisterMod(plugin, metadata, isEnabled: true);
+                    bridge.RegisterMod(plugin, metadata, isEnabled);
                     record.Registered = true;
-                    Log.Normal($"[ModBridge] RegisterMod id={metadata.Id} enabled=true bridgeId={GetObjectId(bridge)}");
-                    Console.WriteLine($"[ModBridge] RegisterMod id={metadata.Id} enabled=true bridgeId={GetObjectId(bridge)}");
+                    Log.Normal($"[ModBridge] RegisterMod id={metadata.Id} enabled={isEnabled} bridgeId={GetObjectId(bridge)}");
+                    Console.WriteLine($"[ModBridge] RegisterMod id={metadata.Id} enabled={isEnabled} bridgeId={GetObjectId(bridge)}");
 
-                    Log.Normal($"[ModLoad] {record.TypeName}.OnEnable START id={metadata.Id}");
-                    plugin.OnEnable();
-                    record.OnEnableExecuted = true;
-                    Log.Normal($"[ModLoad] {record.TypeName}.OnEnable END id={metadata.Id}");
+                    if (isEnabled)
+                    {
+                        Log.Normal($"[ModLoad] {record.TypeName}.OnEnable START id={metadata.Id}");
+                        plugin.OnEnable();
+                        record.OnEnableExecuted = true;
+                        Log.Normal($"[ModLoad] {record.TypeName}.OnEnable END id={metadata.Id}");
+                    }
 
-                    record.Enabled = true;
+                    record.Enabled = isEnabled;
                 }
                 catch (Exception ex)
                 {
@@ -88,6 +95,7 @@ public static class RuntimeModInitializer
             _current = result;
 
             AttachBridgeToProcessor(bridge, messageProcessor);
+            EnsureCharacterCardImporter(messageDistribution, messageProcessor, forceReload);
 
             var enabledIds = bridge.GetAllMods()
                 .Where(x => x.Value.IsEnabled)
@@ -119,6 +127,8 @@ public static class RuntimeModInitializer
                 return;
 
             _current.ModEventBridge.UnloadAllMods();
+            _characterCardImporter?.Dispose();
+            _characterCardImporter = null;
             _current = null;
         }
     }
@@ -127,6 +137,8 @@ public static class RuntimeModInitializer
     {
         lock (SyncRoot)
         {
+            _characterCardImporter?.Dispose();
+            _characterCardImporter = null;
             _current = null;
         }
     }
@@ -139,6 +151,22 @@ public static class RuntimeModInitializer
         processor.SetModEventBridge(bridge);
         Log.Normal($"[RuntimeModInitializer] MessageProcessor.SetModEventBridge called bridgeId={GetObjectId(bridge)} processorId={GetObjectId(processor)}");
         Console.WriteLine($"[RuntimeModInitializer] MessageProcessor.SetModEventBridge called bridgeId={GetObjectId(bridge)} processorId={GetObjectId(processor)}");
+    }
+
+    private static void EnsureCharacterCardImporter(
+        MessageDistribution messageDistribution,
+        MessageProcessor? messageProcessor,
+        bool forceReplace = false)
+    {
+#pragma warning disable CS0618
+        var processor = messageProcessor ?? MessageProcessor.GetInstance();
+#pragma warning restore CS0618
+        if (forceReplace || _characterCardImporter is null || !_characterCardImporter.IsFor(messageDistribution, processor))
+        {
+            _characterCardImporter?.Dispose();
+            _characterCardImporter = new CharacterCardFileImportCoordinator(messageDistribution, processor);
+            Log.Normal("[RuntimeModInitializer] Character-card file importer subscribed.");
+        }
     }
 
     private static bool PathsEqual(string left, string right)

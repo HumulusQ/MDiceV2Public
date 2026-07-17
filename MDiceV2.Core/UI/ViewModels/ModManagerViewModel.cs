@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MDiceV2.Core.Mod;
 using MDiceV2.Models;
 
 #nullable enable
@@ -38,6 +39,15 @@ public partial class ModManagerViewModel : ObservableObject
         [ObservableProperty]
         private string modPath = string.Empty;
 
+        [ObservableProperty]
+        private string modId = string.Empty;
+
+        [ObservableProperty]
+        private bool isRuntimeManaged;
+
+        [ObservableProperty]
+        private bool isSwitching;
+
         /// <summary>
         /// 返回包含的内容描述（脚本/资源类型）
         /// </summary>
@@ -57,22 +67,30 @@ public partial class ModManagerViewModel : ObservableObject
         /// <summary>
         /// 状态文本 - "Enabled" 或 "Disabled"
         /// </summary>
-        public string StateText => IsEnabled ? "Enabled" : "Disabled";
+        public string StateText => IsRuntimeManaged ? (IsEnabled ? "Enabled" : "Disabled") : "Unavailable";
 
         /// <summary>
         /// 按钮文本 - 显示要执行的操作
         /// </summary>
-        public string ButtonText => IsEnabled ? "Disable" : "Enable";
+        public string ButtonText => IsSwitching ? "WORKING" : IsRuntimeManaged ? (IsEnabled ? "Disable" : "Enable") : "UNAVAILABLE";
+
+        public bool CanToggle => IsRuntimeManaged && !IsSwitching;
 
         public ModItem()
         {
             PropertyChanged += (s, e) =>
             {
-                if (e.PropertyName == nameof(IsEnabled))
+                if (e.PropertyName is nameof(IsEnabled) or nameof(IsRuntimeManaged))
                 {
-                    StateColor = IsEnabled ? "#00AA00" : "#AA0000";
+                    StateColor = !IsRuntimeManaged ? "#64748B" : IsEnabled ? "#00AA00" : "#AA0000";
                     OnPropertyChanged(nameof(StateText));
                     OnPropertyChanged(nameof(ButtonText));
+                    OnPropertyChanged(nameof(CanToggle));
+                }
+                else if (e.PropertyName == nameof(IsSwitching))
+                {
+                    OnPropertyChanged(nameof(ButtonText));
+                    OnPropertyChanged(nameof(CanToggle));
                 }
             };
         }
@@ -201,6 +219,12 @@ public partial class ModManagerViewModel : ObservableObject
                                 if (versionMatch.Success)
                                     modItem.Version = versionMatch.Groups[1].Value;
                             }
+                            if (json.Contains("\"id\""))
+                            {
+                                var idMatch = System.Text.RegularExpressions.Regex.Match(json, @"""id"":\s*""([^""]+)""");
+                                if (idMatch.Success)
+                                    modItem.ModId = idMatch.Groups[1].Value;
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -210,6 +234,7 @@ public partial class ModManagerViewModel : ObservableObject
 
                     // 检查包含内容
                     modItem.ContainType = DetermineMissingContent(modDir);
+                    AttachRuntimeState(modItem);
 
                     ModItems.Add(modItem);
                     Log.InfoFormat($"Added mod to ModItems: {modName}");
@@ -232,7 +257,7 @@ public partial class ModManagerViewModel : ObservableObject
                     {
                         Name = modName,
                         ModPath = modFile,
-                        IsEnabled = true,  // 压缩包默认启用
+                        IsEnabled = !File.Exists(modFile + ".disabled"),
                         Author = "Unknown",
                         Version = "1.0.0",
                         ContainType = "Compressed Archive (.mod)"
@@ -246,19 +271,6 @@ public partial class ModManagerViewModel : ObservableObject
                     Log.Error($"Failed to load mod from {modFile}: {ex.Message}");
                 }
             }
-
-            // 添加测试Mod用于UI调试
-            var testMod = new ModItem
-            {
-                Name = "Test Mod",
-                Author = "Test Author",
-                Version = "1.0.0",
-                ContainType = "Test Content",
-                IsEnabled = true,
-                ModPath = "/test/path"
-            };
-            ModItems.Add(testMod);
-            Log.InfoFormat($"Added test mod for debugging");
 
             IsEmptyState = ModItems.Count == 0;
             Log.InfoFormat($"LoadMods() completed. IsEmptyState: {IsEmptyState}, ModItems count: {ModItems.Count}");
@@ -353,40 +365,114 @@ public partial class ModManagerViewModel : ObservableObject
         }
     }
 
+    private static void AttachRuntimeState(ModItem modItem)
+    {
+        var bridge = RuntimeModInitializer.Current?.ModEventBridge;
+        if (bridge == null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(modItem.ModId))
+        {
+            var match = bridge.GetAllMods()
+                .FirstOrDefault(x => string.Equals(x.Key, modItem.Name, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(x.Value.Metadata.Name, modItem.Name, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(match.Key))
+                modItem.ModId = match.Key;
+        }
+
+        if (string.IsNullOrWhiteSpace(modItem.ModId))
+            return;
+
+        var status = bridge.GetModStatus(modItem.ModId);
+        if (status == null)
+            return;
+
+        modItem.IsRuntimeManaged = true;
+        modItem.IsEnabled = status.Value.IsEnabled;
+    }
+
+    private static string GetDisabledMarkerPath(ModItem modItem)
+    {
+        return Directory.Exists(modItem.ModPath)
+            ? Path.Combine(modItem.ModPath, ".disabled")
+            : modItem.ModPath + ".disabled";
+    }
+
+    private static void SetDisabledMarker(ModItem modItem, bool isDisabled)
+    {
+        var markerPath = GetDisabledMarkerPath(modItem);
+        if (isDisabled)
+        {
+            File.WriteAllText(markerPath, string.Empty);
+        }
+        else if (File.Exists(markerPath))
+        {
+            File.Delete(markerPath);
+        }
+    }
+
     /// <summary>
-    /// 切换选中Mod的启用状态
+    /// Toggle an active runtime mod and retain that choice for the next launch.
     /// </summary>
     [RelayCommand]
-    public void ToggleModState()
+    public async Task ToggleModStateAsync()
     {
-        if (SelectedMod != null)
+        var modItem = SelectedMod;
+        if (modItem == null || !modItem.CanToggle)
+            return;
+
+        modItem.IsSwitching = true;
+        try
         {
+            // Let the button render its working state before plugin lifecycle work starts.
+            await Task.Yield();
+
+            var bridge = RuntimeModInitializer.Current?.ModEventBridge;
+            var status = bridge?.GetModStatus(modItem.ModId);
+            if (bridge == null || status == null)
+            {
+                modItem.IsRuntimeManaged = false;
+                Log.Warn($"Mod '{modItem.Name}' is not available in the current runtime.");
+                return;
+            }
+
+            var enable = !status.Value.IsEnabled;
+            var markerPreviouslyExisted = File.Exists(GetDisabledMarkerPath(modItem));
             try
             {
-                var disabledFilePath = Path.Combine(SelectedMod.ModPath, ".disabled");
-
-                if (SelectedMod.IsEnabled)
-                {
-                    // 禁用Mod - 创建.disabled文件
-                    File.WriteAllText(disabledFilePath, "");
-                    SelectedMod.IsEnabled = false;
-                    Log.InfoFormat($"Disabled mod: {SelectedMod.Name}");
-                }
-                else
-                {
-                    // 启用Mod - 删除.disabled文件
-                    if (File.Exists(disabledFilePath))
-                    {
-                        File.Delete(disabledFilePath);
-                    }
-                    SelectedMod.IsEnabled = true;
-                    Log.InfoFormat($"Enabled mod: {SelectedMod.Name}");
-                }
+                SetDisabledMarker(modItem, isDisabled: !enable);
             }
             catch (Exception ex)
             {
-                Log.Error($"Error toggling mod state: {ex.Message}");
+                Log.Error($"Could not persist the state for mod '{modItem.Name}': {ex.Message}");
+                return;
             }
+
+            var succeeded = enable ? bridge.EnableMod(modItem.ModId) : bridge.DisableMod(modItem.ModId);
+            if (!succeeded)
+            {
+                try
+                {
+                    SetDisabledMarker(modItem, isDisabled: markerPreviouslyExisted);
+                }
+                catch (Exception rollbackException)
+                {
+                    Log.Warn($"Could not restore the saved state for '{modItem.Name}': {rollbackException.Message}");
+                }
+
+                return;
+            }
+
+            modItem.IsEnabled = enable;
+            Log.InfoFormat($"{(enable ? "Enabled" : "Disabled")} mod at runtime: {modItem.Name} ({modItem.ModId})");
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Error toggling mod state: {ex.Message}");
+        }
+        finally
+        {
+            modItem.IsSwitching = false;
         }
     }
 

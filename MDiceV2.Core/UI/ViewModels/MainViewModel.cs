@@ -44,6 +44,8 @@ namespace MDiceV2.Core.UI.ViewModels
     public partial class MainViewModel : ViewModelBase
     {
         private readonly Dictionary<int, object> _views = new();
+        private readonly Dictionary<int, Func<object?>> _viewFactories = new();
+        private int _viewLoadGeneration;
         private readonly MDiceV2.Abstractions.IDispatcher? _dispatcher;
         private MessageProcessor? _globalMessageProcessor;
         private ConfigContainerViewModel _basicConfigContainer = null!;
@@ -206,8 +208,12 @@ namespace MDiceV2.Core.UI.ViewModels
             }
             catch (Exception ex)
             {
-                LogSender.Error($"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [MainViewModel] 创建 gRPC 基础设施失败: {ex.Message}");
-                return;
+                LogSender.Warn($"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [MainViewModel] gRPC 同步服务暂不可用，将以本地模式继续运行: {ex.Message}");
+                // The workspace must stay available even when optional sync
+                // infrastructure is unavailable (for example while its port is
+                // already in use). Continue with the local UI and retryable
+                // services rather than leaving the view factory uninitialized.
+                Console.WriteLine($"[MainViewModel] WARNING: gRPC sync is unavailable; continuing without sync services: {ex.Message}");
             }
 
             // ✅ 注册 UI 版本特定的处理器（只处理 UI 容器更新）
@@ -340,7 +346,11 @@ namespace MDiceV2.Core.UI.ViewModels
         /// </summary>
         partial void OnSelectedIndexChanged(int value)
         {
-            UpdateCurrentView();
+            // Avalonia temporarily reports -1 while the navigation ListBox is
+            // being populated. It is not a page selection and must not cancel
+            // the first valid workspace load.
+            if (value >= 0)
+                UpdateCurrentView();
         }
 
         /// <summary>
@@ -469,11 +479,11 @@ namespace MDiceV2.Core.UI.ViewModels
         private void InitializeViews()
         {
             LogSender.InfoFormat($"[MainViewModel] InitializeViews 开始");
-            _views[0] = CreateMainPanel();
-            _views[1] = CreateLogContent();
-            _views[2] = CreateChatContent();
-            _views[3] = CreateSettingContent();
-            _views[4] = CreateModsContent();
+            _viewFactories[0] = CreateMainPanel;
+            _viewFactories[1] = CreateLogContent;
+            _viewFactories[2] = CreateChatContent;
+            _viewFactories[3] = CreateSettingContent;
+            _viewFactories[4] = CreateModsContent;
 
             // 加载从 Mod 注册的导航面板
             LoadRegisteredModPanels();
@@ -504,6 +514,13 @@ namespace MDiceV2.Core.UI.ViewModels
                 {
                     Console.WriteLine($"[MainViewModel] >>> Loading panel: {panelProvider.PanelId} ({panelProvider.PanelName})");
                     LogSender.InfoFormat($"LoadRegisteredModPanels: Creating panel for '{panelProvider.PanelId}' (name: {panelProvider.PanelName})");
+                    var panelId = panelProvider.PanelId;
+                    _viewFactories[viewIndex] = () => registry.CreatePanel(panelId);
+                    Console.WriteLine($"[MainViewModel] >>> Registered lazy panel at index {viewIndex}: {panelId}");
+                    viewIndex++;
+                    if (_viewFactories.ContainsKey(viewIndex - 1))
+                        continue;
+
                     var panel = registry.CreatePanel(panelProvider.PanelId);
                     if (panel != null)
                     {
@@ -533,14 +550,110 @@ namespace MDiceV2.Core.UI.ViewModels
         }
 
         /// <summary>
+        /// Rebuilds only the mod portion of the lazy view map after a live mod
+        /// enable/disable operation changes the navigation registry.
+        /// </summary>
+        public void RefreshModPanelFactories()
+        {
+            foreach (var index in _viewFactories.Keys.Where(index => index >= 5).ToArray())
+                _viewFactories.Remove(index);
+
+            foreach (var index in _views.Keys.Where(index => index >= 5).ToArray())
+                _views.Remove(index);
+
+            LoadRegisteredModPanels();
+        }
+
+        /// <summary>
         /// 根据当前选中的索引更新视图内容
         /// </summary>
-        private void UpdateCurrentView()
+        private async void UpdateCurrentView()
         {
-            if (_views.TryGetValue(SelectedIndex, out var view))
+            var requestedIndex = SelectedIndex;
+            if (requestedIndex < 0)
+                return;
+
+            var generation = ++_viewLoadGeneration;
+            IsViewLoading = true;
+            CurrentView = null;
+
+            // Yield to the UI loop before a page starts materializing its controls.
+            // The ViewModel can be constructed before Avalonia installs a UI
+            // synchronization context, so always marshal the actual control work
+            // explicitly back to the UI dispatcher below.
+            await Task.Delay(60).ConfigureAwait(false);
+            if (generation != _viewLoadGeneration)
+                return;
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
             {
-                CurrentView = view;
-            }
+                try
+                {
+                    if (!_views.TryGetValue(requestedIndex, out var view) &&
+                        _viewFactories.TryGetValue(requestedIndex, out var factory))
+                    {
+                        view = factory();
+                        if (view != null)
+                            _views[requestedIndex] = view;
+                    }
+
+                    if (view == null)
+                        throw new InvalidOperationException($"No workspace factory is registered for navigation index {requestedIndex}.");
+
+                    if (generation == _viewLoadGeneration)
+                        CurrentView = view;
+                }
+                catch (Exception ex)
+                {
+                    LogSender.Error($"[MainViewModel] Failed to load view {requestedIndex}: {ex.Message}");
+                    Console.Error.WriteLine($"[MainViewModel] Failed to load view {requestedIndex}: {ex}");
+                    if (generation == _viewLoadGeneration)
+                        CurrentView = CreateViewLoadErrorPanel(requestedIndex, ex);
+                }
+                finally
+                {
+                    if (generation == _viewLoadGeneration)
+                        IsViewLoading = false;
+                }
+            }, DispatcherPriority.Normal);
+        }
+
+        private Control CreateViewLoadErrorPanel(int index, Exception exception)
+        {
+            var panel = new StackPanel
+            {
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                MaxWidth = 460,
+                Spacing = 12
+            };
+
+            panel.Children.Add(new TextBlock
+            {
+                Text = "WORKSPACE CONTENT UNAVAILABLE",
+                FontSize = 17,
+                FontWeight = FontWeight.Bold,
+                Foreground = Brushes.OrangeRed,
+                HorizontalAlignment = HorizontalAlignment.Center
+            });
+            panel.Children.Add(new TextBlock
+            {
+                Text = $"Page {index} could not be loaded: {exception.Message}",
+                TextWrapping = TextWrapping.Wrap,
+                Foreground = Brushes.White,
+                TextAlignment = TextAlignment.Center
+            });
+
+            var retryButton = new Button
+            {
+                Content = "RETRY",
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Padding = new Thickness(18, 9)
+            };
+            retryButton.Click += (_, _) => UpdateCurrentView();
+            panel.Children.Add(retryButton);
+
+            return panel;
         }
 
         /// <summary>
@@ -1511,13 +1624,16 @@ namespace MDiceV2.Core.UI.ViewModels
             grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
 
             // 左侧：上方WebSocket区域，下方Feedback Message Templates及ConfigContainer
-            var leftPanel = new Grid();
-            leftPanel.RowDefinitions.Add(new RowDefinition(new GridLength(200)));
+            var leftPanel = new Grid
+            {
+                Margin = new Thickness(0, 0, 8, 0)
+            };
+            leftPanel.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
             leftPanel.RowDefinitions.Add(new RowDefinition(GridLength.Star)); // Feedback Message Templates ConfigContainer
 
             // 左侧配置容器 - Feedback Message Templates
             _feedbackTemplatesConfigContainer = new ConfigContainerViewModel();
-            _feedbackTemplatesConfigContainer.Title = "Feedback Message Templatess";
+            _feedbackTemplatesConfigContainer.Title = "Feedback Message Templates";
             
             // 定义反馈模板的分类映射（硬编码基于GlobalFeedbackMessages中的注释）
             var feedbackCategories = new Dictionary<string, string>()
@@ -1620,8 +1736,11 @@ namespace MDiceV2.Core.UI.ViewModels
             // 为GlobalFeedbackMessages.Templates中的每个模板创建配置项（带分类标签）
             var defaultFeedbacks = MDiceV2.Models.GlobalFeedbackMessages.GetDefaultFeedbackTemplates();
             string lastCategory = "";
-            
-            foreach (var kvp in MDiceV2.Models.GlobalFeedbackMessages.FeedbackTemplates)
+            _feedbackTemplatesConfigContainer.BeginBulkUpdate();
+            // Templates can finish their asynchronous disk refresh while this page
+            // is opening. Work from a snapshot so that refresh cannot interrupt
+            // the page construction with a collection-modified exception.
+            foreach (var kvp in MDiceV2.Models.GlobalFeedbackMessages.FeedbackTemplates.ToArray())
             {
                 // 获取当前项的分类
                 feedbackCategories.TryGetValue(kvp.Key, out var currentCategory);
@@ -1640,7 +1759,7 @@ namespace MDiceV2.Core.UI.ViewModels
                 _feedbackTemplatesConfigContainer.SetValue(kvp.Key, kvp.Value);
             }
             // 确保 FilteredItems 在初始化后与 Items 同步，避免加载成功但列表为空
-            _feedbackTemplatesConfigContainer.UpdateFilteredItems();
+            _feedbackTemplatesConfigContainer.EndBulkUpdate();
 
             // 设置值变化回调，用于保存到FeedbackTemplate表
             _feedbackTemplatesConfigContainer.OnValueChanged = (key, value) =>
@@ -1666,51 +1785,112 @@ namespace MDiceV2.Core.UI.ViewModels
 
 
             // WebSocket Connection 区域
-            var websocketPanel = new Grid();
+            var websocketPanel = new Grid
+            {
+                Background = new SolidColorBrush(Color.Parse("#151B2A")),
+                Margin = new Thickness(0, 0, 0, 20)
+            };
             websocketPanel.RowDefinitions.Add(new RowDefinition(GridLength.Auto)); // 标题行
             websocketPanel.RowDefinitions.Add(new RowDefinition(GridLength.Star)); // 内容行
             websocketPanel.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
             websocketPanel.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+            websocketPanel.RowDefinitions[1].Height = new GridLength(174);
 
             // WebSocket Connection 标题
             var websocketTitle = new Border
             {
-                Background = new SolidColorBrush(Color.Parse("#258292")),
-                Height = 40,
-                CornerRadius = new CornerRadius(8, 8, 8, 8),
-                Margin = new Thickness(0, 0, 0, 10),
+                Background = new SolidColorBrush(Color.Parse("#1A2030")),
+                Height = 58,
+                Padding = new Thickness(0),
                 Child = new TextBlock
                 {
-                    Text = "WebSocket Connectionsss",
-                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Text = "WEBSOCKET BRIDGE\nConnection controls and live activity feed",
+                    HorizontalAlignment = HorizontalAlignment.Left,
                     VerticalAlignment = VerticalAlignment.Center,
-                    FontFamily = new FontFamily("avares://MDiceV2.Core/Assets/Font/PlayfairDisplay-Black.ttf#Playfair Display"),
-                    FontSize = 14
+                    FontSize = 13,
+                    FontWeight = FontWeight.Bold,
+                    LetterSpacing = 1.1,
+                    LineHeight = 19
                 }
             };
             Grid.SetColumnSpan(websocketTitle, 2); // 跨越两列
             Grid.SetRow(websocketTitle, 0);
             websocketPanel.Children.Add(websocketTitle);
 
+            var websocketHeaderContent = new Grid();
+            websocketHeaderContent.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(4)));
+            websocketHeaderContent.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+            websocketHeaderContent.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+            websocketHeaderContent.Children.Add(new Border
+            {
+                Background = new SolidColorBrush(Color.Parse("#58D6A9")),
+                VerticalAlignment = VerticalAlignment.Stretch
+            });
+
+            var websocketHeaderCopy = new StackPanel
+            {
+                Margin = new Thickness(14, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+                Spacing = 2
+            };
+            websocketHeaderCopy.Children.Add(new TextBlock
+            {
+                Text = "CONNECTION CONTROL",
+                FontSize = 9,
+                Foreground = new SolidColorBrush(Color.Parse("#7C86A3")),
+                LetterSpacing = 1.8
+            });
+            websocketHeaderCopy.Children.Add(new TextBlock
+            {
+                Text = "WebSocket Bridge",
+                FontSize = 20,
+                FontWeight = FontWeight.Black
+            });
+            Grid.SetColumn(websocketHeaderCopy, 1);
+            websocketHeaderContent.Children.Add(websocketHeaderCopy);
+
+            var websocketToggleGlyph = new TextBlock
+            {
+                Text = "−",
+                FontSize = 17,
+                FontWeight = FontWeight.Black
+            };
+            var websocketToggleButton = new Button
+            {
+                Width = 38,
+                Height = 38,
+                Padding = new Thickness(0),
+                Margin = new Thickness(8, 0, 0, 0),
+                CornerRadius = new CornerRadius(2),
+                Background = new SolidColorBrush(Color.Parse("#202638")),
+                BorderBrush = new SolidColorBrush(Color.Parse("#343C53")),
+                Content = websocketToggleGlyph
+            };
+            ToolTip.SetTip(websocketToggleButton, "Collapse section");
+            Grid.SetColumn(websocketToggleButton, 2);
+            websocketHeaderContent.Children.Add(websocketToggleButton);
+            websocketTitle.Child = websocketHeaderContent;
+
             // 左侧log面板 - 显示WebSocket连接信息（锁定为黑底白字，不受系统主题影响）
             var logPanel = new ScrollViewer
             {
-                Background = Brushes.Black,
-                Margin = new Thickness(5)
+                Background = new SolidColorBrush(Color.Parse("#0F1420")),
+                Margin = new Thickness(0, 0, 8, 0),
+                Padding = new Thickness(12, 10)
             };
             // 为 ScrollViewer 添加专用样式类，应用 App.axaml 中的 WsLogScroll 样式
             logPanel.Classes.Add("WsLogScroll");
 
             var wsLogTextBox = new TextBox
             {
-                Background = Brushes.Black,
-                Foreground = Brushes.White,
-                FontSize = 12,
+                Background = Brushes.Transparent,
+                Foreground = new SolidColorBrush(Color.Parse("#ABB7D0")),
+                FontSize = 11,
                 IsReadOnly = true,
                 AcceptsReturn = true,
                 TextWrapping = TextWrapping.Wrap,
                 Margin = new Thickness(0),
-                FontFamily = new FontFamily("avares://MDiceV2.Core/Assets/Font/PlayfairDisplay-Black.ttf#Playfair Display")
+                FontFamily = new FontFamily("Consolas")
             };
             // 为 TextBox 添加专用样式类，应用 App.axaml 中的 WsLogTextBox 样式
             wsLogTextBox.Classes.Add("WsLogTextBox");
@@ -1729,16 +1909,19 @@ namespace MDiceV2.Core.UI.ViewModels
             // 右侧WS URL配置
             var wsConfigPanel = new StackPanel
             {
-                Margin = new Thickness(5),
-                Spacing = 5
+                Margin = new Thickness(8, 0, 0, 0),
+                Spacing = 8
             };
 
             // WS URL 输入框 - 绑定到ViewModel的WsUrl属性，实现双向绑定
             var wsUrlTextBox = new TextBox
             {
-                Watermark = "WebSocket URL (e.g., ws://localhost:8080)",
-                Height = 30,
-                FontSize = 12
+                Watermark = "Endpoint  ·  ws://localhost:8080",
+                Height = 38,
+                FontSize = 11,
+                Background = new SolidColorBrush(Color.Parse("#101624")),
+                BorderBrush = new SolidColorBrush(Color.Parse("#36415B")),
+                BorderThickness = new Thickness(1)
             };
 
             // 绑定到ViewModel的WsUrl属性，实现双向同步
@@ -1759,58 +1942,53 @@ namespace MDiceV2.Core.UI.ViewModels
             // 连接按钮 - 使用与send button相同的自定义样式，并在左侧显示图标
             var connectButton = new Border
             {
-                Margin = new Thickness(0, 3, 0, 0),
-                CornerRadius = new CornerRadius(4),
-                Background = new SolidColorBrush(Color.Parse("#fc8d87")),
-                Height = 45,
+                Margin = new Thickness(0),
+                CornerRadius = new CornerRadius(2),
+                Background = new SolidColorBrush(Color.Parse("#58D6A9")),
+                Height = 40,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 Child = new Button
                 {
-                    CornerRadius = new CornerRadius(4),
-                    Height = 45,
-                    FontSize = 12,
+                    CornerRadius = new CornerRadius(2),
+                    Height = 40,
+                    FontSize = 10,
                     HorizontalAlignment = HorizontalAlignment.Stretch,
                     Command = ConnectWebSocketCommand,
-                    Background = new SolidColorBrush(Color.Parse("#fc8d87")),
-                    Foreground = Brushes.White,
+                    Background = new SolidColorBrush(Color.Parse("#58D6A9")),
+                    Foreground = new SolidColorBrush(Color.Parse("#0B1816")),
                     BorderThickness = new Thickness(0),
-                    Padding = new Thickness(16, 8)
+                    Padding = new Thickness(14, 8)
                 }
             };
 
             // 设置 connect 按钮内容为 图标 + 文本
             if (connectButton.Child is Button innerButton)
             {
-                var connectStack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
-                try
-                {
-                    var bmp = new Bitmap(AssetLoader.Open(new Uri("avares://MDiceV2.Core/Assets/Sprite/Connect.png")));
-                    connectStack.Children.Add(new Image { Source = bmp, Width = 24, Height = 24 });
-                }
-                catch { }
-                connectStack.Children.Add(new TextBlock { Text = "Reconnect WebSockets", VerticalAlignment = VerticalAlignment.Center });
+                var connectStack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, HorizontalAlignment = HorizontalAlignment.Center };
+                connectStack.Children.Add(new TextBlock { Text = "↻", FontSize = 17, VerticalAlignment = VerticalAlignment.Center });
+                connectStack.Children.Add(new TextBlock { Text = "RECONNECT", VerticalAlignment = VerticalAlignment.Center });
                 innerButton.Content = connectStack;
 
                 // 按钮视觉效果
                 innerButton.PointerPressed += async (s, e) =>
                 {
-                    connectButton.Background = new SolidColorBrush(Color.Parse("#d87771"));
-                    innerButton.Background = new SolidColorBrush(Color.Parse("#d87771"));
+                    connectButton.Background = new SolidColorBrush(Color.Parse("#40AF87"));
+                    innerButton.Background = new SolidColorBrush(Color.Parse("#40AF87"));
                 };
                 innerButton.PointerEntered += (s, e) =>
                 {
-                    connectButton.Background = new SolidColorBrush(Color.Parse("#ff9b95"));
-                    innerButton.Background = new SolidColorBrush(Color.Parse("#ff9b95"));
+                    connectButton.Background = new SolidColorBrush(Color.Parse("#72E3BA"));
+                    innerButton.Background = new SolidColorBrush(Color.Parse("#72E3BA"));
                 };
                 innerButton.PointerExited += (s, e) =>
                 {
-                    connectButton.Background = new SolidColorBrush(Color.Parse("#fc8d87"));
-                    innerButton.Background = new SolidColorBrush(Color.Parse("#fc8d87"));
+                    connectButton.Background = new SolidColorBrush(Color.Parse("#58D6A9"));
+                    innerButton.Background = new SolidColorBrush(Color.Parse("#58D6A9"));
                 };
                 innerButton.PointerReleased += (s, e) =>
                 {
-                    connectButton.Background = new SolidColorBrush(Color.Parse("#fc8d87"));
-                    innerButton.Background = new SolidColorBrush(Color.Parse("#fc8d87"));
+                    connectButton.Background = new SolidColorBrush(Color.Parse("#58D6A9"));
+                    innerButton.Background = new SolidColorBrush(Color.Parse("#58D6A9"));
                 };
             }
 
@@ -1819,8 +1997,8 @@ namespace MDiceV2.Core.UI.ViewModels
             // Update区域：左侧 Update 按钮，右侧镜像源选择下拉框（共用一行，等宽）
             var updateRowGrid = new Grid
             {
-                Height = 45,
-                Margin = new Thickness(0, 3, 0, 0),
+                Height = 38,
+                Margin = new Thickness(0),
                 HorizontalAlignment = HorizontalAlignment.Stretch
             };
             updateRowGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star)); // 左半：Update按钮
@@ -1829,33 +2007,28 @@ namespace MDiceV2.Core.UI.ViewModels
             // 左侧：Update 按钮
             var updateButton = new Border
             {
-                CornerRadius = new CornerRadius(4, 0, 0, 4),
-                Background = new SolidColorBrush(Color.Parse("#258292")),
+                CornerRadius = new CornerRadius(2, 0, 0, 2),
+                Background = new SolidColorBrush(Color.Parse("#8B7CF6")),
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 Child = new Button
                 {
-                    CornerRadius = new CornerRadius(4, 0, 0, 4),
-                    FontSize = 12,
+                    CornerRadius = new CornerRadius(2, 0, 0, 2),
+                    FontSize = 9,
                     HorizontalAlignment = HorizontalAlignment.Stretch,
                     Command = UpdateFromGitHubCommand,
-                    Background = new SolidColorBrush(Color.Parse("#207584")),
+                    Background = new SolidColorBrush(Color.Parse("#8B7CF6")),
                     Foreground = Brushes.White,
                     BorderThickness = new Thickness(0),
-                    Padding = new Thickness(12, 8),
+                    Padding = new Thickness(10, 6),
                     HorizontalContentAlignment = HorizontalAlignment.Center
                 }
             };
 
             if (updateButton.Child is Button updateInner)
             {
-                var updateStack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, VerticalAlignment = VerticalAlignment.Center };
-                try
-                {
-                    var bmp2 = new Bitmap(AssetLoader.Open(new Uri("avares://MDiceV2.Core/Assets/Sprite/Update.png")));
-                    updateStack.Children.Add(new Image { Source = bmp2, Width = 18, Height = 18 });
-                }
-                catch { }
-                updateStack.Children.Add(new TextBlock { Text = "Update", VerticalAlignment = VerticalAlignment.Center });
+                var updateStack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
+                updateStack.Children.Add(new TextBlock { Text = "↑", FontSize = 14, VerticalAlignment = VerticalAlignment.Center });
+                updateStack.Children.Add(new TextBlock { Text = "UPDATE", VerticalAlignment = VerticalAlignment.Center });
                 updateInner.Content = updateStack;
             }
 
@@ -1889,18 +2062,19 @@ namespace MDiceV2.Core.UI.ViewModels
 
             var mirrorCombo = new ComboBox
             {
-                CornerRadius = new CornerRadius(0, 4, 4, 0),
-                Background = new SolidColorBrush(Color.Parse("#333333")),
-                Foreground = Brushes.White,
-                Height = 45,
-                BorderThickness = new Thickness(0),
-                Padding = new Thickness(8, 8, 8, 8),
+                CornerRadius = new CornerRadius(0, 2, 2, 0),
+                Background = new SolidColorBrush(Color.Parse("#202638")),
+                Foreground = new SolidColorBrush(Color.Parse("#DCE2F2")),
+                Height = 38,
+                BorderBrush = new SolidColorBrush(Color.Parse("#36415B")),
+                BorderThickness = new Thickness(1),
+                Padding = new Thickness(8, 6),
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 HorizontalContentAlignment = HorizontalAlignment.Center,
                 VerticalContentAlignment = VerticalAlignment.Center,
                 ItemsSource = displayNames,
                 SelectedIndex = 0, // 默认第一个（GitHub 主站）
-                FontSize = 12
+                FontSize = 10
             };
 
             // 将 ComboBox 与 ViewModel.UpdateSourceSelection 做逻辑绑定
@@ -1987,6 +2161,17 @@ namespace MDiceV2.Core.UI.ViewModels
             Grid.SetRow(wsConfigPanel, 1);
             websocketPanel.Children.Add(wsConfigPanel);
 
+            var isWebsocketExpanded = true;
+            websocketToggleButton.Click += (s, e) =>
+            {
+                isWebsocketExpanded = !isWebsocketExpanded;
+                websocketPanel.RowDefinitions[1].Height = new GridLength(isWebsocketExpanded ? 174 : 0);
+                logPanel.IsVisible = isWebsocketExpanded;
+                wsConfigPanel.IsVisible = isWebsocketExpanded;
+                websocketToggleGlyph.Text = isWebsocketExpanded ? "−" : "+";
+                ToolTip.SetTip(websocketToggleButton, isWebsocketExpanded ? "Collapse section" : "Expand section");
+            };
+
             Grid.SetRow(websocketPanel, 0);
             leftPanel.Children.Add(websocketPanel);
 
@@ -2013,7 +2198,10 @@ namespace MDiceV2.Core.UI.ViewModels
                 "{选项1<group 123>||选项2<group 456>||选项3} - 按群号过滤\n" +
                 "{选项1<id 111><weight 2>||选项2<id 222>||选项3<weight 3>} - 组合使用");
             // 右侧面板：上半区域Basic Config，下半区域HelpMessage
-            var rightPanel = new Grid();
+            var rightPanel = new Grid
+            {
+                Margin = new Thickness(8, 0, 0, 0)
+            };
             rightPanel.RowDefinitions.Add(new RowDefinition(GridLength.Star)); // Basic Config区域
             rightPanel.RowDefinitions.Add(new RowDefinition(GridLength.Star)); // HelpMessage区域
 
@@ -2151,7 +2339,8 @@ namespace MDiceV2.Core.UI.ViewModels
 
             // 为GlobalFeedbackMessages.HelpTemplates中的每个模板创建配置项
             var defaultHelps = MDiceV2.Models.GlobalFeedbackMessages.GetDefaultHelpTemplates();
-            foreach (var kvp in MDiceV2.Models.GlobalFeedbackMessages.HelpTemplates)
+            _helpTemplatesConfigContainer.BeginBulkUpdate();
+            foreach (var kvp in MDiceV2.Models.GlobalFeedbackMessages.HelpTemplates.ToArray())
             {
                 defaultHelps.TryGetValue(kvp.Key, out var defVal);
                 _helpTemplatesConfigContainer.AddConfig(kvp.Key, ConfigType.LineEdit, defVal);
@@ -2159,7 +2348,7 @@ namespace MDiceV2.Core.UI.ViewModels
             }
 
             // 确保 FilteredItems 在初始化后与 Items 同步，避免加载成功但列表为空
-            _helpTemplatesConfigContainer.UpdateFilteredItems();
+            _helpTemplatesConfigContainer.EndBulkUpdate();
 
             // 设置值变化回调，用于保存到HelpTemplates表
             _helpTemplatesConfigContainer.OnValueChanged = (key, value) =>
@@ -2187,6 +2376,18 @@ namespace MDiceV2.Core.UI.ViewModels
             {
                 DataContext = _helpTemplatesConfigContainer
             };
+            void UpdateRightPanelRows()
+            {
+                rightPanel.RowDefinitions[0].Height = configView.IsSectionExpanded
+                    ? new GridLength(1, GridUnitType.Star)
+                    : GridLength.Auto;
+                rightPanel.RowDefinitions[1].Height = helpConfigView.IsSectionExpanded
+                    ? new GridLength(1, GridUnitType.Star)
+                    : GridLength.Auto;
+            }
+            configView.SectionExpansionChanged += (s, e) => UpdateRightPanelRows();
+            helpConfigView.SectionExpansionChanged += (s, e) => UpdateRightPanelRows();
+            UpdateRightPanelRows();
             helpConfigView.InitializeHelpText("=====空的默认配置说明.~(OvO)~======\n\n此容器支持添加新配置项功能。\n可以点击Add按钮来添加新的配置项。");
             Grid.SetRow(helpConfigView, 1);
             rightPanel.Children.Add(helpConfigView);

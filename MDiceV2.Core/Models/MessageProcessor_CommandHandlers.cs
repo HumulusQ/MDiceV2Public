@@ -50,7 +50,7 @@ public partial class MessageProcessor : ObservableObject
     /// 指令前缀列表（按长度从长到短排序，确保更长的前缀优先匹配）
     /// </summary>
     private readonly List<string> prefixes = new()
-    { "dismiss", "welcome", "rule", "help", "jrrp", "abot", "team", "duel", "deck", "draw", "bot", "diy", "name", "com", "log", "ai",
+    { "dismiss", "welcome", "rule", "help", "jrrp", "abot", "team", "duel", "deck", "draw", "bot", "diy", "name", "com", "log", "get", "ai",
     "cc", "ra", "rc", "st", "sc", "ti", "gc", "as", "en", "cn", "ri", "ww", "r" };
 
     /// <summary>
@@ -451,6 +451,10 @@ public partial class MessageProcessor : ObservableObject
         {
             HandleQqUpdateCommand(args, msg);
         }
+        else if (subcommand == "db" || subcommand == "database")
+        {
+            HandleDatabaseImportCommand(msg);
+        }
         else if (subcommand == "mod")
         {
             Reply("⏳ 正在检查 CustomizedReply Mod 更新...", msg);
@@ -461,9 +465,14 @@ public partial class MessageProcessor : ObservableObject
             Reply("⏳ 正在检查 AIMod 更新...", msg);
             TriggerAiModUpdateAsync(msg).Wait();
         }
+        else if (subcommand == "coccard")
+        {
+            Reply("⏳ 正在下载最新版 CoC 人物卡...", msg);
+            TriggerCocCardUpdateAsync(msg).Wait();
+        }
         else
         {
-            Reply("❌ 未知的更新类型。使用: #update (主程序) / #update mod (CustomizedReply Mod) / #update aimod (AIMod)", msg);
+            Reply("❌ 未知的更新类型。使用: #update (主程序) / #update db / #update mod / #update aimod / #update coccard", msg);
         }
     }
 
@@ -517,6 +526,7 @@ public partial class MessageProcessor : ObservableObject
         commandHandlers.TryAdd("jrrp", HandleJrrpCommand);
         commandHandlers.TryAdd("ww", HandleWwRoll);
         commandHandlers.TryAdd("welcome", HandleWelcomeCommand);
+        commandHandlers.TryAdd("get", HandleGetCommand);
 
         // 注册 Mod 提供的指令处理器（通用框架，与具体Mod解耦）
         if (_modEventBridge != null)
@@ -669,60 +679,8 @@ public partial class MessageProcessor : ObservableObject
             {
                 Log.Normal("[系统命令] 准备通过外部脚本重启应用程序...");
 
-                var currentProcess = Process.GetCurrentProcess();
-                var pid = currentProcess.Id;
+                LaunchStandardRestartScriptAndExit(message => Log.Normal($"[SystemRestart] {message}"));
 
-                // 根据启动模式选择重启哪个可执行文件
-                var startupMode = ServiceBootstrapper.CurrentStartupMode;
-                var appRootDir = GetApplicationRootDirectory();
-                var exePath = startupMode == StartupMode.Console
-                    ? Path.Combine(appRootDir, "MDiceV2.Console.exe")
-                    : Path.Combine(appRootDir, "MDiceV2.Launcher.exe");
-
-                if (string.IsNullOrWhiteSpace(exePath))
-                {
-                    Log.Error("[系统命令] 无法获取可执行文件路径，重启终止");
-                    return;
-                }
-
-                var exeName = Path.GetFileName(exePath);
-                var batPath = Path.Combine(Path.GetTempPath(), $"mdice_restart_{Guid.NewGuid():N}.bat");
-
-                // 改进的脚本：使用 taskkill 判断进程是否存在，更可靠
-                // taskkill /FI "PID eq {pid}" 返回 SUCCESS 表示进程存在，INFO 表示进程不存在
-                var bat = "@echo off\r\n" +
-                          "setlocal enabledelayedexpansion\r\n" +
-                          $"set PID={pid}\r\n" +
-                          $"set EXE_PATH={exePath}\r\n" +
-                          "echo Waiting for application (PID !PID!) to exit...\r\n" +
-                          ":loop\r\n" +
-                          "tasklist /FI \"PID eq !PID!\" 2>nul | findstr /I !PID! >nul\r\n" +
-                          "if %ERRORLEVEL%==0 (\r\n" +
-                          "  REM Process still running\r\n" +
-                          "  timeout /t 1 /nobreak >nul\r\n" +
-                          "  goto loop\r\n" +
-                          ")\r\n" +
-                          "REM Process exited, safe to restart\r\n" +
-                          "echo Restarting application from: !EXE_PATH!\r\n" +
-                          "timeout /t 2 /nobreak >nul\r\n" +
-                          "start \"\" \"!EXE_PATH!\"\r\n" +
-                          "endlocal\r\n" +
-                          "del /f /q \"%~f0\" 2>nul\r\n";
-
-                File.WriteAllText(batPath, bat);
-                Log.Normal($"[系统命令] 已创建重启脚本: {batPath}");
-
-                var psi = new ProcessStartInfo
-                {
-                    FileName = batPath,
-                    UseShellExecute = true,
-                    CreateNoWindow = true
-                };
-
-                Process.Start(psi);
-                // 退出当前进程，交由批处理脚本完成重启
-                // 使用退出码 99 通知 Console：这是有意的重启，不是崩溃
-                Environment.Exit(99);
             }
             catch (Exception ex)
             {
@@ -972,7 +930,7 @@ public partial class MessageProcessor : ObservableObject
                     $"脚本：{result.ScriptPath}\n" +
                     $"Payload：{result.PayloadDir}",
                     msg);
-                await Task.Delay(1200);
+                await Task.Delay(1200).ConfigureAwait(false);
                 Environment.Exit(99);
             }
             else
@@ -1034,65 +992,75 @@ public partial class MessageProcessor : ObservableObject
         {
             Log.Normal("[系统命令] 准备通过外部脚本重启应用程序...");
 
-            var currentProcess = Process.GetCurrentProcess();
-            var pid = currentProcess.Id;
+            LaunchStandardRestartScriptAndExit(message => Log.Normal($"[SystemRestart] {message}"));
 
-            // 根据启动模式选择重启哪个可执行文件
-            var startupMode = ServiceBootstrapper.CurrentStartupMode;
-            var appRootDir = GetApplicationRootDirectory();
-            var exePath = startupMode == StartupMode.Console
-                ? Path.Combine(appRootDir, "MDiceV2.Console.exe")
-                : Path.Combine(appRootDir, "MDiceV2.Launcher.exe");
-
-            if (string.IsNullOrWhiteSpace(exePath))
-            {
-                Log.Error("[系统命令] 无法获取可执行文件路径，重启终止");
-                return;
-            }
-
-            var batPath = Path.Combine(Path.GetTempPath(), $"mdice_restart_{Guid.NewGuid():N}.bat");
-
-            // 改进的脚本：使用 taskkill 判断进程是否存在，更可靠
-            var bat = "@echo off\r\n" +
-                      "setlocal enabledelayedexpansion\r\n" +
-                      $"set PID={pid}\r\n" +
-                      $"set EXE_PATH={exePath}\r\n" +
-                      "echo Waiting for application (PID !PID!) to exit...\r\n" +
-                      ":loop\r\n" +
-                      "tasklist /FI \"PID eq !PID!\" 2>nul | findstr /I !PID! >nul\r\n" +
-                      "if %ERRORLEVEL%==0 (\r\n" +
-                      "  REM Process still running\r\n" +
-                      "  timeout /t 1 /nobreak >nul\r\n" +
-                      "  goto loop\r\n" +
-                      ")\r\n" +
-                      "REM Process exited, safe to restart\r\n" +
-                      "echo Restarting application from: !EXE_PATH!\r\n" +
-                      "timeout /t 2 /nobreak >nul\r\n" +
-                      "start \"\" \"!EXE_PATH!\"\r\n" +
-                      "endlocal\r\n" +
-                      "del /f /q \"%~f0\" 2>nul\r\n";
-
-            File.WriteAllText(batPath, bat);
-            Log.Normal($"[系统命令] 已创建重启脚本: {batPath}");
-
-            var psi = new ProcessStartInfo
-            {
-                FileName = batPath,
-                UseShellExecute = true,
-                CreateNoWindow = true
-            };
-
-            Process.Start(psi);
-            Log.Normal("[系统命令] 重启脚本已启动，当前进程即将退出");
-
-            // 退出当前进程，交由批处理脚本完成重启
-            // 使用退出码 99 通知 Console：这是有意的重启，不是崩溃
-            Environment.Exit(99);
         }
         catch (Exception ex)
         {
             Log.Error($"[系统命令] 创建或启动重启脚本失败: {ex.Message}");
         }
+    }
+
+    private void LaunchStandardRestartScriptAndExit(Action<string> log)
+    {
+        log("Preparing external restart script...");
+
+        var currentProcess = Process.GetCurrentProcess();
+        var restartTarget = ResolveRestartTargetForUpdate(
+            GetApplicationRootDirectory(),
+            ServiceBootstrapper.CurrentStartupMode,
+            log);
+
+        if (string.IsNullOrWhiteSpace(restartTarget.ExePath))
+        {
+            log("Restart executable path is empty; aborting restart.");
+            return;
+        }
+
+        var batPath = Path.Combine(Path.GetTempPath(), $"mdice_restart_{Guid.NewGuid():N}.bat");
+        var bat = BuildStandardRestartBatchContent(
+            currentProcess.Id,
+            restartTarget.ExePath,
+            restartTarget.WorkingDirectory);
+
+        File.WriteAllText(batPath, bat, Encoding.Default);
+        log($"Created restart script: {batPath}");
+
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = batPath,
+            UseShellExecute = true,
+            CreateNoWindow = true
+        });
+
+        log("Restart script launched; current process will exit with restart code 99.");
+        Environment.Exit(99);
+    }
+
+    private static string BuildStandardRestartBatchContent(int pid, string exePath, string workingDirectory)
+    {
+        var bat = new StringBuilder();
+        bat.AppendLine("@echo off");
+        bat.AppendLine("setlocal enabledelayedexpansion");
+        bat.AppendLine($"set \"PID={pid}\"");
+        bat.AppendLine($"set \"EXE_PATH={exePath}\"");
+        bat.AppendLine($"set \"RESTART_WORKDIR={workingDirectory}\"");
+        bat.AppendLine("echo Waiting for application (PID !PID!) to exit...");
+        bat.AppendLine(":loop");
+        bat.AppendLine("tasklist /FI \"PID eq !PID!\" 2>nul | findstr /I \"!PID!\" >nul");
+        bat.AppendLine("if %ERRORLEVEL%==0 (");
+        bat.AppendLine("  REM Process still running");
+        bat.AppendLine("  timeout /t 1 /nobreak >nul");
+        bat.AppendLine("  goto loop");
+        bat.AppendLine(")");
+        bat.AppendLine("REM Process exited, safe to restart");
+        bat.AppendLine("echo Restarting application from: !EXE_PATH!");
+        bat.AppendLine("echo Working directory: !RESTART_WORKDIR!");
+        bat.AppendLine("timeout /t 2 /nobreak >nul");
+        bat.AppendLine("start \"\" /D \"!RESTART_WORKDIR!\" \"!EXE_PATH!\"");
+        bat.AppendLine("endlocal");
+        bat.AppendLine("del /f /q \"%~f0\" 2>nul");
+        return bat.ToString();
     }
 
     private async Task TriggerModUpdate(Msg msg)
@@ -2120,6 +2088,10 @@ public partial class MessageProcessor : ObservableObject
                 result = detail;
                 exmessage = exMsg;
             }
+            if (isLoopMode && results.Count > 0)
+            {
+                result = CompactLoopCheckResult(result, mode);
+            }
             results.Add(result);
             exMessages.Add(exmessage); // 保存个性化文本
 
@@ -2143,6 +2115,11 @@ public partial class MessageProcessor : ObservableObject
         
         if (results.Count > 0)
         {
+            if (isLoopMode)
+            {
+                results[0] = ExpandFirstLoopCheckResult(results[0], mode);
+            }
+
             string combinedReply = string.Join("\n", results);
             
             // 仅在非循环模式下添加个性化文本
@@ -2152,16 +2129,19 @@ public partial class MessageProcessor : ObservableObject
             }
             
             finalReply = combinedReply + finalReply;
-            
+
             if (isHiddenMode)
             {
-                string publicText = GlobalFeedbackMessages.FeedbackTemplates.TryGetValue("HiddenRollPublic", out var pub) ? pub : "已执行暗骰，结果已私发。";
-                string privateText = SafeFormatString(GlobalFeedbackMessages.FeedbackTemplates["HiddenRollPrivatePrefix"], finalReply);
+                string publicTemplate = GlobalFeedbackMessages.FeedbackTemplates.TryGetValue("HiddenRollPublic", out var pub) ? pub : "已执行暗骰，结果已私发。";
+                string publicText = RefineMsg(publicTemplate, msg);
+                string privateTemplate = RefineMsg(GlobalFeedbackMessages.FeedbackTemplates["HiddenRollPrivatePrefix"], msg);
+                string refinedFinalReply = RefineMsg(finalReply, msg);
+                string privateText = RestoreEscapedChars(SafeFormatString(privateTemplate, refinedFinalReply));
 
                 // 模板为空时兜底，避免发送空白消息
                 if (string.IsNullOrWhiteSpace(privateText))
                 {
-                    privateText = $"[暗骰结果]\n{finalReply}";
+                    privateText = $"[暗骰结果]\n{refinedFinalReply}";
                 }
 
                 // 仅群聊发送公共提示，私聊不需要"已私发"提示
@@ -2195,6 +2175,83 @@ public partial class MessageProcessor : ObservableObject
             Log.InfoFormat($"用户 {userId} CoC 检定结果: {finalReply}");
 
         }
+    }
+
+    private static string CompactLoopCheckResult(string result, string mode)
+    {
+        if (string.IsNullOrEmpty(result))
+        {
+            return result;
+        }
+
+        var lines = result.Replace("\r\n", "\n").Split('\n');
+        for (int i = 0; i < lines.Length; i++)
+        {
+            lines[i] = CompactLoopCheckLine(lines[i], mode);
+        }
+
+        return string.Join("\n", lines);
+    }
+
+    private static string CompactLoopCheckLine(string line, string mode)
+    {
+        if (string.IsNullOrWhiteSpace(line))
+        {
+            return line;
+        }
+
+        foreach (var marker in GetLoopCheckMarkers(mode))
+        {
+            int index = line.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+            if (index >= 0)
+            {
+                return line[index..].TrimStart();
+            }
+        }
+
+        return line;
+    }
+
+    private static string ExpandFirstLoopCheckResult(string result, string mode)
+    {
+        if (string.IsNullOrEmpty(result))
+        {
+            return result;
+        }
+
+        var lines = result.Replace("\r\n", "\n").Split('\n');
+        for (int i = 0; i < lines.Length; i++)
+        {
+            lines[i] = ExpandFirstLoopCheckLine(lines[i], mode);
+        }
+
+        return string.Join("\n", lines);
+    }
+
+    private static string ExpandFirstLoopCheckLine(string line, string mode)
+    {
+        if (string.IsNullOrWhiteSpace(line))
+        {
+            return line;
+        }
+
+        foreach (var marker in GetLoopCheckMarkers(mode))
+        {
+            int index = line.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+            if (index > 0)
+            {
+                return line[..index].TrimEnd() + "\n" + line[index..].TrimStart();
+            }
+        }
+
+        return line;
+    }
+
+    private static string[] GetLoopCheckMarkers(string mode)
+    {
+        return mode.Equals("et", StringComparison.OrdinalIgnoreCase)
+            ? new[] { "D20", "B1[", "B2[", "B3[", "B4[", "B5[", "B6[", "B7[", "B8[", "B9[", "P1[", "P2[", "P3[", "P4[", "P5[", "P6[", "P7[", "P8[", "P9[" }
+            : new[] { "D100=" };
     }
     
     /// <summary>
@@ -4028,7 +4085,7 @@ public partial class MessageProcessor : ObservableObject
 
     /// <summary>
     /// 处理 .team 指令（队伍管理系统）
-    /// 子命令：new, add, join, del, call, sort, list, set
+    /// 子命令：new, add, era, join, del, call, sort, list, set
     /// 统一格式：.team 子命令 参数（子命令与参数间空格可省略，如 .teamnew队伍名）
     /// </summary>
     private void HandleTeamCommand(string args, Msg msg)
@@ -4045,7 +4102,7 @@ public partial class MessageProcessor : ObservableObject
             if (string.IsNullOrEmpty(trimmedArgs))
             {
                 Reply("队伍管理指令格式：.team 子命令 参数\n" +
-                      "子命令：new 队伍名, add @或QQ, join 队伍名, del 队伍名, call 队伍名, sort 技能名, list, set", msg);
+                      "子命令：new 队伍名, add @或QQ, era @或QQ, join 队伍名, del 队伍名, call 队伍名, sort 技能名, list, set", msg);
                 return;
             }
 
@@ -4053,7 +4110,7 @@ public partial class MessageProcessor : ObservableObject
             var match = Regex.Match(trimmedArgs, @"^([a-zA-Z]+)\s*(.*)$");
             if (!match.Success)
             {
-                Reply("队伍管理指令格式无效。子命令：new, add, join, del, call, sort, list, set", msg);
+                Reply("队伍管理指令格式无效。子命令：new, add, era, join, del, call, sort, list, set", msg);
                 return;
             }
             string command = match.Groups[1].Value.ToLower();
@@ -4066,6 +4123,9 @@ public partial class MessageProcessor : ObservableObject
                     break;
                 case "add":
                     HandleTeamAdd(param, msg);
+                    break;
+                case "era":
+                    HandleTeamEra(param, msg);
                     break;
                 case "join":
                     HandleTeamJoin(param, msg);
@@ -4103,7 +4163,7 @@ public partial class MessageProcessor : ObservableObject
                         }
                     }
                     Reply($"未知的队伍管理子命令：{command}\n" +
-                          "有效子命令：new, add, join, del, call, sort, list, set", msg);
+                          "有效子命令：new, add, era, join, del, call, sort, list, set", msg);
                     break;
             }
         }
@@ -4280,6 +4340,116 @@ public partial class MessageProcessor : ObservableObject
         {
             Log.Error($"[队伍管理] 处理 .team add 指令时出错: {ex.Message}");
             Reply("处理队伍添加指令时发生错误。", msg);
+        }
+    }
+
+    /// <summary>
+    /// .team era [@或QQ] - 从当前默认队伍中移除成员
+    /// </summary>
+    private void HandleTeamEra(string args, Msg msg)
+    {
+        try
+        {
+            var trimmedArgs = args.Trim();
+            if (string.IsNullOrEmpty(trimmedArgs))
+            {
+                Reply("格式：.team era [@或QQ号] [[@或QQ号] ...]\n示例：.team era @张三 或 .team era 123456789 或 .team era @张三 @李四", msg);
+                return;
+            }
+
+            if (!groupDataRecords.TryGetValue(msg.GroupId, out var groupData))
+            {
+                Reply("群数据不存在，请先创建队伍。", msg);
+                return;
+            }
+
+            groupData.Teams ??= new Dictionary<string, TeamInfo>();
+            groupData.UserDefaultTeams ??= new Dictionary<long, string>();
+
+            if (!groupData.UserDefaultTeams.TryGetValue(msg.UserId, out var defaultTeamName))
+            {
+                Reply("您还没有加入任何队伍。请先使用 .team join <队伍名> 加入队伍。", msg);
+                return;
+            }
+
+            if (!groupData.Teams.TryGetValue(defaultTeamName, out var team))
+            {
+                groupData.UserDefaultTeams.Remove(msg.UserId);
+                Reply($"您的默认队伍 '{defaultTeamName}' 已被删除。请重新选择队伍。", msg);
+                SaveGroupData(msg.GroupId);
+                return;
+            }
+
+            if (team.CreatorId != msg.UserId && (groupData.AuthLevel == null || groupData.AuthLevel > 1))
+            {
+                Reply($"您没有权限从队伍 '{defaultTeamName}' 中删除成员。只有队伍创建者或群主/管理员可以执行此操作。", msg);
+                return;
+            }
+
+            var memberIds = ExtractAllUserIdsFromMentions(trimmedArgs);
+            if (memberIds.Count == 0)
+            {
+                Reply("无法识别要删除的成员。请使用 @格式 或 QQ 号码。", msg);
+                return;
+            }
+
+            var removedNames = new List<string>();
+            var failureReasons = new List<string>();
+
+            foreach (var memberId in memberIds)
+            {
+                if (memberId <= 0)
+                {
+                    failureReasons.Add("无效的成员ID");
+                    continue;
+                }
+
+                if (memberId == team.CreatorId)
+                {
+                    failureReasons.Add($"{GetReasonableSenderName(memberId, msg.IsSimulationMode)} 是队伍创建者，无法用 .team era 删除");
+                    continue;
+                }
+
+                if (!team.Members.Contains(memberId))
+                {
+                    failureReasons.Add($"{GetReasonableSenderName(memberId, msg.IsSimulationMode)} 不在队伍中");
+                    continue;
+                }
+
+                team.Members.Remove(memberId);
+                if (groupData.UserDefaultTeams.TryGetValue(memberId, out var memberDefaultTeam) &&
+                    memberDefaultTeam == defaultTeamName)
+                {
+                    groupData.UserDefaultTeams.Remove(memberId);
+                }
+
+                removedNames.Add($"{GetReasonableSenderName(memberId, msg.IsSimulationMode)} ({memberId})");
+            }
+
+            if (removedNames.Count == 0)
+            {
+                Reply($"队伍 '{defaultTeamName}' 没有成员被移除。\n原因：{string.Join("；", failureReasons)}", msg);
+                return;
+            }
+
+            team.UpdatedAt = DateTime.UtcNow;
+            SaveGroupData(msg.GroupId);
+
+            var replyMessage = new StringBuilder();
+            replyMessage.AppendLine($"✅ 已从队伍 '{defaultTeamName}' 移除 {removedNames.Count} 名成员：");
+            replyMessage.AppendLine(string.Join("、", removedNames));
+
+            if (failureReasons.Count > 0)
+            {
+                replyMessage.AppendLine($"未处理：{string.Join("；", failureReasons)}");
+            }
+
+            Reply(replyMessage.ToString().Trim(), msg);
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"[队伍管理] 处理 .team era 指令时出错: {ex.Message}");
+            Reply("处理队伍成员删除指令时发生错误。", msg);
         }
     }
 
@@ -5378,13 +5548,17 @@ public partial class MessageProcessor : ObservableObject
     }
 
     /// <summary>
-    /// 处理 .jrrp 指令（强制抽取隐藏牌堆“_抽签动画”）
+    /// 处理 .jrrp 指令（抽取并保存隐藏牌堆“_今日运势”的每日结果）
     /// </summary>
     private void HandleJrrpCommand(string args, Msg msg)
     {
         try
         {
-            string refinedMessage = RefineMsg("<deck _今日运势>", msg);
+            var today = DateOnly.FromDateTime(DateTime.Now);
+            string refinedMessage = GetOrCreateDailyJrrpResult(
+                msg.UserId,
+                today,
+                () => RefineMsg("<deck _今日运势>", msg));
             Reply(refinedMessage, msg);
         }
         catch (Exception ex)
@@ -5394,12 +5568,78 @@ public partial class MessageProcessor : ObservableObject
         }
     }
 
+    private const string DailyJrrpTableName = "DailyJrrp";
+    private readonly object dailyJrrpLock = new();
+    private readonly ConcurrentDictionary<long, DailyJrrpRecord> dailyJrrpRecords = new();
+
+    private sealed class DailyJrrpRecord
+    {
+        public DateOnly Date { get; set; }
+        public string Result { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// 获取用户当天的 jrrp 回执；首次生成后立即持久化，保证重启后仍保持一致。
+    /// </summary>
+    private string GetOrCreateDailyJrrpResult(long userId, DateOnly date, Func<string> resultFactory)
+    {
+        lock (dailyJrrpLock)
+        {
+            if (dailyJrrpRecords.TryGetValue(userId, out var cachedRecord)
+                && cachedRecord.Date == date
+                && !string.IsNullOrEmpty(cachedRecord.Result))
+            {
+                return cachedRecord.Result;
+            }
+
+            if (DataIO != null)
+            {
+                string? persistedJson = DataIO.ReadData(DailyJrrpTableName, userId.ToString());
+                if (!string.IsNullOrWhiteSpace(persistedJson))
+                {
+                    try
+                    {
+                        var persistedRecord = JsonSerializer.Deserialize<DailyJrrpRecord>(persistedJson);
+                        if (persistedRecord != null
+                            && persistedRecord.Date == date
+                            && !string.IsNullOrEmpty(persistedRecord.Result))
+                        {
+                            dailyJrrpRecords[userId] = persistedRecord;
+                            return persistedRecord.Result;
+                        }
+                    }
+                    catch (JsonException ex)
+                    {
+                        Log.Warn($"[牌堆系统] 解析用户 {userId} 的每日 jrrp 数据失败，将重新生成: {ex.Message}");
+                    }
+                }
+            }
+
+            string result = resultFactory();
+            var newRecord = new DailyJrrpRecord
+            {
+                Date = date,
+                Result = result
+            };
+            dailyJrrpRecords[userId] = newRecord;
+
+            if (DataIO != null)
+            {
+                string json = JsonSerializer.Serialize(newRecord);
+                DataIO.SaveData(DailyJrrpTableName, userId.ToString(), json);
+            }
+
+            return result;
+        }
+    }
+
     /// <summary>
     /// 处理 .ww 指令——双重十字骰的加骰检定
     /// 格式: .ww&lt;骰子数&gt; [a&lt;加骰阈值&gt;] [+/-n]
     /// 例如: .ww10 a9（投掷10个d10，出目≥9为加骰触发条件）
     ///      .ww10 a9 +5（投掷后额外加5成功）
-    /// 加骰阈值默认为8，有效范围8-10，超过10则忽略设置（回退到默认8）
+    ///      .ww10 a11（不加骰）
+    /// 加骰阈值默认为8，可设为8或更高；设为大于10的值时，本次检定不加骰
     /// 
     /// 检定规则：
     /// 1. 投掷N个d10，出目8/9/10计为成功度，≥加骰阈值计为加骰数
@@ -5417,7 +5657,7 @@ public partial class MessageProcessor : ObservableObject
             string input = (args ?? "").Trim();
             if (string.IsNullOrEmpty(input))
             {
-                Reply("格式: .ww&lt;骰子数&gt; [a&lt;加骰阈值&gt;] [+/-n]\n示例: .ww10 或 .ww8a9 或 .ww10a9+5", msg);
+                Reply("格式: .ww&lt;骰子数&gt; [a&lt;加骰阈值&gt;] [+/-n]\n示例: .ww10、.ww8a9、.ww10a9+5，或 .ww10a11（不加骰）", msg);
                 return;
             }
 
@@ -5441,7 +5681,9 @@ public partial class MessageProcessor : ObservableObject
             }
 
             // 解析加骰阈值（a后面的数字）
-            int addThreshold = 8; // 默认加骰阈值
+            const int defaultAddThreshold = 8;
+            int addThreshold = defaultAddThreshold;
+            bool isAddDiceDisabled = false;
             int addIdx = input.IndexOf('a', StringComparison.OrdinalIgnoreCase);
             string diceCountStr;
             if (addIdx >= 0)
@@ -5449,9 +5691,13 @@ public partial class MessageProcessor : ObservableObject
                 string thresholdStr = input.Substring(addIdx + 1).Trim();
                 if (int.TryParse(thresholdStr, out int parsedThreshold))
                 {
-                    // 大于10时忽略此设置
-                    if (parsedThreshold >= 8 && parsedThreshold <= 10)
+                    if (parsedThreshold >= defaultAddThreshold)
+                    {
                         addThreshold = parsedThreshold;
+                        // d10 不可能达到大于 10 的阈值。明确记录这个状态，
+                        // 避免将 a11 等写法误回退为默认的 a8。
+                        isAddDiceDisabled = parsedThreshold > 10;
+                    }
                 }
                 diceCountStr = input.Substring(0, addIdx).Trim();
             }
@@ -5494,7 +5740,7 @@ public partial class MessageProcessor : ObservableObject
                 foreach (int val in rollResult.Rolls)
                 {
                     if (val >= 8) roundSuccess++;
-                    if (val >= addThreshold) roundAddDice++;
+                    if (!isAddDiceDisabled && val >= addThreshold) roundAddDice++;
                 }
 
                 totalSuccess += roundSuccess;
@@ -5547,10 +5793,15 @@ public partial class MessageProcessor : ObservableObject
 
             // === 构建回复 ===
             var sb = new StringBuilder();
-            sb.AppendLine($"投掷{diceCount}d10 {(addThreshold == 8 ? "" : $"加骰阈值≥{addThreshold}")}");
+            string addDiceDescription = isAddDiceDisabled
+                ? $"加骰阈值≥{addThreshold}（不加骰）"
+                : addThreshold == defaultAddThreshold ? "" : $"加骰阈值≥{addThreshold}";
+            sb.AppendLine($"投掷{diceCount}d10 {addDiceDescription}".TrimEnd());
             sb.AppendLine(string.Join("\n", roundDetails));
             sb.AppendLine($"━━━━━━━━━━━━━━━━");
-            sb.Append($"总计成功度: {totalSuccess}{modifierDisplay} = {finalSuccess}");
+            sb.Append(successModifier == 0
+                ? $"总计成功度: {totalSuccess}"
+                : $"总计成功度: {totalSuccess}{modifierDisplay} = {finalSuccess}");
 
             Reply(sb.ToString(), msg);
         }

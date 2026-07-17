@@ -2045,7 +2045,7 @@
           "build/net6.0/xunit.runner.visualstudio.props": {}
         }
       },
-      "AIMod/0.2.7": {
+      "AIMod/0.3.1": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v10.0",
         "dependencies": {
@@ -2053,8 +2053,8 @@
           "Avalonia.Fonts.Inter": "11.3.6",
           "Avalonia.Themes.Fluent": "11.3.6",
           "CommunityToolkit.Mvvm": "8.3.2",
-          "MDiceV2.Core": "0.2.7",
-          "MDiceV2.Interfaces": "0.2.7",
+          "MDiceV2.Core": "0.3.1",
+          "MDiceV2.Interfaces": "0.3.1",
           "Polly": "8.5.0",
           "Semi.Avalonia": "11.1.0",
           "System.Data.SQLite": "1.0.119"
@@ -2066,7 +2066,7 @@
           "bin/placeholder/AIMod.dll": {}
         }
       },
-      "MDiceV2.Abstractions/0.2.7": {
+      "MDiceV2.Abstractions/0.3.1": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v9.0",
         "dependencies": {
@@ -2082,7 +2082,7 @@
           "bin/placeholder/MDiceV2.Abstractions.dll": {}
         }
       },
-      "MDiceV2.Core/0.2.7": {
+      "MDiceV2.Core/0.3.1": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v10.0",
         "dependencies": {
@@ -2093,8 +2093,8 @@
           "Avalonia.Themes.Fluent": "11.3.6",
           "CommunityToolkit.Mvvm": "8.3.2",
           "Grpc.AspNetCore": "2.60.0",
-          "MDiceV2.Abstractions": "0.2.7",
-          "MDiceV2.Interfaces": "0.2.7",
+          "MDiceV2.Abstractions": "0.3.1",
+          "MDiceV2.Interfaces": "0.3.1",
           "Microsoft.Extensions.DependencyInjection": "9.0.0",
           "MoonSharp": "2.0.0",
           "Polly": "8.5.0",
@@ -2110,7 +2110,7 @@
           "bin/placeholder/MDiceV2.Core.dll": {}
         }
       },
-      "MDiceV2.Interfaces/0.2.7": {
+      "MDiceV2.Interfaces/0.3.1": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v10.0",
         "dependencies": {
@@ -5356,22 +5356,22 @@
         "xunit.runner.visualstudio.nuspec"
       ]
     },
-    "AIMod/0.2.7": {
+    "AIMod/0.3.1": {
       "type": "project",
       "path": "../Mods/AIMod/AIMod.csproj",
       "msbuildProject": "../Mods/AIMod/AIMod.csproj"
     },
-    "MDiceV2.Abstractions/0.2.7": {
+    "MDiceV2.Abstractions/0.3.1": {
       "type": "project",
       "path": "../MDiceV2.Abstractions/MDiceV2.Abstractions.csproj",
       "msbuildProject": "../MDiceV2.Abstractions/MDiceV2.Abstractions.csproj"
     },
-    "MDiceV2.Core/0.2.7": {
+    "MDiceV2.Core/0.3.1": {
       "type": "project",
       "path": "../MDiceV2.Core/MDiceV2.Core.csproj",
       "msbuildProject": "../MDiceV2.Core/MDiceV2.Core.csproj"
     },
-    "MDiceV2.Interfaces/0.2.7": {
+    "MDiceV2.Interfaces/0.3.1": {
       "type": "project",
       "path": "../MDiceV2.Interfaces/MDiceV2.Interfaces.csproj",
       "msbuildProject": "../MDiceV2.Interfaces/MDiceV2.Interfaces.csproj"
@@ -5379,12 +5379,12 @@
   },
   "projectFileDependencyGroups": {
     "net10.0-windows": [
-      "AIMod >= 0.2.7",
+      "AIMod >= 0.3.1",
       "BenchmarkDotNet >= 0.13.12",
       "FluentAssertions >= 6.12.0",
       "Grpc.Net.Client.Web >= 2.60.0",
-      "MDiceV2.Abstractions >= 0.2.7",
-      "MDiceV2.Core >= 0.2.7",
+      "MDiceV2.Abstractions >= 0.3.1",
+      "MDiceV2.Core >= 0.3.1",
       "Microsoft.NET.Test.Sdk >= 17.9.1",
       "Moq >= 4.20.70",
       "xunit >= 2.7.1",
@@ -5395,7 +5395,7 @@
     "C:\\Users\\49405\\.nuget\\packages\\": {}
   },
   "project": {
-    "version": "1.0.0",
+    "version": "0.3.1",
     "restore": {
       "projectUniqueName": "C:\\Users\\49405\\Documents\\Mydata\\Programming\\MDiceV2\\MDiceV2.Tests\\MDiceV2.Tests.csproj",
       "projectName": "MDiceV2.Tests",

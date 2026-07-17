@@ -14,6 +14,7 @@ public sealed class OneBotFileInfo
     public string SourceKind { get; set; } = string.Empty;
     public long UserId { get; set; }
     public long GroupId { get; set; }
+    public long BusId { get; set; }
     public string FileId { get; set; } = string.Empty;
     public string FileName { get; set; } = string.Empty;
     public long FileSize { get; set; }
@@ -101,6 +102,7 @@ public sealed class OneBotFileInfo
         info.FileId = GetFirstString(fileElement, "file_id", "id", "file");
         info.FileName = SanitizeDisplayName(GetFirstString(fileElement, "name", "file_name", "file"));
         info.FileSize = GetFirstInt64(fileElement, "file_size", "size") ?? 0;
+        info.BusId = GetFirstInt64(fileElement, "busid", "bus_id") ?? 0;
         info.Path = GetFirstString(fileElement, "path");
         info.Url = GetFirstString(fileElement, "url");
 

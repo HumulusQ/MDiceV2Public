@@ -5,14 +5,24 @@
     <Application.Resources>
        <!-- 注册全局转换器 -->
        <conv:BoolToWidthConverter x:Key="BoolToWidthConverter" />
-       <!-- Default font family: use PlayfairDisplay-Black for all UI -->
-       <FontFamily x:Key="DefaultFontFamily">avares://MDiceV2.Core/Assets/Font/PlayfairDisplay-Black.ttf#Playfair Display</FontFamily>
+       <!-- Clean geometric UI face with Chinese fallbacks -->
+       <FontFamily x:Key="DefaultFontFamily">avares://MDiceV2.Core/Assets/Font/AlibabaPuHuiTi-3-45-Light.ttf#Alibaba PuHuiTi, Microsoft YaHei UI, Segoe UI</FontFamily>
        <!-- Chinese TextBox font: use new Alibaba PuHuiTi Light font for input fields -->
        <FontFamily x:Key="ChineseFontFamily">avares://MDiceV2.Core/Assets/Font/AlibabaPuHuiTi-3-45-Light.ttf#Alibaba PuHuiTi, 楷体, SimSun</FontFamily>
        <!-- Bold Chinese font: use Alibaba PuHuiTi Bold for labels (deprecated, keeping for compatibility) -->
        <FontFamily x:Key="BoldChineseFontFamily">avares://MDiceV2.Core/Assets/Font/Alibaba-PuHuiTi-B.ttf#Alibaba PuHuiTi, 楷体, SimSun</FontFamily>
        <!-- Bold English font: use PlayfairDisplay Black for English labels (same as DefaultFontFamily now) -->
        <FontFamily x:Key="BoldEnglishFontFamily">avares://MDiceV2.Core/Assets/Font/PlayfairDisplay-Black.ttf#Playfair Display</FontFamily>
+
+       <!-- MDice midnight palette: shared by the main shell and configuration views -->
+       <SolidColorBrush x:Key="MdSurface">#141927</SolidColorBrush>
+       <SolidColorBrush x:Key="MdSurfaceRaised">#202638</SolidColorBrush>
+       <SolidColorBrush x:Key="MdSurfaceInput">#101521</SolidColorBrush>
+       <SolidColorBrush x:Key="MdBorder">#323B51</SolidColorBrush>
+       <SolidColorBrush x:Key="MdAccent">#8B7CF6</SolidColorBrush>
+       <SolidColorBrush x:Key="MdAccentHover">#A093FF</SolidColorBrush>
+       <SolidColorBrush x:Key="MdText">#F1F3FA</SolidColorBrush>
+       <SolidColorBrush x:Key="MdMutedText">#8E98B2</SolidColorBrush>
     </Application.Resources>
 
     <Application.Styles>
@@ -20,13 +30,13 @@
 
         <!-- EllipseButton 样式 -->
         <Style Selector="Button.EllipseButton">
-          <Setter Property="Background" Value="#258292"/>
-          <Setter Property="Foreground" Value="White"/>
+          <Setter Property="Background" Value="{StaticResource MdAccent}"/>
+          <Setter Property="Foreground" Value="{StaticResource MdText}"/>
           <Setter Property="Padding" Value="16"/>
           <Setter Property="Template">
             <ControlTemplate>
               <Border Background="{TemplateBinding Background}"
-                      CornerRadius="8"
+                      CornerRadius="2"
                       HorizontalAlignment="Stretch"
                       VerticalAlignment="Stretch">
                 <ContentPresenter x:Name="PART_ContentPresenter"
@@ -41,38 +51,69 @@
 
         <!-- 悬停状态 -->
         <Style Selector="Button.EllipseButton:pointerover">
-          <Setter Property="Background" Value="Red"/>
-          <Setter Property="Foreground" Value="White"/>
+          <Setter Property="Background" Value="{StaticResource MdAccentHover}"/>
+          <Setter Property="Foreground" Value="{StaticResource MdText}"/>
         </Style>
 
         <!-- ================= TextBlock 文字颜色锁定为白色 ================= -->
         <!-- 全局 TextBlock：锁定文字为白色，防止 FluentTheme 覆盖 -->
         <Style Selector="TextBlock">
             <Setter Property="FontFamily" Value="{StaticResource DefaultFontFamily}" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Foreground" Value="{StaticResource MdText}" />
         </Style>
 
         <!-- TextBlock 禁用状态：仍保持白色 -->
         <Style Selector="TextBlock:disabled">
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Foreground" Value="{StaticResource MdMutedText}" />
         </Style>
 
         <!-- 其他控件字体配置 -->
         <Style Selector="Button, Label">
             <Setter Property="FontFamily" Value="{StaticResource DefaultFontFamily}" />
         </Style>
+
+        <!-- Shared controls: a quieter, layered dark surface with a vivid focus state. -->
+        <Style Selector="Window">
+            <Setter Property="Background" Value="#0B0E18" />
+        </Style>
+
+        <Style Selector="Button">
+            <Setter Property="Background" Value="{StaticResource MdSurfaceRaised}" />
+            <Setter Property="BorderBrush" Value="{StaticResource MdBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="Padding" Value="12,7" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+
+        <Style Selector="Button:pointerover">
+            <Setter Property="Background" Value="#2A3147" />
+            <Setter Property="BorderBrush" Value="#58647F" />
+        </Style>
+
+        <Style Selector="Button:pressed">
+            <Setter Property="Background" Value="#151B2D" />
+        </Style>
+
+        <Style Selector="Button:disabled">
+            <Setter Property="Opacity" Value="0.45" />
+        </Style>
         
         <!-- TextBox: use ChineseFontFamily with fallbacks and Normal weight -->
         <Style Selector="TextBox">
             <Setter Property="FontFamily" Value="{StaticResource ChineseFontFamily}" />
             <Setter Property="FontWeight" Value="Normal" />
-            <Setter Property="Background" Value="#303030" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="CaretBrush" Value="White" />
-            <Setter Property="BorderBrush" Value="#444444" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="SelectionForegroundBrush" Value="White" />
-            <Setter Property="SelectionBrush" Value="#4F7FBF" />
+            <Setter Property="Background" Value="{StaticResource MdSurfaceInput}" />
+            <Setter Property="Foreground" Value="{StaticResource MdText}" />
+            <Setter Property="CaretBrush" Value="{StaticResource MdText}" />
+            <Setter Property="BorderBrush" Value="{StaticResource MdBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="SelectionForegroundBrush" Value="{StaticResource MdText}" />
+            <Setter Property="SelectionBrush" Value="#6257B8" />
         </Style>
 
         <!-- TextBox内部的水印文本（watermark）必须显式指定字体，避免继承TextBlock全局样式的粗体 -->
@@ -86,32 +127,65 @@
             <Setter Property="FontFamily" Value="{StaticResource DefaultFontFamily}" />
         </Style>
 
+        <Style Selector="ComboBox, NumericUpDown">
+            <Setter Property="FontFamily" Value="{StaticResource DefaultFontFamily}" />
+            <Setter Property="Background" Value="{StaticResource MdSurfaceInput}" />
+            <Setter Property="Foreground" Value="{StaticResource MdText}" />
+            <Setter Property="BorderBrush" Value="{StaticResource MdBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="2" />
+        </Style>
+
+        <Style Selector="ToggleButton">
+            <Setter Property="Background" Value="{StaticResource MdSurfaceRaised}" />
+            <Setter Property="BorderBrush" Value="{StaticResource MdBorder}" />
+            <Setter Property="CornerRadius" Value="2" />
+        </Style>
+
+        <Style Selector="ToggleButton:checked">
+            <Setter Property="Background" Value="{StaticResource MdAccent}" />
+            <Setter Property="BorderBrush" Value="{StaticResource MdAccent}" />
+        </Style>
+
+        <Style Selector="TabControl">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
+        <Style Selector="TabItem">
+            <Setter Property="FontFamily" Value="{StaticResource DefaultFontFamily}" />
+            <Setter Property="Foreground" Value="{StaticResource MdMutedText}" />
+        </Style>
+
+        <Style Selector="TabItem:selected">
+            <Setter Property="Foreground" Value="{StaticResource MdText}" />
+        </Style>
+
         <!-- 获得焦点时仍保持黑底白字 -->
         <Style Selector="TextBox:focus">
-            <Setter Property="Background" Value="#303030" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="CaretBrush" Value="White" />
-            <Setter Property="BorderBrush" Value="#444444" />
+            <Setter Property="Background" Value="#101727" />
+            <Setter Property="Foreground" Value="{StaticResource MdText}" />
+            <Setter Property="CaretBrush" Value="{StaticResource MdText}" />
+            <Setter Property="BorderBrush" Value="{StaticResource MdAccent}" />
         </Style>
 
         <!-- 鼠标悬停时也不改变背景颜色 -->
         <Style Selector="TextBox:pointerover">
-            <Setter Property="Background" Value="#528e5aff" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#1B2338" />
+            <Setter Property="Foreground" Value="{StaticResource MdText}" />
         </Style>
 
         <!-- 日志 ScrollViewer：锁死为黑底，防止模板使用浅色 Panel -->
         <Style Selector="ScrollViewer.WsLogScroll">
-            <Setter Property="Background" Value="#303030" />
+            <Setter Property="Background" Value="#111725" />
         </Style>
 
         <!-- 深层覆盖：TextBox 模板内部的 Border 背景（FluentTheme 在 focus 时会改变这个） -->
         <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
-            <Setter Property="Background" Value="#303030" />
+            <Setter Property="Background" Value="#101521" />
         </Style>
         
         <Style Selector="TextBox:focus /template/ Border">
-            <Setter Property="Background" Value="#303030" />
+            <Setter Property="Background" Value="#101521" />
         </Style>
 
         <!-- ABOT Script 输入框：强制白色背景，覆盖全局默认 -->
@@ -158,22 +232,22 @@
         <!-- ================= Button 文字颜色锁定为白色 ================= -->
         <!-- 全局 Button：锁死文字为白色，防止 FluentTheme 覆盖 -->
         <Style Selector="Button">
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Foreground" Value="{StaticResource MdText}" />
         </Style>
 
         <!-- Button 悬停状态：保持白色文字 -->
         <Style Selector="Button:pointerover">
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Foreground" Value="{StaticResource MdText}" />
         </Style>
 
         <!-- Button 按下状态：保持白色文字 -->
         <Style Selector="Button:pressed">
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Foreground" Value="{StaticResource MdText}" />
         </Style>
 
         <!-- Button 禁用状态：仍保持白色（或可选调整为灰白） -->
         <Style Selector="Button:disabled">
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Foreground" Value="#8E99BA" />
         </Style>
     </Application.Styles>
 </Application>

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using MDiceV2.Interfaces;
 using MDiceV2.Interfaces.Mod;
 
 namespace MDiceV2.Core.Mod;
@@ -63,6 +64,7 @@ public class ModEventBridge
 
         _mods[metadata.Id] = (plugin, metadata, isEnabled);
         InvalidateCache();
+        SynchronizeNavigationPanel(plugin, isEnabled);
 
         _modContext.Log(LogLevel.Debug,
             $"Registered mod: {metadata.Name} (Enabled: {isEnabled})");
@@ -111,12 +113,12 @@ public class ModEventBridge
     /// 启用 Mod
     /// 调用 Mod 的 OnEnable()
     /// </summary>
-    public void EnableMod(string modId)
+    public bool EnableMod(string modId)
     {
         if (!_mods.TryGetValue(modId, out var modEntry))
         {
             _modContext.Log(LogLevel.Warn, $"Mod not found: {modId}");
-            return;
+            return false;
         }
 
         var (plugin, metadata, isEnabled) = modEntry;
@@ -124,7 +126,7 @@ public class ModEventBridge
         if (isEnabled)
         {
             _modContext.Log(LogLevel.Debug, $"Mod already enabled: {modId}");
-            return;
+            return true;
         }
 
         try
@@ -132,14 +134,17 @@ public class ModEventBridge
             plugin.OnEnable();
             _mods[modId] = (plugin, metadata, true);
             InvalidateCache();
+            SynchronizeNavigationPanel(plugin, isEnabled: true);
 
             _modContext.Log(LogLevel.Info, $"Mod enabled: {metadata.Name}");
             CommandProvidersChanged?.Invoke();
+            return true;
         }
         catch (Exception ex)
         {
             _modContext.Log(LogLevel.Error,
                 $"Error enabling mod '{metadata.Name}': {ex.Message}");
+            return false;
         }
     }
 
@@ -148,12 +153,12 @@ public class ModEventBridge
     /// 调用 Mod 的 OnDisable()
     /// 注意：DLL 本身不卸载，仍在内存中
     /// </summary>
-    public void DisableMod(string modId)
+    public bool DisableMod(string modId)
     {
         if (!_mods.TryGetValue(modId, out var modEntry))
         {
             _modContext.Log(LogLevel.Warn, $"Mod not found: {modId}");
-            return;
+            return false;
         }
 
         var (plugin, metadata, isEnabled) = modEntry;
@@ -161,7 +166,7 @@ public class ModEventBridge
         if (!isEnabled)
         {
             _modContext.Log(LogLevel.Debug, $"Mod already disabled: {modId}");
-            return;
+            return true;
         }
 
         try
@@ -169,14 +174,34 @@ public class ModEventBridge
             plugin.OnDisable();
             _mods[modId] = (plugin, metadata, false);
             InvalidateCache();
+            SynchronizeNavigationPanel(plugin, isEnabled: false);
 
             _modContext.Log(LogLevel.Info, $"Mod disabled: {metadata.Name}");
             CommandProvidersChanged?.Invoke();
+            return true;
         }
         catch (Exception ex)
         {
             _modContext.Log(LogLevel.Error,
                 $"Error disabling mod '{metadata.Name}': {ex.Message}");
+            return false;
+        }
+    }
+
+    private static void SynchronizeNavigationPanel(IModPlugin plugin, bool isEnabled)
+    {
+        if (plugin is not INavigationPanelProvider provider)
+            return;
+
+        var registry = NavigationPanelRegistry.Instance;
+        if (isEnabled)
+        {
+            if (!registry.IsRegistered(provider.PanelId))
+                registry.Register(provider);
+        }
+        else
+        {
+            registry.Unregister(provider.PanelId);
         }
     }
 

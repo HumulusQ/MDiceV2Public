@@ -94,7 +94,7 @@ namespace AIMod.UI
             if (trpgConfigBorder != null)
                 trpgConfigBorder.IsVisible = isTrpgMode;
             if (trpgGuideBorder != null)
-                trpgGuideBorder.IsVisible = isTrpgMode;
+                trpgGuideBorder.IsVisible = true;
 
             // System prompt only relevant for Prefix/InterceptAll
             if (systemPromptBorder != null)

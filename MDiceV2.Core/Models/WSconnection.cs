@@ -277,7 +277,25 @@ public partial class WSconnection : ObservableObject
 
                 if (result.MessageType == WebSocketMessageType.Text)
                 {
-                    var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                    // A OneBot JSON response may be split across multiple WebSocket
+                    // frames; wait for the entire message before parsing it.
+                    using var content = new MemoryStream();
+                    content.Write(buffer, 0, result.Count);
+                    while (!result.EndOfMessage)
+                    {
+                        result = await _wsClient.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken);
+                        if (result.MessageType != WebSocketMessageType.Text)
+                            break;
+                        content.Write(buffer, 0, result.Count);
+                    }
+
+                    if (!result.EndOfMessage || result.MessageType != WebSocketMessageType.Text)
+                    {
+                        Log.Warn("接收 WebSocket 文本分片时收到了非文本或未完成帧。");
+                        break;
+                    }
+
+                    var message = Encoding.UTF8.GetString(content.GetBuffer(), 0, checked((int)content.Length));
 
                     // 处理接收到的消息
                     await HandleReceivedMessageAsync(message);

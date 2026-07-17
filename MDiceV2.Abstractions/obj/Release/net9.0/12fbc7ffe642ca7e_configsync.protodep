@@ -1,0 +1,3 @@
+obj\Release\net9.0\Protos/Configsync.cs \
+obj\Release\net9.0\Protos/ConfigsyncGrpc.cs: C:/Users/49405/.nuget/packages/grpc.tools/2.60.0/build/native/include/google/protobuf/empty.proto\
+ Protos/configsync.proto

@@ -37,6 +37,45 @@ namespace MDiceV2.Models
         private static readonly TimeSpan DownloadNoProgressTimeout = TimeSpan.FromSeconds(45);
         private static readonly TimeSpan DownloadProgressLogInterval = TimeSpan.FromSeconds(5);
         private const int DownloadBufferSize = 1024 * 128;
+        private PendingUpdateScript? _pendingUpdateScript;
+
+        private sealed class PendingUpdateScript
+        {
+            public PendingUpdateScript(
+                string scriptPath,
+                string appRoot,
+                string coreDirectory,
+                string sourceDice,
+                string targetDice,
+                string targetBackup,
+                string restartExecutable,
+                string logDirectory,
+                string logFile,
+                string version)
+            {
+                ScriptPath = scriptPath;
+                AppRoot = appRoot;
+                CoreDirectory = coreDirectory;
+                SourceDice = sourceDice;
+                TargetDice = targetDice;
+                TargetBackup = targetBackup;
+                RestartExecutable = restartExecutable;
+                LogDirectory = logDirectory;
+                LogFile = logFile;
+                Version = version;
+            }
+
+            public string ScriptPath { get; }
+            public string AppRoot { get; }
+            public string CoreDirectory { get; }
+            public string SourceDice { get; }
+            public string TargetDice { get; }
+            public string TargetBackup { get; }
+            public string RestartExecutable { get; }
+            public string LogDirectory { get; }
+            public string LogFile { get; }
+            public string Version { get; }
+        }
 
         /// <summary>
         /// 镜像站配置类：定义所有支持的镜像站
@@ -315,7 +354,7 @@ namespace MDiceV2.Models
                     Log("下载类型：单一可执行文件");
                 }
 
-                await DownloadAsset(coreAsset, tempCorePath, latestRelease.Release.TagName);
+                await DownloadAsset(coreAsset, tempCorePath, owner, repo, latestRelease.Release.TagName);
 
                 // 6. 如果下载的是 Zip 文件，自动解压
                 if (isZipFile)
@@ -559,6 +598,46 @@ namespace MDiceV2.Models
                     Log($"清理 QQ 更新解压目录失败: {ex.Message}");
                 }
             }
+        }
+
+        public Task<List<GitHubRelease>> GetGitHubReleasesAsync(string owner, string repo)
+        {
+            return GetAllReleasesAsync(owner, repo);
+        }
+
+        public Task DownloadGitHubAssetAsync(
+            GitHubAsset asset,
+            string targetPath,
+            string owner = "HumulusQ",
+            string repo = "MDiceV2Public",
+            string? releaseTag = null)
+        {
+            return DownloadAsset(asset, targetPath, owner, repo, releaseTag);
+        }
+
+        public static string ResolveStandardRestartExecutablePath(string appRootDir, StartupMode startupMode)
+        {
+            return startupMode == StartupMode.Console
+                ? Path.Combine(appRootDir, "MDiceV2.Console.exe")
+                : Path.Combine(appRootDir, "MDiceV2.Launcher.exe");
+        }
+
+        public static ProcessStartInfo CreateStandardUpdateScriptStartInfo(string scriptPath)
+        {
+            return new ProcessStartInfo
+            {
+                FileName = scriptPath,
+                UseShellExecute = true,
+                CreateNoWindow = false
+            };
+        }
+
+        public static async Task ExitCurrentProcessForExternalUpdateAsync(Action<string>? logger = null)
+        {
+            logger?.Invoke("应用将在2秒后自动退出...");
+            await Task.Delay(2000).ConfigureAwait(false);
+            logger?.Invoke("正在退出应用以完成更新...");
+            Environment.Exit(0);
         }
 
         private static bool IsAllowedLocalPackageName(string packagePath)
@@ -833,7 +912,12 @@ namespace MDiceV2.Models
         /// <summary>
         /// 下载文件到指定路径（支持多个镜像站，优先从镜像站下载）
         /// </summary>
-        private async Task DownloadAsset(GitHubAsset asset, string targetPath, string? releaseTag = null)
+        private async Task DownloadAsset(
+            GitHubAsset asset,
+            string targetPath,
+            string owner,
+            string repo,
+            string? releaseTag = null)
         {
             try
             {
@@ -884,7 +968,7 @@ namespace MDiceV2.Models
                 if (lastException != null)
                 {
                     Log("所有镜像站下载均失败，尝试 API 下载...");
-                    await DownloadAssetViaApi(asset, targetPath);
+                    await DownloadAssetViaApi(asset, targetPath, owner, repo);
                 }
             }
             catch (Exception ex)
@@ -898,7 +982,7 @@ namespace MDiceV2.Models
         /// <summary>
         /// 使用GitHub API下载文件（带速率限制保护和重试机制）
         /// </summary>
-        private async Task DownloadAssetViaApi(GitHubAsset asset, string targetPath)
+        private async Task DownloadAssetViaApi(GitHubAsset asset, string targetPath, string owner, string repo)
         {
             int maxRetries = 3;
             int delayBetweenRetries = 3000; // 3秒
@@ -911,7 +995,7 @@ namespace MDiceV2.Models
                 throw new Exception("无法获取 Asset ID，跳过 API 下载");
             }
 
-            var apiUrl = $"https://api.github.com/repos/HumulusQ/MDiceV2Public/releases/assets/{assetId}";
+            var apiUrl = $"https://api.github.com/repos/{owner}/{repo}/releases/assets/{assetId}";
 
             for (int attempt = 1; attempt <= maxRetries; attempt++)
             {
@@ -1157,7 +1241,7 @@ namespace MDiceV2.Models
                         throw new DownloadFailureException(failureInfo);
                     }
 
-                    if (IsErrorPageContentType(response.Content.Headers.ContentType))
+                    if (IsErrorPageContentType(response.Content.Headers.ContentType) && !IsHtmlAsset(asset))
                     {
                         failureInfo.Stage = "headers";
                         failureInfo.IsRetryable = false;
@@ -1346,7 +1430,7 @@ namespace MDiceV2.Models
                     throw new DownloadFailureException(failureInfo);
                 }
 
-                if (LooksLikeErrorPayload(contentType, header, read, out var errorReason))
+                if (LooksLikeErrorPayload(asset, contentType, header, read, out var errorReason))
                 {
                     SafeDeleteFile(partPath, errorReason);
                     failureInfo.IsRetryable = false;
@@ -1448,7 +1532,12 @@ namespace MDiceV2.Models
                     mediaType.Equals("application/json", StringComparison.OrdinalIgnoreCase));
         }
 
+        private static bool IsHtmlAsset(GitHubAsset asset) =>
+            asset.Name.EndsWith(".html", StringComparison.OrdinalIgnoreCase) ||
+            asset.Name.EndsWith(".htm", StringComparison.OrdinalIgnoreCase);
+
         private static bool LooksLikeErrorPayload(
+            GitHubAsset asset,
             MediaTypeHeaderValue? contentType,
             byte[] header,
             int read,
@@ -1462,7 +1551,12 @@ namespace MDiceV2.Models
                 return true;
             }
 
-            if (IsErrorPageContentType(contentType))
+            var isHtmlAsset = IsHtmlAsset(asset);
+
+            // HTML is a valid release asset for the portable CoC card. Its
+            // expected size has already been verified before this check, so do
+            // not confuse a valid <!doctype html> document with an error page.
+            if (IsErrorPageContentType(contentType) && !isHtmlAsset)
             {
                 reason = $"响应 Content-Type 可疑: {contentType}";
                 return true;
@@ -1472,9 +1566,7 @@ namespace MDiceV2.Models
                 .TrimStart('\uFEFF', '\0', ' ', '\t', '\r', '\n')
                 .ToLowerInvariant();
 
-            if (prefix.StartsWith("<html", StringComparison.Ordinal) ||
-                prefix.StartsWith("<!doctype", StringComparison.Ordinal) ||
-                prefix.StartsWith("{\"message\":", StringComparison.Ordinal) ||
+            if (prefix.StartsWith("{\"message\":", StringComparison.Ordinal) ||
                 prefix.StartsWith("{\"message\"", StringComparison.Ordinal) ||
                 prefix.StartsWith("{\"error\":", StringComparison.Ordinal) ||
                 prefix.StartsWith("{\"documentation_url\"", StringComparison.Ordinal) ||
@@ -1485,7 +1577,16 @@ namespace MDiceV2.Models
                 return true;
             }
 
-            if (contentType?.MediaType?.StartsWith("text/", StringComparison.OrdinalIgnoreCase) == true &&
+            if (!isHtmlAsset &&
+                (prefix.StartsWith("<html", StringComparison.Ordinal) ||
+                 prefix.StartsWith("<!doctype", StringComparison.Ordinal)))
+            {
+                reason = "下载内容看起来像 HTML 错误页";
+                return true;
+            }
+
+            if (!isHtmlAsset &&
+                contentType?.MediaType?.StartsWith("text/", StringComparison.OrdinalIgnoreCase) == true &&
                 (prefix.Contains("not found", StringComparison.Ordinal) ||
                  prefix.Contains("error", StringComparison.Ordinal) ||
                  prefix.Contains("forbidden", StringComparison.Ordinal) ||
@@ -1570,14 +1671,53 @@ namespace MDiceV2.Models
             // 根据启动模式选择重启哪个可执行文件
             var startupMode = ServiceBootstrapper.CurrentStartupMode;
             var appRootDir = GetApplicationRootDirectory();
-            var exePath = startupMode == StartupMode.Console
-                ? Path.Combine(appRootDir, "MDiceV2.Console.exe")
-                : Path.Combine(appRootDir, "MDiceV2.Launcher.exe");
+            var exePath = ResolveStandardRestartExecutablePath(appRootDir, startupMode);
             
             // 核心应用 .Dice 文件的路径（在 Core 子目录中）
             var coreSubDir = Path.Combine(appRootDir, "Core");
             var targetDicePath = Path.Combine(coreSubDir, "MDiceV2.Core.Dice");
             var targetDiceBackup = Path.Combine(coreSubDir, "MDiceV2.Core.Dice.bak");
+            var logDirectory = Path.Combine(appRootDir, "logs");
+            var logFileName = $"update-{DateTime.Now:yyyyMMdd-HHmmss}-{currentPid}.log";
+            var updateLogPath = Path.Combine(logDirectory, logFileName);
+
+            // Create this before shutting down. The batch file will also retry so that
+            // a read-only/broken installation is recorded as the first failure.
+            Directory.CreateDirectory(logDirectory);
+            await File.AppendAllTextAsync(
+                updateLogPath,
+                $"[{DateTime.Now:O}] [INFO] Preparing external update. Root={appRootDir}; Core={coreSubDir}; Source={tempDicePath}; Restart={exePath}{Environment.NewLine}",
+                Encoding.UTF8);
+
+            try
+            {
+                if (!File.Exists(tempDicePath))
+                {
+                    throw new FileNotFoundException("The downloaded update file is missing before the application is closed.", tempDicePath);
+                }
+
+                if (!File.Exists(exePath))
+                {
+                    throw new FileNotFoundException("The restart executable is missing before the application is closed.", exePath);
+                }
+
+                Directory.CreateDirectory(coreSubDir);
+                var writeProbePath = Path.Combine(coreSubDir, $".mdice-update-write-probe-{Guid.NewGuid():N}.tmp");
+                await File.WriteAllTextAsync(writeProbePath, string.Empty, Encoding.UTF8);
+                File.Delete(writeProbePath);
+                await File.AppendAllTextAsync(
+                    updateLogPath,
+                    $"[{DateTime.Now:O}] [INFO] Update preflight passed: the Core directory is writable.{Environment.NewLine}",
+                    Encoding.UTF8);
+            }
+            catch (Exception ex)
+            {
+                await File.AppendAllTextAsync(
+                    updateLogPath,
+                    $"[{DateTime.Now:O}] [ERROR] Update preflight failed; application will remain open.{Environment.NewLine}{ex}{Environment.NewLine}",
+                    Encoding.UTF8);
+                throw;
+            }
 
                 Log($"生成批处理文件: {batPath}");
                 Log($"可执行文件路径: {exePath}");
@@ -1585,132 +1725,144 @@ namespace MDiceV2.Models
                 Log($"应用根目录: {appRootDir}");
                 Log($"目标Dice路径: {targetDicePath}");
                 Log($"临时Dice路径: {tempDicePath}");
+                Log($"更新执行日志: {updateLogPath}");
 
                 var batBuilder = new System.Text.StringBuilder();
                 batBuilder.AppendLine("@echo off");
                 batBuilder.AppendLine("setlocal enabledelayedexpansion");
-                batBuilder.AppendLine("");
-                batBuilder.AppendLine("REM ========================================");
-                batBuilder.AppendLine("REM MDiceV2 Update Script (Safe Version)");
-                batBuilder.AppendLine($"REM Version: {version}");
-                batBuilder.AppendLine("REM ========================================");
-                batBuilder.AppendLine("");
-                batBuilder.AppendLine("set LOGFILE=%~dp0error.txt");
-                batBuilder.AppendLine("");
-                batBuilder.AppendLine("echo ==== Update started at %date% %time% ==== >> \"%LOGFILE%\"");
-                batBuilder.AppendLine("");
+                batBuilder.AppendLine("set \"APP_ROOT=%MDICE_UPDATE_APP_ROOT%\"");
+                batBuilder.AppendLine("set \"CORE_DIR=%MDICE_UPDATE_CORE_DIR%\"");
+                batBuilder.AppendLine("set \"TEMP_DICE=%MDICE_UPDATE_SOURCE_DICE%\"");
+                batBuilder.AppendLine("set \"TARGET_DICE=%MDICE_UPDATE_TARGET_DICE%\"");
+                batBuilder.AppendLine("set \"TARGET_BACKUP=%MDICE_UPDATE_TARGET_BACKUP%\"");
+                batBuilder.AppendLine("set \"RESTART_EXE=%MDICE_UPDATE_RESTART_EXE%\"");
+                batBuilder.AppendLine("set \"LOG_DIR=%MDICE_UPDATE_LOG_DIR%\"");
+                batBuilder.AppendLine("set \"LOGFILE=%MDICE_UPDATE_LOG_FILE%\"");
+                batBuilder.AppendLine("set \"UPDATE_RESULT=SUCCESS\"");
+                batBuilder.AppendLine("if not exist \"!LOG_DIR!\" mkdir \"!LOG_DIR!\" 2>nul");
+                batBuilder.AppendLine("if not exist \"!LOG_DIR!\" (");
+                batBuilder.AppendLine("    echo [FATAL] Cannot create update log directory: !LOG_DIR!");
+                batBuilder.AppendLine("    exit /b 1");
+                batBuilder.AppendLine(")");
+                batBuilder.AppendLine("call :LOG \"==== Update script started ====\"");
+                batBuilder.AppendLine("call :LOG \"Version: %MDICE_UPDATE_VERSION%\"");
+                batBuilder.AppendLine("call :LOG \"Script: %~f0\"");
+                batBuilder.AppendLine("call :LOG \"App root: !APP_ROOT!\"");
+                batBuilder.AppendLine("call :LOG \"Current directory before cd: !CD!\"");
+                batBuilder.AppendLine("call :LOG \"Core directory: !CORE_DIR!\"");
+                batBuilder.AppendLine("call :LOG \"Source file: !TEMP_DICE!\"");
+                batBuilder.AppendLine("call :LOG \"Target file: !TARGET_DICE!\"");
+                batBuilder.AppendLine("call :LOG \"Restart executable: !RESTART_EXE!\"");
+                batBuilder.AppendLine("ver >> \"!LOGFILE!\" 2>&1");
+                batBuilder.AppendLine("whoami >> \"!LOGFILE!\" 2>&1");
+                batBuilder.AppendLine("cd /d \"!APP_ROOT!\" >> \"!LOGFILE!\" 2>&1");
+                batBuilder.AppendLine("if errorlevel 1 goto :FAIL_CHANGE_DIRECTORY");
+                batBuilder.AppendLine("call :LOG \"Working directory after cd: !CD!\"");
                 batBuilder.AppendLine($"set PID={currentPid}");
                 batBuilder.AppendLine("set MAX_WAIT_SECONDS=60");
                 batBuilder.AppendLine("set WAIT_COUNTER=0");
-                batBuilder.AppendLine("");
-                batBuilder.AppendLine($"echo MDiceV2 正在更新到版本 {version}...");
-                batBuilder.AppendLine($"echo 等待进程 PID !PID! 退出...");
-                batBuilder.AppendLine("");
-                batBuilder.AppendLine("REM ========================================");
-                batBuilder.AppendLine("REM 等待旧进程退出");
-                batBuilder.AppendLine("REM ========================================");
                 batBuilder.AppendLine("if \"!PID!\"==\"\" (");
-                batBuilder.AppendLine("    echo [Error] PID 为空，无法等待进程退出 >> \"%LOGFILE%\"");
-                batBuilder.AppendLine("    goto :ERROR");
+                batBuilder.AppendLine("    call :FAIL \"PID is empty; cannot wait for the current process.\"");
+                batBuilder.AppendLine("    goto :CLEANUP");
                 batBuilder.AppendLine(")");
-                batBuilder.AppendLine("");
+                batBuilder.AppendLine("call :LOG \"Waiting for application PID !PID! to exit.\"");
                 batBuilder.AppendLine(":WAIT_LOOP");
                 batBuilder.AppendLine("tasklist /FI \"PID eq !PID!\" | findstr /I \"!PID!\" >nul 2>&1");
-                batBuilder.AppendLine("if %ERRORLEVEL% EQU 0 (");
+                batBuilder.AppendLine("if not errorlevel 1 (");
                 batBuilder.AppendLine("    set /a WAIT_COUNTER+=1");
+                batBuilder.AppendLine("    if !WAIT_COUNTER! EQU 1 call :LOG \"Application is still running; wait limit is !MAX_WAIT_SECONDS! seconds.\"");
+                batBuilder.AppendLine("    set /a WAIT_REMAINDER=!WAIT_COUNTER! %% 10");
+                batBuilder.AppendLine("    if !WAIT_REMAINDER! EQU 0 call :LOG \"Still waiting for PID !PID! (!WAIT_COUNTER! seconds).\"");
                 batBuilder.AppendLine("    if !WAIT_COUNTER! LEQ !MAX_WAIT_SECONDS! (");
                 batBuilder.AppendLine("        timeout /t 1 /nobreak >nul");
                 batBuilder.AppendLine("        goto WAIT_LOOP");
                 batBuilder.AppendLine("    ) else (");
-                batBuilder.AppendLine("        echo [Timeout] 进程 !PID! 未在规定时间退出 >> \"%LOGFILE%\"");
+                batBuilder.AppendLine("        call :FAIL \"Timed out waiting for application PID !PID! to exit.\"");
+                batBuilder.AppendLine("        goto :CLEANUP");
                 batBuilder.AppendLine("    )");
                 batBuilder.AppendLine(")");
-                batBuilder.AppendLine("");
-                batBuilder.AppendLine("echo 进程已退出，开始更新...");
+                batBuilder.AppendLine("call :LOG \"Application process has exited; beginning replacement.\"");
                 batBuilder.AppendLine("timeout /t 1 >nul");
-                batBuilder.AppendLine("");
-                batBuilder.AppendLine("REM ========================================");
-                batBuilder.AppendLine("REM 备份旧文件");
-                batBuilder.AppendLine("REM ========================================");
-                batBuilder.AppendLine($"if exist \"{targetDicePath}\" (");
-                batBuilder.AppendLine("    echo 正在备份旧文件...");
-                batBuilder.AppendLine($"    if exist \"{targetDiceBackup}\" del /f /q \"{targetDiceBackup}\" >nul");
-                batBuilder.AppendLine($"    ren \"{targetDicePath}\" \"MDiceV2.Core.Dice.bak\" >nul");
-                batBuilder.AppendLine("    if !ERRORLEVEL! NEQ 0 (");
-                batBuilder.AppendLine("        echo [Error] 备份失败 >> \"%LOGFILE%\"");
-                batBuilder.AppendLine("        goto :ERROR");
-                batBuilder.AppendLine("    )");
+                batBuilder.AppendLine("if not exist \"!CORE_DIR!\" mkdir \"!CORE_DIR!\" >> \"!LOGFILE!\" 2>&1");
+                batBuilder.AppendLine("if not exist \"!CORE_DIR!\" goto :FAIL_CREATE_CORE_DIRECTORY");
+                batBuilder.AppendLine("if not exist \"!TEMP_DICE!\" goto :FAIL_SOURCE_MISSING");
+                batBuilder.AppendLine("for %%I in (\"!TEMP_DICE!\") do call :LOG \"Source file size: %%~zI bytes\"");
+                batBuilder.AppendLine("if not exist \"!RESTART_EXE!\" goto :FAIL_RESTART_EXE_MISSING");
+                batBuilder.AppendLine("if exist \"!TARGET_DICE!\" (");
+                batBuilder.AppendLine("    call :LOG \"Existing target found; creating backup.\"");
+                batBuilder.AppendLine("    if exist \"!TARGET_BACKUP!\" del /f /q \"!TARGET_BACKUP!\" >> \"!LOGFILE!\" 2>&1");
+                batBuilder.AppendLine("    if exist \"!TARGET_BACKUP!\" goto :FAIL_DELETE_OLD_BACKUP");
+                batBuilder.AppendLine("    move /Y \"!TARGET_DICE!\" \"!TARGET_BACKUP!\" >> \"!LOGFILE!\" 2>&1");
+                batBuilder.AppendLine("    if errorlevel 1 goto :RESTORE_OR_FAIL_BACKUP");
+                batBuilder.AppendLine("    if not exist \"!TARGET_BACKUP!\" goto :RESTORE_OR_FAIL_BACKUP");
+                batBuilder.AppendLine("    for %%I in (\"!TARGET_BACKUP!\") do call :LOG \"Backup file size: %%~zI bytes\"");
                 batBuilder.AppendLine(") else (");
-                batBuilder.AppendLine("    echo 目标文件不存在，跳过备份");
+                batBuilder.AppendLine("    call :LOG \"No existing target file; replacement will be a fresh install.\"");
                 batBuilder.AppendLine(")");
-                batBuilder.AppendLine("");
-                batBuilder.AppendLine("REM ========================================");
-                batBuilder.AppendLine("REM 复制新文件");
-                batBuilder.AppendLine("REM ========================================");
-                batBuilder.AppendLine($"if exist \"{tempDicePath}\" (");
-                batBuilder.AppendLine("    echo 正在复制新文件...");
-                
-                batBuilder.AppendLine($"    copy /Y \"{tempDicePath}\" \"{targetDicePath}\" >nul");
-                batBuilder.AppendLine("    if !ERRORLEVEL! NEQ 0 (");
-                batBuilder.AppendLine("        echo [Error] 复制新文件失败 >> \"%LOGFILE%\"");
-                batBuilder.AppendLine("        goto :RESTORE");
-                batBuilder.AppendLine("    )");
-                batBuilder.AppendLine(") else (");
-                batBuilder.AppendLine($"    echo [Error] 临时文件不存在: \"{tempDicePath}\" >> \"%LOGFILE%\"");
-                batBuilder.AppendLine("    goto :ERROR");
-                batBuilder.AppendLine(")");
-                batBuilder.AppendLine("");
-                batBuilder.AppendLine("REM ========================================");
-                batBuilder.AppendLine("REM 文件系统稳定等待（避免 0xc0000142）");
-                batBuilder.AppendLine("REM ========================================");
-                batBuilder.AppendLine("timeout /t 1 >nul");
-                batBuilder.AppendLine($"dir \"{targetDicePath}\" >nul 2>&1");
-                batBuilder.AppendLine("timeout /t 1 >nul");
-                batBuilder.AppendLine("");
-                batBuilder.AppendLine("REM ========================================");
-                batBuilder.AppendLine("REM 验证 Core 子目录");
-                batBuilder.AppendLine("REM ========================================");
-                batBuilder.AppendLine($"if not exist \"{coreSubDir}\" mkdir \"{coreSubDir}\" >nul");
-                batBuilder.AppendLine("");
-                batBuilder.AppendLine("REM ========================================");
-                batBuilder.AppendLine("REM 重启应用（安全启动）");
-                batBuilder.AppendLine("REM ========================================");
-                batBuilder.AppendLine("echo 正在重启应用...");
-                batBuilder.AppendLine($"start \"\" \"{exePath}\"");
-                batBuilder.AppendLine("");
+                batBuilder.AppendLine("call :LOG \"Copying update file to Core directory.\"");
+                batBuilder.AppendLine("copy /Y \"!TEMP_DICE!\" \"!TARGET_DICE!\" >> \"!LOGFILE!\" 2>&1");
+                batBuilder.AppendLine("if errorlevel 1 goto :RESTORE");
+                batBuilder.AppendLine("if not exist \"!TARGET_DICE!\" goto :RESTORE");
+                batBuilder.AppendLine("for %%I in (\"!TARGET_DICE!\") do set TARGET_SIZE=%%~zI");
+                batBuilder.AppendLine("for %%I in (\"!TEMP_DICE!\") do set SOURCE_SIZE=%%~zI");
+                batBuilder.AppendLine("call :LOG \"Copied file size: !TARGET_SIZE! bytes (source !SOURCE_SIZE! bytes).\"");
+                batBuilder.AppendLine("if not \"!TARGET_SIZE!\"==\"!SOURCE_SIZE!\" goto :RESTORE");
+                batBuilder.AppendLine("call :LOG \"Replacement succeeded; starting application.\"");
+                batBuilder.AppendLine("start \"MDiceV2 restart\" /D \"!APP_ROOT!\" \"!RESTART_EXE!\" >> \"!LOGFILE!\" 2>&1");
+                batBuilder.AppendLine("if errorlevel 1 goto :RESTORE");
+                batBuilder.AppendLine("call :LOG \"Restart command was accepted by Windows. Check launcher.log for application startup details.\"");
                 batBuilder.AppendLine("goto :CLEANUP");
                 batBuilder.AppendLine("");
+                batBuilder.AppendLine(":FAIL_CHANGE_DIRECTORY");
+                batBuilder.AppendLine("call :FAIL \"Could not switch to application root.\"");
+                batBuilder.AppendLine("goto :CLEANUP");
+                batBuilder.AppendLine(":FAIL_CREATE_CORE_DIRECTORY");
+                batBuilder.AppendLine("call :FAIL \"Core directory is missing and could not be created.\"");
+                batBuilder.AppendLine("goto :CLEANUP");
+                batBuilder.AppendLine(":FAIL_SOURCE_MISSING");
+                batBuilder.AppendLine("call :FAIL \"Downloaded update file is missing before replacement.\"");
+                batBuilder.AppendLine("goto :CLEANUP");
+                batBuilder.AppendLine(":FAIL_RESTART_EXE_MISSING");
+                batBuilder.AppendLine("call :FAIL \"Restart executable is missing.\"");
+                batBuilder.AppendLine("goto :CLEANUP");
+                batBuilder.AppendLine(":FAIL_DELETE_OLD_BACKUP");
+                batBuilder.AppendLine("call :FAIL \"Could not delete the previous backup; target was not replaced.\"");
+                batBuilder.AppendLine("goto :CLEANUP");
+                batBuilder.AppendLine(":RESTORE_OR_FAIL_BACKUP");
+                batBuilder.AppendLine("call :FAIL \"Could not move the existing target to its backup location.\"");
+                batBuilder.AppendLine("goto :CLEANUP");
                 batBuilder.AppendLine(":RESTORE");
-                batBuilder.AppendLine("echo 正在恢复备份文件...");
-                batBuilder.AppendLine($"if exist \"{targetDiceBackup}\" (");
-                batBuilder.AppendLine($"    del /f /q \"{targetDicePath}\" >nul");
-                batBuilder.AppendLine($"    ren \"{targetDiceBackup}\" \"MDiceV2.Core.Dice\" >nul");
+                batBuilder.AppendLine("call :FAIL \"Copy, verification, or restart failed; attempting to restore the previous version.\"");
+                batBuilder.AppendLine("if exist \"!TARGET_BACKUP!\" (");
+                batBuilder.AppendLine("    if exist \"!TARGET_DICE!\" del /f /q \"!TARGET_DICE!\" >> \"!LOGFILE!\" 2>&1");
+                batBuilder.AppendLine("    move /Y \"!TARGET_BACKUP!\" \"!TARGET_DICE!\" >> \"!LOGFILE!\" 2>&1");
+                batBuilder.AppendLine("    if exist \"!TARGET_DICE!\" (call :LOG \"Previous version restored.\") else (call :FAIL \"Previous version could not be restored.\")");
                 batBuilder.AppendLine(") else (");
-                batBuilder.AppendLine("    echo [Error] 无法恢复备份 >> \"%LOGFILE%\"");
+                batBuilder.AppendLine("    call :LOG \"No previous version was backed up; leaving the copied file in place for manual diagnosis.\"");
                 batBuilder.AppendLine(")");
                 batBuilder.AppendLine("goto :CLEANUP");
-                batBuilder.AppendLine("");
-                batBuilder.AppendLine(":ERROR");
-                batBuilder.AppendLine("echo 更新过程发生错误，详情见 error.txt");
                 batBuilder.AppendLine("");
                 batBuilder.AppendLine(":CLEANUP");
-                batBuilder.AppendLine("echo 清理临时文件...");
-                batBuilder.AppendLine($"if exist \"{tempDicePath}\" del /f /q \"{tempDicePath}\" >nul");
-                batBuilder.AppendLine("");
-                batBuilder.AppendLine("echo ==== Update finished at %date% %time% ==== >> \"%LOGFILE%\"");
-                batBuilder.AppendLine("");
-                batBuilder.AppendLine("REM ========================================");
-                batBuilder.AppendLine("REM 自删除（安全方式，不影响日志写入）");
-                batBuilder.AppendLine("REM ========================================");
-                batBuilder.AppendLine("start \"\" cmd /c \"timeout /t 1 >nul & del /f /q \"%~f0\"\"");
-                batBuilder.AppendLine("");
+                batBuilder.AppendLine("if exist \"!TEMP_DICE!\" del /f /q \"!TEMP_DICE!\" >> \"!LOGFILE!\" 2>&1");
+                batBuilder.AppendLine("if exist \"!TEMP_DICE!\" (call :FAIL \"Could not delete temporary update file.\") else (call :LOG \"Temporary update file removed.\")");
+                batBuilder.AppendLine("call :LOG \"==== Update script finished with result !UPDATE_RESULT! ====");
                 batBuilder.AppendLine("endlocal");
+                batBuilder.AppendLine("exit /b 0");
+                batBuilder.AppendLine("");
+                batBuilder.AppendLine(":LOG");
+                batBuilder.AppendLine("echo [%date% %time%] [INFO] %~1>> \"!LOGFILE!\"");
+                batBuilder.AppendLine("exit /b 0");
+                batBuilder.AppendLine(":FAIL");
+                batBuilder.AppendLine("set \"UPDATE_RESULT=FAILED\"");
+                batBuilder.AppendLine("echo [%date% %time%] [ERROR] %~1>> \"!LOGFILE!\"");
                 batBuilder.AppendLine("exit /b 0");
 
                 var batContent = batBuilder.ToString();
 
                 // 写入文件
-                await File.WriteAllTextAsync(batPath, batContent, System.Text.Encoding.Default);
+                // Keep the batch source ASCII-only. All potentially non-ASCII paths are
+                // supplied through the Unicode process environment when cmd.exe starts.
+                await File.WriteAllTextAsync(batPath, batContent, Encoding.ASCII);
 
                 // 验证文件是否创建成功
                 if (File.Exists(batPath))
@@ -1722,6 +1874,18 @@ namespace MDiceV2.Models
                 {
                     throw new Exception("批处理文件创建失败");
                 }
+
+                _pendingUpdateScript = new PendingUpdateScript(
+                    batPath,
+                    appRootDir,
+                    coreSubDir,
+                    tempDicePath,
+                    targetDicePath,
+                    targetDiceBackup,
+                    exePath,
+                    logDirectory,
+                    updateLogPath,
+                    version);
 
                 return batPath;
             }
@@ -1737,6 +1901,7 @@ namespace MDiceV2.Models
         /// </summary>
         private async Task LaunchUpdateProcess(string batPath)
         {
+            var pendingScript = _pendingUpdateScript;
             try
             {
                 // 验证批处理文件是否存在
@@ -1745,12 +1910,37 @@ namespace MDiceV2.Models
                     throw new Exception($"批处理文件不存在: {batPath}");
                 }
 
+                if (pendingScript == null ||
+                    !string.Equals(pendingScript.ScriptPath, batPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException("The update-script launch context is missing.");
+                }
+
+                var commandProcessor = Environment.GetEnvironmentVariable("ComSpec") ?? "cmd.exe";
                 var startInfo = new ProcessStartInfo
                 {
-                    FileName = batPath,
-                    UseShellExecute = true,
-                    CreateNoWindow = false
+                    FileName = commandProcessor,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    WorkingDirectory = Path.GetDirectoryName(batPath) ?? _tempDir
                 };
+                startInfo.ArgumentList.Add("/d");
+                startInfo.ArgumentList.Add("/c");
+                startInfo.ArgumentList.Add(batPath);
+                startInfo.Environment["MDICE_UPDATE_APP_ROOT"] = pendingScript.AppRoot;
+                startInfo.Environment["MDICE_UPDATE_CORE_DIR"] = pendingScript.CoreDirectory;
+                startInfo.Environment["MDICE_UPDATE_SOURCE_DICE"] = pendingScript.SourceDice;
+                startInfo.Environment["MDICE_UPDATE_TARGET_DICE"] = pendingScript.TargetDice;
+                startInfo.Environment["MDICE_UPDATE_TARGET_BACKUP"] = pendingScript.TargetBackup;
+                startInfo.Environment["MDICE_UPDATE_RESTART_EXE"] = pendingScript.RestartExecutable;
+                startInfo.Environment["MDICE_UPDATE_LOG_DIR"] = pendingScript.LogDirectory;
+                startInfo.Environment["MDICE_UPDATE_LOG_FILE"] = pendingScript.LogFile;
+                startInfo.Environment["MDICE_UPDATE_VERSION"] = pendingScript.Version;
+
+                await TryAppendUpdateScriptLogAsync(
+                    pendingScript.LogFile,
+                    "INFO",
+                    $"Launching cmd.exe explicitly. CommandProcessor={commandProcessor}; Script={batPath}");
 
                 Log($"启动批处理文件: {batPath}");
                 var process = Process.Start(startInfo);
@@ -1762,16 +1952,18 @@ namespace MDiceV2.Models
 
                 Log("更新进程已启动");
                 Log($"批处理进程ID: {process.Id}");
-                Log("应用将在2秒后自动退出...");
-
-                // 增加延迟时间并添加更多日志，确保用户了解情况
-                await Task.Delay(2000);
-
-                Log("正在退出应用以完成更新...");
-                Environment.Exit(0);
+                await TryAppendUpdateScriptLogAsync(
+                    pendingScript.LogFile,
+                    "INFO",
+                    $"cmd.exe started successfully. ProcessId={process.Id}");
+                await ExitCurrentProcessForExternalUpdateAsync(Log);
             }
             catch (Exception ex)
             {
+                if (pendingScript != null)
+                {
+                    await TryAppendUpdateScriptLogAsync(pendingScript.LogFile, "ERROR", $"Unable to start the external update script.{Environment.NewLine}{ex}");
+                }
                 Log($"启动更新进程失败: {ex.Message}");
                 throw new Exception($"启动更新进程失败: {ex.Message}", ex);
             }
@@ -1780,6 +1972,21 @@ namespace MDiceV2.Models
         /// <summary>
         /// 测试更新脚本（使用临时目录中已有的文件，不下载）
         /// </summary>
+        private static async Task TryAppendUpdateScriptLogAsync(string logPath, string level, string message)
+        {
+            try
+            {
+                await File.AppendAllTextAsync(
+                    logPath,
+                    $"[{DateTime.Now:O}] [{level}] {message}{Environment.NewLine}",
+                    Encoding.UTF8);
+            }
+            catch
+            {
+                // Diagnostic logging must never prevent the updater from attempting recovery.
+            }
+        }
+
         public async Task<UpdateResult> TestUpdateScriptAsync()
         {
             var result = new UpdateResult();
