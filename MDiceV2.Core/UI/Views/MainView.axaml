@@ -1,0 +1,150 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+              xmlns:vm="using:MDiceV2.Core.UI.ViewModels"
+              xmlns:conv="using:MDiceV2.Core.Converters"
+              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="720"
+              x:Class="MDiceV2.Core.UI.Views.MainView"
+              x:DataType="vm:MainViewModel">
+
+    <UserControl.Resources>
+        <conv:BoolToWidthConverter x:Key="BoolToWidthConverter"/>
+        <conv:LoadingOpacityConverter x:Key="LoadingOpacityConverter"/>
+    </UserControl.Resources>
+
+    <Design.DataContext>
+        <vm:MainViewModel/>
+    </Design.DataContext>
+
+    <Grid Background="#0B0E18">
+        <SplitView x:Name="NavigationSplitView"
+                   IsPaneOpen="{Binding IsPaneOpen, Mode=TwoWay}"
+                   PanePlacement="Left"
+                   CompactPaneLength="116"
+                   OpenPaneLength="280"
+                   DisplayMode="CompactInline">
+
+            <SplitView.Pane>
+                <Grid RowDefinitions="Auto,Auto,*,Auto" Background="#111522">
+                    <!-- Brand block -->
+                    <Grid Grid.Row="0" Height="78" Margin="12,12,12,4">
+                        <Border Width="48" Height="48" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                Background="#F05A47" CornerRadius="2">
+                            <TextBlock Text="M" FontSize="26" FontWeight="Black"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#FFF8F2"/>
+                        </Border>
+                        <StackPanel Margin="62,0,0,0" VerticalAlignment="Center"
+                                    IsVisible="{Binding IsPaneOpen}">
+                            <TextBlock Text="MDICE" FontSize="18" FontWeight="Black" LetterSpacing="2"/>
+                            <TextBlock Text="RUNTIME DESK" FontSize="9" Foreground="#77809B" LetterSpacing="1.5"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Navigation rail control -->
+                    <Button x:Name="PanelExpandButton" Grid.Row="1" Height="52" Margin="10,3"
+                            Padding="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" CornerRadius="2"
+                            Background="#172132" BorderBrush="#58D6A9" BorderThickness="1"
+                            Click="PanelExpandButton_Click">
+                        <Grid>
+                            <Border Width="3" Background="#58D6A9" HorizontalAlignment="Left"/>
+                            <StackPanel Orientation="Horizontal" IsVisible="{Binding IsPaneOpen}"
+                                        HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+                                <Image Source="avares://MDiceV2.Core/Assets/Sprite/Panel64.png" Width="16" Height="16"/>
+                                <TextBlock Text="NAVIGATION RAIL" FontSize="10" FontWeight="Bold" LetterSpacing="1" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <StackPanel IsVisible="{Binding !IsPaneOpen}" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="4">
+                                <Border Width="24" Height="3" Background="#E8EDF8" CornerRadius="1"/>
+                                <Border Width="24" Height="3" Background="#E8EDF8" CornerRadius="1"/>
+                                <Border Width="24" Height="3" Background="#E8EDF8" CornerRadius="1"/>
+                            </StackPanel>
+                        </Grid>
+                    </Button>
+
+                    <ListBox x:Name="NavigationListBox" Grid.Row="2"
+                             SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}"
+                             Background="Transparent" BorderThickness="0"
+                             PointerEntered="NavigationListBox_PointerEntered"
+                             PointerExited="NavigationListBox_PointerExited">
+                        <ListBox.Styles>
+                            <Style Selector="ListBoxItem">
+                                <Setter Property="Margin" Value="10,3"/>
+                                <Setter Property="Padding" Value="0"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                            </Style>
+                            <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+                                <Setter Property="Background" Value="#1D2334"/>
+                                <Setter Property="CornerRadius" Value="2"/>
+                            </Style>
+                            <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+                                <Setter Property="Background" Value="#292640"/>
+                                <Setter Property="BorderBrush" Value="#8B7CF6"/>
+                                <Setter Property="BorderThickness" Value="3,0,0,0"/>
+                                <Setter Property="CornerRadius" Value="2"/>
+                            </Style>
+                        </ListBox.Styles>
+                    </ListBox>
+
+                    <Border Grid.Row="3" Margin="12,10,12,16" Padding="12,10"
+                            Background="#171B29" CornerRadius="2" IsVisible="{Binding IsPaneOpen}">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <Border Width="8" Height="8" Background="#58D6A9" CornerRadius="4" VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                <TextBlock Text="SYSTEM ONLINE" FontSize="9" LetterSpacing="1"/>
+                                <TextBlock Text="LOCAL CONTROL" FontSize="8" Foreground="#68718A"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </SplitView.Pane>
+
+            <SplitView.Content>
+                <Grid RowDefinitions="76,*" Background="#0D101B">
+                    <!-- Workspace context bar -->
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="28,0,28,0">
+                        <StackPanel VerticalAlignment="Center" Spacing="2">
+                            <TextBlock Text="MDICE / WORKSPACE" FontSize="9" Foreground="#7D86A1" LetterSpacing="1.6"/>
+                            <TextBlock x:Name="WorkspaceTitle" Text="MAIN" FontSize="23" FontWeight="Black" LetterSpacing="0.6"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <Button Height="32" Padding="12,0" CornerRadius="2" Background="#1B2030" BorderBrush="#58D6A9"
+                                    Click="ChooseBackgroundButton_Click" ToolTip.Tip="Choose workspace background">
+                                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <TextBlock Text="BACKGROUND" FontSize="9" FontWeight="Bold" LetterSpacing="0.9"/>
+                                </StackPanel>
+                            </Button>
+                            <Border Width="38" Height="12" Background="#F05A47"/>
+                            <Border Width="12" Height="12" Background="#E9B949"/>
+                            <Border Width="12" Height="12" Background="#58D6A9"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Flat-art canvas -->
+                    <Grid x:Name="WorkspaceCanvas" Grid.Row="1" Margin="20,0,20,20">
+                        <Border Background="#141927" CornerRadius="4" BorderBrush="#232A3D" BorderThickness="1"/>
+                        <Image x:Name="WorkspaceBackgroundImage" Opacity="0.30" Stretch="UniformToFill" IsHitTestVisible="False"
+                               ClipToBounds="True"/>
+                        <Border Background="#A60D101B" CornerRadius="4" IsHitTestVisible="False"/>
+                        <Border Width="88" Height="6" Background="#8B7CF6"
+                                HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,0,0,0"/>
+                        <Border Width="6" Height="70" Background="#F05A47"
+                                HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,0,0"/>
+                        <ContentControl Content="{Binding CurrentView}" Margin="26"
+                                        Opacity="{Binding IsViewLoading, Converter={StaticResource LoadingOpacityConverter}}">
+                            <ContentControl.Transitions>
+                                <Transitions><DoubleTransition Property="Opacity" Duration="0:0:0.24" Easing="CubicEaseOut"/></Transitions>
+                            </ContentControl.Transitions>
+                        </ContentControl>
+                        <Border IsVisible="{Binding IsViewLoading}" Background="#C80D101B" CornerRadius="4" Margin="1">
+                            <StackPanel Width="180" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+                                <ProgressBar IsIndeterminate="True" Height="4" Foreground="#58D6A9" Background="#2A3349"/>
+                                <TextBlock Text="LOADING WORKSPACE" HorizontalAlignment="Center" FontSize="9" FontWeight="Bold"
+                                           Foreground="#C8D0E6" LetterSpacing="1.3"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </SplitView.Content>
+        </SplitView>
+    </Grid>
+</UserControl>

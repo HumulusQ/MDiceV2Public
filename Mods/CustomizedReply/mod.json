@@ -1,0 +1,13 @@
+{
+  "id": "com.example.customreply",
+  "name": "Custom Reply System",
+  "version": "1.0.0",
+  "author": "Example Author",
+  "description": "A Mod example that provides customized reply functionality for group and private chats with exact, regex, and fuzzy matching support.",
+  "dllFileName": "CustomizedReply.dll",
+  "pluginClassName": "CustomizedReply.CustomizedReplyMod",
+  "priority": 100,
+  "modType": "dll",
+  "supportHotReload": false,
+  "apiVersion": "1.0"
+}

@@ -1,0 +1,29 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:views="using:MDiceV2.Core.UI.Views"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="600"
+        x:Class="MDiceV2.Core.UI.Views.MainWindow"
+        Title="MDiceV2"
+        Width="1280" Height="780"
+        MinWidth="1000" MinHeight="600"
+        WindowState="Normal"
+        Background="#080A10"
+        RequestedThemeVariant="Dark"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="36">
+    <Grid RowDefinitions="36,*" Background="#080A10">
+        <Grid Grid.Row="0" Background="#050609" PointerPressed="TitleBar_PointerPressed">
+            <TextBlock Text="MDICE V2  /  RUNTIME DESK" Margin="14,0" VerticalAlignment="Center"
+                       FontSize="10" FontWeight="Bold" Foreground="#AAB2C8" LetterSpacing="1.4"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Width="46" Height="36" Padding="0" Background="Transparent" BorderThickness="0" Click="MinimizeButton_Click"><TextBlock Text="—" FontSize="15"/></Button>
+                <Button Width="46" Height="36" Padding="0" Background="Transparent" BorderThickness="0" Click="MaximizeButton_Click"><TextBlock Text="□" FontSize="14"/></Button>
+                <Button Width="52" Height="36" Padding="0" Background="#B94348" BorderThickness="0" Click="CloseButton_Click"><TextBlock Text="×" FontSize="20"/></Button>
+            </StackPanel>
+        </Grid>
+        <views:MainView Grid.Row="1"/>
+    </Grid>
+</Window>

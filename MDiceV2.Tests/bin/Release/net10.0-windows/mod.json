@@ -1,0 +1,13 @@
+{
+  "id": "com.humulus.aimod",
+  "name": "AI Mod",
+  "version": "2.0.0",
+  "author": "Humulus",
+  "description": "AI-powered chat mod with TRPG Player support (Gemini/ZhipuAI/SiliconFlow/DeepSeek).",
+  "dllFileName": "AIMod.dll",
+  "pluginClassName": "AIMod.AIMod",
+  "priority": 200,
+  "modType": "dll",
+  "supportHotReload": false,
+  "apiVersion": "1.0"
+}

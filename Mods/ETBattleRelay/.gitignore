@@ -1,0 +1,4 @@
+bin/
+obj/
+!README.md
+!Deployment/*.md

@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- 在最开始禁用工具集检查 -->
+  <PropertyGroup>
+    <_SkipToolsetVersionCheck>true</_SkipToolsetVersionCheck>
+    <ToolsetNotFoundWarningSupression>true</ToolsetNotFoundWarningSupression>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <_ProgramFilesX86 Condition="'$(_ProgramFilesX86)' == ''">$([System.Environment]::GetEnvironmentVariable('ProgramFiles(x86)'))</_ProgramFilesX86>
+    <_ProgramFiles Condition="'$(_ProgramFiles)' == ''">$([System.Environment]::GetEnvironmentVariable('ProgramFiles'))</_ProgramFiles>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(VCTargetsPath)' == ''">
+    <VCTargetsPath Condition="Exists('$(_ProgramFilesX86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Microsoft\VC\v170\')">$(_ProgramFilesX86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Microsoft\VC\v170\</VCTargetsPath>
+    <VCTargetsPath Condition="'$(VCTargetsPath)' == '' and Exists('$(_ProgramFiles)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Microsoft\VC\v170\')">$(_ProgramFiles)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Microsoft\VC\v170\</VCTargetsPath>
+    <VCTargetsPath Condition="'$(VCTargetsPath)' == '' and Exists('$(_ProgramFilesX86)\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\')">$(_ProgramFilesX86)\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\</VCTargetsPath>
+    <VCTargetsPath Condition="'$(VCTargetsPath)' == '' and Exists('$(_ProgramFiles)\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\')">$(_ProgramFiles)\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\</VCTargetsPath>
+  </PropertyGroup>
+
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{8D35CA5E-0061-F067-17B7-DFA6F3758F45}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>ABot.Core</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <AssemblyName>ABot.Core</AssemblyName>
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+
+  <PropertyGroup>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset Condition="'$(PlatformToolset)' == ''">v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <TrackFileAccess Condition="'$(MSBuildRuntimeType)' == 'Core' and '$(TrackFileAccess)' == ''">false</TrackFileAccess>
+    <VCToolsInstallDir Condition="'$(VCToolsInstallDir)' == '' and '$(VCToolsVersion)' != '' and Exists('$(_ProgramFilesX86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\$(VCToolsVersion)\')">$(_ProgramFilesX86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\$(VCToolsVersion)\</VCToolsInstallDir>
+    <VCToolsInstallDir Condition="'$(VCToolsInstallDir)' == '' and '$(VCToolsVersion)' != '' and Exists('$(_ProgramFiles)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\$(VCToolsVersion)\')">$(_ProgramFiles)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\$(VCToolsVersion)\</VCToolsInstallDir>
+    <VCToolsInstallDir Condition="'$(VCToolsInstallDir)' == '' and '$(VCToolsVersion)' != '' and Exists('$(_ProgramFilesX86)\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\$(VCToolsVersion)\')">$(_ProgramFilesX86)\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\$(VCToolsVersion)\</VCToolsInstallDir>
+    <VCToolsInstallDir Condition="'$(VCToolsInstallDir)' == '' and '$(VCToolsVersion)' != '' and Exists('$(_ProgramFiles)\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\$(VCToolsVersion)\')">$(_ProgramFiles)\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\$(VCToolsVersion)\</VCToolsInstallDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <Optimization>Disabled</Optimization>
+    <OutDir>$(SolutionDir)bin\Debug\x64\</OutDir>
+    <IntDir>$(SolutionDir)obj\Debug\$(ProjectName)\x64\</IntDir>
+    <AdditionalIncludeDirectories>$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    <PreprocessorDefinitions>_DEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    <LanguageStandard>stdcpp17</LanguageStandard>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <DebugSymbols>false</DebugSymbols>
+    <GenerateDebugInformation>false</GenerateDebugInformation>
+    <Optimization>MaxSpeed</Optimization>
+    <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+    <OutDir>$(SolutionDir)bin\Release\x64\</OutDir>
+    <IntDir>$(SolutionDir)obj\Release\$(ProjectName)\x64\</IntDir>
+    <AdditionalIncludeDirectories>$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    <PreprocessorDefinitions>NDEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    <LanguageStandard>stdcpp17</LanguageStandard>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <DebugSymbols>true</DebugSymbols>
+    <Optimization>Disabled</Optimization>
+    <OutDir>$(SolutionDir)bin\Debug\x86\</OutDir>
+    <IntDir>$(SolutionDir)obj\Debug\$(ProjectName)\x86\</IntDir>
+    <AdditionalIncludeDirectories>$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    <PreprocessorDefinitions>_DEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    <LanguageStandard>stdcpp17</LanguageStandard>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <DebugSymbols>false</DebugSymbols>
+    <Optimization>MaxSpeed</Optimization>
+    <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+    <OutDir>$(SolutionDir)bin\Release\x86\</OutDir>
+    <IntDir>$(SolutionDir)obj\Release\$(ProjectName)\x86\</IntDir>
+    <AdditionalIncludeDirectories>$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    <PreprocessorDefinitions>NDEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    <LanguageStandard>stdcpp17</LanguageStandard>
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+
+  <Target Name="CustomBuild"
+          Condition="'$(MSBuildRuntimeType)' == 'Core' and '@(CustomBuild)' == '' and '@(CustomBuildStep)' == ''" />
+  <Target Name="CopyFileToFolders"
+          Condition="'$(MSBuildRuntimeType)' == 'Core'" />
+
+  <!-- 添加编译选项以支持并行 PDB 访问和 UTF-8 编码 -->
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/FS /utf-8 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <!-- Disable CET compatibility for Windows 10 21H2 compatibility -->
+      <AdditionalOptions>/CETCOMPAT:NO %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <ItemGroup>
+    <ClCompile Include="src\Lexer.cpp" />
+    <ClCompile Include="src\Parser.cpp" />
+    <ClCompile Include="src\Bytecode.cpp" />
+    <ClCompile Include="src\VM.cpp" />
+    <ClCompile Include="src\C_API.cpp" />
+    <ClCompile Include="src\TypeSystem.cpp" />
+    <ClCompile Include="src\Value.cpp" />
+    <ClCompile Include="src\SchemaValue.cpp" />
+    <ClCompile Include="src\ValueV2.cpp" />
+    <ClCompile Include="src\Scope.cpp" />
+    <ClCompile Include="src\Character.cpp" />
+    <ClCompile Include="src\ParameterParser.cpp" />
+    <ClCompile Include="src\Battle.cpp" />
+    <ClCompile Include="src\RoundManager.cpp" />
+    <ClCompile Include="src\SkillTriggerSystem.cpp" />
+    <ClCompile Include="src\SkillMessageImplementations.cpp" />
+    <ClCompile Include="src\SkillMessageDefinitions.cpp" />
+    <ClCompile Include="src\SkillDefinitionImplementations.cpp" />
+    <ClCompile Include="src\SkillSystem.cpp" />
+    <ClCompile Include="src\SkillExecutor.cpp" />
+    <ClCompile Include="src\PresetSystem.cpp" />
+    <ClCompile Include="src\ExecutionEnvironment.cpp" />
+    <ClCompile Include="src\BuiltinPresets.cpp" />
+    <ClCompile Include="src\ScriptExecutionContainer.cpp" />
+    <ClCompile Include="src\ObjectTable.cpp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ClInclude Include="src\Value.h" />
+    <ClInclude Include="src\ValueV2.h" />
+    <ClInclude Include="src\Scope.h" />
+    <ClInclude Include="src\Lexer.h" />
+    <ClInclude Include="src\Parser.h" />
+    <ClInclude Include="src\Bytecode.h" />
+    <ClInclude Include="src\VM.h" />
+    <ClInclude Include="src\C_API.h" />
+    <ClInclude Include="src\Character.h" />
+    <ClInclude Include="src\ParameterParser.h" />
+    <ClInclude Include="src\Battle.h" />
+    <ClInclude Include="src\RoundManager.h" />
+    <ClInclude Include="src\SkillTriggerSystem.h" />
+    <ClInclude Include="src\SkillMessageDefinitions.h" />
+    <ClInclude Include="src\SkillSystem.h" />
+    <ClInclude Include="src\SkillExecutor.h" />
+    <ClInclude Include="src\PresetSystem.h" />
+    <ClInclude Include="src\ExecutionEnvironment.h" />
+    <ClInclude Include="src\BuiltinPresets.h" />
+    <ClInclude Include="src\TypeSystem.h" />
+    <ClInclude Include="src\ScriptExecutionContainer.h" />
+    <ClInclude Include="src\ObjectHandle.h" />
+    <ClInclude Include="src\ObjectTable.h" />
+  </ItemGroup>
+
+  <!-- 禁用 MSB8020 工具集检查错误 -->
+  <Target Name="DisableToolsetCheck" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <_SkipToolsetVersionCheck>true</_SkipToolsetVersionCheck>
+    </PropertyGroup>
+  </Target>
+
+</Project>

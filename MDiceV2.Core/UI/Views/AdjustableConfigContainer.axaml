@@ -1,0 +1,130 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:MDiceV2.Core.UI.ViewModels"
+             xmlns:conv="using:MDiceV2.Core.Converters"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="650"
+             x:Class="MDiceV2.Core.UI.Views.AdjustableConfigContainer"
+             x:DataType="vm:ConfigContainerViewModel">
+
+    <UserControl.Resources>
+        <!-- Config converters and splitter template are inherited from ConfigContainer. -->
+        <ItemsPanelTemplate x:Key="VirtualizingPanelTemplate"><VirtualizingStackPanel Orientation="Vertical"/></ItemsPanelTemplate>
+    </UserControl.Resources>
+
+    <Grid RowDefinitions="Auto,*">
+        <Grid Grid.Row="0" ColumnDefinitions="4,*,Auto" Height="58" Margin="0,0,0,12" Background="#1A2030">
+            <Border Background="#58D6A9"/>
+            <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center" Spacing="2">
+                <TextBlock Text="EDITABLE DATASET" FontSize="9" Foreground="#7C86A3" LetterSpacing="1.8"/>
+                <TextBlock x:Name="Title" Text="{Binding Title}" FontSize="20" FontWeight="Black"/>
+            </StackPanel>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <Button x:Name="SectionToggleButton" Width="38" Height="38" Padding="0" CornerRadius="2" Click="SectionToggleButton_Click" ToolTip.Tip="Collapse section">
+                    <TextBlock x:Name="SectionToggleGlyph" Text="−" FontSize="17" FontWeight="Black"/>
+                </Button>
+                <Button x:Name="SearchButton" Height="38" Padding="12,0" CornerRadius="2" Click="SearchButton_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="7" HorizontalAlignment="Center" VerticalAlignment="Center"><Image Source="avares://MDiceV2.Core/Assets/Sprite/Search.png" Width="14"/><TextBlock Text="FILTER" FontSize="10" LetterSpacing="1"/></StackPanel>
+                </Button>
+                <Button x:Name="AddPanelButton" Height="38" Padding="12,0" CornerRadius="2" Background="#58D6A9" BorderBrush="#58D6A9" Click="AddPanelButton_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="7" HorizontalAlignment="Center" VerticalAlignment="Center"><Image Source="avares://MDiceV2.Core/Assets/Sprite/Add.png" Width="14"/><TextBlock Text="NEW" FontSize="10" LetterSpacing="1" Foreground="#0B1816"/></StackPanel>
+                </Button>
+                <Button x:Name="HelpButton" Height="38" Padding="12,0" CornerRadius="2" Background="#F05A47" BorderBrush="#F05A47" Click="HelpButton_Click">
+                    <TextBlock Text="GUIDE" FontSize="10" LetterSpacing="1"/>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <Grid x:Name="SectionBody" Grid.Row="1" RowDefinitions="Auto,Auto,Auto,*">
+
+        <Border x:Name="SearchPanel" Grid.Row="0" IsVisible="{Binding IsSearchPanelVisible}" Height="0" ClipToBounds="True" Opacity="0"
+                Background="#1A2030" BorderBrush="#30394F" BorderThickness="1" CornerRadius="2">
+            <Border.Transitions><Transitions><DoubleTransition Property="Height" Duration="0:0:0.25" Easing="CubicEaseOut"/><DoubleTransition Property="Opacity" Duration="0:0:0.25" Easing="CubicEaseOut"/></Transitions></Border.Transitions>
+            <Border x:Name="FillArea" Height="0" ClipToBounds="True"><Border.Transitions><Transitions><DoubleTransition Property="Height" Duration="0:0:0.25"/></Transitions></Border.Transitions>
+                <Grid x:Name="SearchControls" Height="54" ColumnDefinitions="Auto,*,Auto,*" Margin="14,0">
+                    <TextBlock Text="KEY" FontSize="9" Foreground="#8B7CF6" LetterSpacing="1" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBox Grid.Column="1" Text="{Binding KeyFilterText, Mode=TwoWay}" Height="34" Watermark="Filter keys"/>
+                    <TextBlock Grid.Column="2" Text="VALUE" FontSize="9" Foreground="#F05A47" LetterSpacing="1" VerticalAlignment="Center" Margin="18,0,10,0"/>
+                    <TextBox Grid.Column="3" Text="{Binding ValueFilterText, Mode=TwoWay}" Height="34" Watermark="Filter values"/>
+                </Grid>
+            </Border>
+        </Border>
+
+        <Border x:Name="AddPanel" Grid.Row="1" IsVisible="{Binding IsAddPanelVisible}" Height="0" ClipToBounds="True" Opacity="0"
+                Background="#182824" BorderBrush="#2C554A" BorderThickness="1" CornerRadius="2">
+            <Border.Transitions><Transitions><DoubleTransition Property="Height" Duration="0:0:0.25" Easing="CubicEaseOut"/><DoubleTransition Property="Opacity" Duration="0:0:0.25" Easing="CubicEaseOut"/></Transitions></Border.Transitions>
+            <Border x:Name="AddFillArea" Height="0" ClipToBounds="True"><Border.Transitions><Transitions><DoubleTransition Property="Height" Duration="0:0:0.25"/></Transitions></Border.Transitions>
+                <Grid x:Name="AddControls" Height="58" ColumnDefinitions="Auto,*,Auto,*,Auto" Margin="14,0">
+                    <TextBlock Text="KEY" FontSize="9" Foreground="#58D6A9" LetterSpacing="1" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBox x:Name="NewKeyTextBox" Grid.Column="1" Height="34" Watermark="New key"/>
+                    <TextBlock Grid.Column="2" Text="VALUE" FontSize="9" Foreground="#58D6A9" LetterSpacing="1" VerticalAlignment="Center" Margin="18,0,10,0"/>
+                    <TextBox x:Name="NewValueTextBox" Grid.Column="3" Height="34" Watermark="Initial value"/>
+                    <Button x:Name="AddItemButton" Grid.Column="4" Height="34" Margin="10,0,0,0" Padding="16,0" CornerRadius="2"
+                            Background="#58D6A9" BorderBrush="#58D6A9" Click="AddItemButton_Click">
+                        <TextBlock Text="CREATE" FontSize="9" Foreground="#0B1816" LetterSpacing="1"/>
+                    </Button>
+                </Grid>
+            </Border>
+        </Border>
+
+        <Border x:Name="HelpPanel" Grid.Row="2" IsVisible="{Binding IsHelpPanelVisible}" Height="0" ClipToBounds="True" Opacity="0"
+                Background="#241E26" BorderBrush="#51343B" BorderThickness="1" CornerRadius="2">
+            <Border.Transitions><Transitions><DoubleTransition Property="Height" Duration="0:0:0.3" Easing="CubicEaseOut"/><DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="CubicEaseOut"/></Transitions></Border.Transitions>
+            <StackPanel>
+                <Border x:Name="HelpFillArea" Height="0" ClipToBounds="True"><Border.Transitions><Transitions><DoubleTransition Property="Height" Duration="0:0:0.3"/></Transitions></Border.Transitions>
+                    <Grid Height="38" ColumnDefinitions="*,Auto" Margin="16,0">
+                        <TextBlock Text="QUICK GUIDE" FontSize="10" FontWeight="Bold" Foreground="#F05A47" LetterSpacing="1" VerticalAlignment="Center"/>
+                        <Button Grid.Column="1" Height="26" Padding="10,0" Background="#342530" BorderBrush="#6A3E49" CornerRadius="2" Click="HelpButton_Click"><TextBlock Text="CLOSE GUIDE" FontSize="8" FontWeight="Bold" LetterSpacing="0.8"/></Button>
+                    </Grid>
+                </Border>
+                <Grid x:Name="HelpContent" Height="0" ClipToBounds="True" RowDefinitions="*" Margin="16,0,16,12">
+                    <Grid.Transitions><Transitions><DoubleTransition Property="Height" Duration="0:0:0.3"/></Transitions></Grid.Transitions>
+                    <ScrollViewer><TextBlock x:Name="HelpTextBlock" TextWrapping="Wrap" FontSize="11" Foreground="#C1C8DB" LineHeight="18"/></ScrollViewer>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <ListBox x:Name="ConfigListBox" Grid.Row="3" ItemsSource="{Binding FilteredItems}" Background="Transparent" BorderThickness="0"
+                 ItemsPanel="{StaticResource VirtualizingPanelTemplate}">
+            <ListBox.Styles>
+                <Style Selector="ListBoxItem"><Setter Property="Margin" Value="0"/><Setter Property="Padding" Value="0"/><Setter Property="Background" Value="Transparent"/></Style>
+                <Style Selector="ListBoxItem:selected /template/ ContentPresenter"><Setter Property="Background" Value="Transparent"/></Style>
+                <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter"><Setter Property="Background" Value="Transparent"/></Style>
+            </ListBox.Styles>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Border Height="54" Margin="0,3" Background="#1A2030" BorderBrush="#2C354B" BorderThickness="1" CornerRadius="2">
+                        <Border.Transitions><Transitions><DoubleTransition Property="Height" Duration="0:0:0.22" Easing="CubicEaseOut"/></Transitions></Border.Transitions>
+                        <Grid SizeChanged="Grid_SizeChanged">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="{Binding LeftColumnRatio, Converter={StaticResource RatioToStarConverter}}" MinWidth="100"/>
+                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="{Binding RightColumnRatio, Converter={StaticResource RatioToStarConverter}}" MinWidth="100"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid Margin="16,0" ColumnDefinitions="6,*">
+                                <Border Width="6" Height="6" CornerRadius="3" Background="#58D6A9" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" Text="{Binding Key}" Margin="12,0,0,0" VerticalAlignment="Center" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                            </Grid>
+                            <GridSplitter Grid.Column="1" ResizeDirection="Columns" Template="{StaticResource SplitterTemplate}" DragDelta="GridSplitter_DragDelta"/>
+                            <Grid Grid.Column="2" Margin="12,6,10,6" ColumnDefinitions="*,Auto">
+                                <TextBox Text="{Binding Value, Mode=TwoWay}" Height="34" MinHeight="34" AcceptsReturn="True" TextWrapping="Wrap"
+                                         IsVisible="{Binding Type, Converter={StaticResource ConfigTypeToBoolConverter}, ConverterParameter=LineEdit}"
+                                         GotFocus="OnItemTextBoxGotFocus" LostFocus="OnItemTextBoxLostFocus">
+                                    <TextBox.Transitions><Transitions><DoubleTransition Property="Height" Duration="0:0:0.22"/></Transitions></TextBox.Transitions>
+                                </TextBox>
+                                <CheckBox IsChecked="{Binding ValueAsBool, Mode=TwoWay}" VerticalAlignment="Center"
+                                          IsVisible="{Binding Type, Converter={StaticResource ConfigTypeToBoolConverter}, ConverterParameter=CheckBox}"/>
+                                <Button Grid.Column="1" Width="32" Height="32" Margin="8,0,0,0" Padding="0" Background="#272E42" BorderThickness="0"
+                                        IsVisible="{Binding ShowResetButton}" Click="OnResetButtonClick">
+                                    <Image Source="avares://MDiceV2.Core/Assets/Sprite/Reset.png" Width="15"/>
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        </Grid>
+    </Grid>
+</UserControl>

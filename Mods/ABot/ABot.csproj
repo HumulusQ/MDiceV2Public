@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- ============ 婵＄偑鍊曞﹢鍗灻烘导鏉戞槬闁绘垶蓱閹峰崬菐閸ワ絽澧插ù?============ -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Mod闂佺粯顨堥幊鎾绘偩妤ｅ啯鐓€鐎广儱娲ㄩ弸?-->
+    <OutputType>Library</OutputType>
+    <AssemblyName>ABot</AssemblyName>
+    <!-- 闂佺粯顨呴悧濠傦耿閻楀牏鈹嶉柍鈺佸暕缁?-->
+    <Authors>ABOT Team</Authors>
+    <Description>ABOT Battle Orchestration Interpreter for MDiceV2</Description>
+    <!-- 婵炴垶鎸哥粔鍫曞极閹捐绠ｉ柟顒€銆弒emblyInfo闂佹寧绋戞總鏃€绻涢崶顒佸仺闁炽儲妲紃ectory.Build.props -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <SelfContained>false</SelfContained>
+    <!-- 闂佺粯顨呴悧濠傦耿娴兼潙鐭楅柧姘€婚惌?Version.props 闂佸憡鏌ｉ崝宥夊焵椤戞寧绁版鐐茬箻瀹曪綁寮介悽鐢殿槷闂備緡鍋呮穱铏规崲?Directory.Build.props 闁诲海鏁搁崢褔宕?-->
+    <!-- AssemblyVersion: $(VersionBase).$(BuildCounter) -->
+    <!-- FileVersion: $(VersionBase).$(BuildCounter) -->
+    <!-- InformationalVersion 婵炲濮撮幊鎰板极閵堝棛顩查幖娣灮閸ㄥジ鎮规担宄板祮妞わ絺鏅犲畷锝夊箣閿濆孩鏂€闂佺粯顨呴悧濠傦耿?-->
+    <Version>0.3.1</Version>
+    <AssemblyVersion>0.3.1</AssemblyVersion>
+    <FileVersion>0.3.1</FileVersion>
+    <InformationalVersion>beta</InformationalVersion>
+  </PropertyGroup>
+  <!-- ============ 婵＄偑鍊曞﹢鍗灻洪悧鍫㈢懝婵犻潧锕﹂々?============ -->
+  <ItemGroup>
+    <!-- 閻庢鍠楀ú婊堝极?Interfaces 婵炲濮伴崕鎾嵁韫囨稑鐭?IModPlugin 闂佽浜介崕杈亹?-->
+    <ProjectReference Include="..\..\MDiceV2.Interfaces\MDiceV2.Interfaces.csproj">
+      <Private>false</Private>
+    </ProjectReference>
+    <!-- 閻庢鍠楀ú婊堝极?Core 婵炲濮伴崕鎾嵁韫囨稑鐭?Mod 闂佽浜介崕杈亹濞戞埃鍋撶憴鍕叝缂?-->
+    <ProjectReference Include="..\..\MDiceV2.Core\MDiceV2.Core.csproj">
+      <Private>false</Private>
+    </ProjectReference>
+    <!-- Avalonia UI Framework - Complete dependency set -->
+    <PackageReference Include="Avalonia" Version="11.3.6" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.6" />
+  </ItemGroup>
+  <!-- ============ 闁哄鐗婇幐鎼佸吹椤撱垺鐓€鐎广儱娲ㄩ弸?============ -->
+  <PropertyGroup>
+    <!-- Mod闁圭厧鐡ㄥΛ浣烘椤撱垹绀勯柛婵嗗閻撳倿鏌ｅΔ鍐╁殌闁伙綁绠栭幆鍕敊閼测晝协婵炲濮伴崕鎵矚閸洘鐒鹃柕濞у棭鍞?-->
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,49 @@
+{
+  "Mode": 2,
+  "SelectedModel": 0,
+  "SystemPrompt": "You are a helpful QQ group chat bot.",
+  "PrefixRules": [
+    {
+      "Prefix": "/ai ",
+      "Enabled": true
+    }
+  ],
+  "InterceptAll": false,
+  "TimeoutSeconds": 60,
+  "MaxContextMessages": 10,
+  "GeminiConfig": {
+    "ApiKey": "YOUR_GEMINI_API_KEY",
+    "ModelName": "gemini-2.5-flash"
+  },
+  "ZhipuAIConfig": {
+    "ApiKey": "YOUR_ZHIPU_API_KEY",
+    "ModelName": "glm-4.7-flash"
+  },
+  "SiliconFlowConfig": {
+    "ApiKey": "YOUR_SILICONFLOW_API_KEY",
+    "ModelName": "Qwen/Qwen3-8B"
+  },
+  "DeepSeekConfig": {
+    "ApiKey": "YOUR_DEEPSEEK_API_KEY",
+    "ModelName": "deepseek-chat"
+  },
+  "TrpgConfig": {
+    "OocPrefix": "\u3010OOC\u3011",
+    "CooldownSeconds": 60,
+    "TokenThreshold": 6000,
+    "SystemPromptTemplate": "",
+    "StateInterceptionEnabled": true,
+    "RecallTopK": 1,
+    "RecallMinSimilarity": 0.85,
+    "EnableNarrativeMemoryDebugLog": false,
+    "EnableStructuredNarrativeContext": true,
+    "EnableNarrativeContextLlm": false,
+    "EnableAffectiveTags": true,
+    "EnableAffectiveMemoryEncoding": true,
+    "RecentHistoryCount": 40,
+    "HistoryFoldCount": 20,
+    "SecondaryApiKey": "",
+    "SecondaryModel": "",
+    "SecondaryEndpoint": ""
+  }
+}
