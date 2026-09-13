@@ -1,0 +1,17 @@
+{
+  "id": "com.abot.interpreter",
+  "name": "ABOT Interpreter",
+  "version": "0.1.0",
+  "author": "ABOT Development Team",
+  "description": "Battle Orchestration Toolkit (ABOT) script interpreter for MDiceV2. Provides Lexer, Parser, Bytecode Compiler, and VM for ABOT script execution.",
+  "dllFileName": "ABot.dll",
+  "pluginClassName": "ABot.ABotMod",
+  "priority": 150,
+  "modType": "dll",
+  "supportHotReload": false,
+  "apiVersion": "1.0",
+  "notes": {
+    "cppCliDependency": "This mod requires ABot.CLI.dll (C++/CLI wrapper). If not available, the mod will still load but script execution will be unavailable. Recompile C++ layer (Phase 1.5) when ready.",
+    "gracefulDegradation": "When C++/CLI wrapper is missing, ABotInterpreter methods will return -1/null gracefully without crashing the application."
+  }
+}

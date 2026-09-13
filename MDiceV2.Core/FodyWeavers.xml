@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Weavers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="FodyWeavers.xsd">
+  <Costura>
+    <!-- Include all assemblies except native and system assemblies -->
+    <ExcludeAssemblies>
+      <!-- Exclude MDiceV2 projects (they can be loaded separately) -->
+      MDiceV2.Abstractions
+      MDiceV2.Interfaces
+      <!-- .NET system assemblies -->
+      System.*
+      netstandard
+      mscorlib
+    </ExcludeAssemblies>
+    <!-- Include native libraries (SkiaSharp native DLLs, etc.) -->
+    <IncludeRuntimes>true</IncludeRuntimes>
+    <!-- Create local copies in case they're needed for native code -->
+    <CreateTemporaryAssemblies>false</CreateTemporaryAssemblies>
+    <!-- Seal sealed types if possible -->
+    <DisableCleanup>false</DisableCleanup>
+  </Costura>
+</Weavers>

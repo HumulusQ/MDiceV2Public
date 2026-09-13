@@ -1,0 +1,514 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build-customized-reply-mod",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/Mods/CustomizedReply/CustomizedReply.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "copy-customized-reply-mod",
+            "command": "powershell",
+            "type": "process",
+            "args": [
+                "-NoProfile",
+                "-Command",
+                "$src='${workspaceFolder}/Mods/CustomizedReply/bin/Debug/net10.0-windows';$mod='${workspaceFolder}/Mods/CustomizedReply';$dst='${workspaceFolder}/MDiceV2_Debug/mods/CustomizedReply';if(-not(Test-Path $dst)){New-Item -ItemType Directory -Path $dst -Force|Out-Null};Copy-Item \"$src/CustomizedReply.dll\" $dst -Force;Copy-Item \"$src/CustomizedReply.pdb\" $dst -Force -EA 0;Copy-Item \"$mod/mod.json\" $dst -Force -EA 0;Copy-Item \"$mod/data.json\" $dst -Force -EA 0;Write-Host 'Mod files copied to '$dst"
+            ],
+            "dependsOn": "build-customized-reply-mod"
+        },
+
+        {
+            "label": "build-interfaces-debug",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "publish",
+                "${workspaceFolder}/MDiceV2.Interfaces/MDiceV2.Interfaces.csproj",
+                "/property:Configuration=Debug",
+                "/p:PublishDir=${workspaceFolder}/MDiceV2_Debug/",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "build-core-debug",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "publish",
+                "${workspaceFolder}/MDiceV2.Core/MDiceV2.Core.csproj",
+                "/property:Configuration=Debug",
+                "/p:PublishDir=${workspaceFolder}/MDiceV2_Debug/Core/",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile",
+            "dependsOn": [
+                "copy-customized-reply-mod",
+                "build-interfaces-debug"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "build-launcher-debug",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "publish",
+                "${workspaceFolder}/MDiceV2.Launcher/MDiceV2.Launcher.csproj",
+                "/property:Configuration=Debug",
+                "/p:PublishDir=${workspaceFolder}/MDiceV2_Debug/",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile",
+            "dependsOn": [
+                "build-core-debug"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "build",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/MDiceV2.sln",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile",
+            "dependsOn": [
+                "copy-customized-reply-mod"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "publish",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "publish",
+                "${workspaceFolder}/MDiceV2.Launcher/MDiceV2.Launcher.csproj",
+                "/property:Configuration=Release",
+                "/p:PublishDir=${workspaceFolder}/MDiceV2_Published/",
+                "/p:DebugType=None",
+                "/p:DebugSymbols=false",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "publish-all",
+            "dependsOn": [
+                "publish-interfaces",
+                "publish-core",
+                "publish-launcher"
+            ],
+            "group": "build"
+        },
+        {
+            "label": "publish-interfaces",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "publish",
+                "${workspaceFolder}/MDiceV2.Interfaces/MDiceV2.Interfaces.csproj",
+                "/property:Configuration=Release",
+                "/p:PublishDir=${workspaceFolder}/MDiceV2_Published/",
+                "/p:DebugType=None",
+                "/p:DebugSymbols=false",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "publish-core",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "publish",
+                "${workspaceFolder}/MDiceV2.Core/MDiceV2.Core.csproj",
+                "/property:Configuration=Release",
+                "/p:PublishDir=${workspaceFolder}/MDiceV2_Published/",
+                "/p:DebugType=None",
+                "/p:DebugSymbols=false",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "publish-launcher",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "publish",
+                "${workspaceFolder}/MDiceV2.Launcher/MDiceV2.Launcher.csproj",
+                "/property:Configuration=Release",
+                "/p:PublishDir=${workspaceFolder}/MDiceV2_Published/",
+                "/p:DebugType=None",
+                "/p:DebugSymbols=false",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "watch",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "watch",
+                "run",
+                "--project",
+                "${workspaceFolder}/MDiceV2.Launcher/MDiceV2.Launcher.csproj"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build-all",
+            "dependsOn": [
+                "build-interfaces",
+                "build-core",
+                "build-launcher"
+            ],
+            "group": "build"
+        },
+        {
+            "label": "build-interfaces",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/MDiceV2.Interfaces/MDiceV2.Interfaces.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build-core",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/MDiceV2.Core/MDiceV2.Core.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build-launcher",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/MDiceV2.Launcher/MDiceV2.Launcher.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "run",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "run",
+                "--project",
+                "${workspaceFolder}/MDiceV2.Launcher/MDiceV2.Launcher.csproj"
+            ],
+            "problemMatcher": "$msCompile",
+            "dependsOn": "build"
+        },
+        {
+            "label": "debug-build-clean",
+            "command": "powershell",
+            "type": "process",
+            "args": [
+                "-ExecutionPolicy",
+                "Bypass",
+                "-NoProfile",
+                "-File",
+                "${workspaceFolder}/tools/build-debug.ps1"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "run-debug",
+            "command": "${workspaceFolder}/MDiceV2_Debug/MDiceV2.Launcher.exe",
+            "type": "process",
+            "args": [],
+            "dependsOn": "debug-build-clean",
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new",
+                "echo": true
+            }
+        },
+        {
+            "label": "run-published",
+            "command": "${workspaceFolder}/MDiceV2.Launcher/bin/Release/net9.0-windows/MDiceV2.Launcher.exe",
+            "type": "process",
+            "args": [],
+            "dependsOn": "publish-all",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "phase7-sync-versions",
+            "command": "powershell",
+            "type": "process",
+            "args": [
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}/tools/sync-versions.ps1"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "phase7-build-release",
+            "command": "powershell",
+            "type": "process",
+            "args": [
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}/tools/build-release.ps1"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "phase7-build-release-skip-clean",
+            "command": "powershell",
+            "type": "process",
+            "args": [
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}/tools/build-release.ps1",
+                "-SkipClean"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "phase7-publish-release",
+            "command": "powershell",
+            "type": "process",
+            "args": [
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}/tools/publish.ps1"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "test-all",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "test",
+                "${workspaceFolder}/MDiceV2.Tests/MDiceV2.Tests.csproj",
+                "-c",
+                "Debug",
+                "--no-build",
+                "--verbosity",
+                "detailed"
+            ],
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "test-unit",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "test",
+                "${workspaceFolder}/MDiceV2.Tests/MDiceV2.Tests.csproj",
+                "-c",
+                "Debug",
+                "--no-build",
+                "--filter",
+                "Category=Unit"
+            ],
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "test-integration",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "test",
+                "${workspaceFolder}/MDiceV2.Tests/MDiceV2.Tests.csproj",
+                "-c",
+                "Debug",
+                "--no-build",
+                "--filter",
+                "Category=Integration"
+            ],
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "benchmark-run",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "run",
+                "-c",
+                "Release",
+                "-p",
+                "${workspaceFolder}/MDiceV2.Tests/MDiceV2.Tests.csproj",
+                "--",
+                "--job",
+                "short",
+                "--warmupCount",
+                "3"
+            ],
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "test-build-and-run",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/MDiceV2.Tests/MDiceV2.Tests.csproj",
+                "-c",
+                "Debug"
+            ],
+            "dependsOn": "test-all",
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "test-coverage-report",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "test",
+                "${workspaceFolder}/MDiceV2.Tests/MDiceV2.Tests.csproj",
+                "-c",
+                "Debug",
+                "--no-build",
+                "--logger",
+                "trx;LogFileName=test-results.trx"
+            ],
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            }
+        }
+    ]
+}

@@ -1,0 +1,11 @@
+battle.example.com {
+    encode zstd gzip
+
+    @et_battle path /et-battle/*
+    reverse_proxy @et_battle 127.0.0.1:8787
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+    }
+}

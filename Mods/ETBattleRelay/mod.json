@@ -1,0 +1,13 @@
+{
+  "id": "com.etbattle.relay",
+  "name": "ET Battle Relay",
+  "version": "1.0.0",
+  "author": "ET Battle Engine",
+  "description": "Isolated room, WebRTC signalling, and opaque WSS relay service for ET Battle Engine. Disabled by default.",
+  "dllFileName": "ETBattleRelay.dll",
+  "pluginClassName": "ETBattleRelay.ETBattleRelayMod",
+  "priority": -1000,
+  "modType": "dll",
+  "supportHotReload": false,
+  "apiVersion": "1.0"
+}

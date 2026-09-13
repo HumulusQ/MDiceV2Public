@@ -1,0 +1,14 @@
+{
+  "enabled": false,
+  "http_prefix": "http://127.0.0.1:8787/et-battle/",
+  "max_peers": 8,
+  "recovery_seconds": 300,
+  "max_frame_bytes": 524288,
+  "messages_per_second": 80,
+  "bytes_per_second": 2097152,
+  "join_attempts_per_minute": 12,
+  "outbound_queue_capacity": 128,
+  "heartbeat_seconds": 15,
+  "heartbeat_timeout_seconds": 45,
+  "ice_servers": [{ "urls": ["stun:stun.example.com:3478"] }]
+}

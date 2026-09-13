@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <system.webServer>
+    <webSocket enabled="true" />
+    <rewrite>
+      <rules>
+        <rule name="ETBattleRelay" stopProcessing="true">
+          <match url="^et-battle/(.*)" />
+          <action type="Rewrite" url="http://127.0.0.1:8787/et-battle/{R:1}" />
+        </rule>
+      </rules>
+    </rewrite>
+    <security>
+      <requestFiltering>
+        <requestLimits maxAllowedContentLength="1048576" />
+      </requestFiltering>
+    </security>
+  </system.webServer>
+</configuration>

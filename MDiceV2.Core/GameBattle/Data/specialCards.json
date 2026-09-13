@@ -1,0 +1,149 @@
+{
+  "specialCards": [
+    {
+      "name": "暴走卷心菜",
+      "help": "特殊卡#人类阵营\n技能:\n暴走卷心菜：掷d10，检定值 > 当前武力时阵营财力+10%，反之-10%。",
+      "factions": ["Human"],
+      "rarity": "Rare",
+      "type": "Festival",
+      "innateSkills": [
+        {
+          "skillId": "cabbage_rampage",
+          "parameters": {}
+        }
+      ],
+      "skillNarratives": {
+        "cabbage_rampage_success_Immediate": "冒险者们好不容易凑到一起，横砍竖切，把从地里逃走的卷心菜切成了丁，看着不是很新鲜，但好歹也能送到市场。",
+        "cabbage_rampage_failure_Immediate": "几个卷心菜肘翻了城门，你今年雪上加霜的税收又被顺走了，但日子还得过。"
+      },
+      "effect": "投掷d10，高于当前武力值时当前阵营的财力+10%，否则-10%"
+    },
+    {
+      "name": "阿克西斯教游行",
+      "help": "特殊卡#人类阵营\n技能:\n阿克西斯教游行：掷Nd6(N=当前回合数)，总和 > 当前武力时，武力-6、财力+8、声望+8；反之武力-12、财力+8、声望+8。",
+      "factions": ["Human"],
+      "rarity": "Epic",
+      "type": "Festival",
+      "innateSkills": [
+        {
+          "skillId": "axis_parade",
+          "parameters": {
+            "DiceExpr": "%dd6",
+            "SuccessPowerDelta": -6,
+            "SuccessWealthDelta": 8,
+            "SuccessFameDelta": 8,
+            "FailurePowerDelta": -12,
+            "FailureWealthDelta": 8,
+            "FailureFameDelta": 8
+          }
+        }
+      ],
+      "skillNarratives": {
+        "axis_parade_success_Immediate": "阿克西斯教信徒走上街头传教，挨家挨户分发入教宣传单和可以喝的沐浴露，意外地，因为后者的清洁效果不错。可以喝的沐浴露荣获年度销售冠军",
+        "axis_parade_failure_Immediate": "阿克西斯教信徒走上街头传教，挨家挨户分发入教宣传单和可以喝的沐浴露，冲垮了城镇的治安管理负载，民众不胜其烦。"
+      },
+      "effect": "检定：掷当前回合数量的d6，总和大于当前武力则成功。成功：武力-6、财力+8、声望+8；失败：武力-12、财力+8、声望+8。"
+    }
+    ,
+    {
+      "name": "战术性骚扰",
+      "help": "特殊卡#通用\n技能:\n军事骚扰：对手财力-5，使用方武力+8，使用方额外抽取一张卡。",
+      "factions": ["Human", "Demon"],
+      "rarity": "Rare",
+      "type": "Disaster",
+      "innateSkills": [
+        {
+          "skillId": "tactical_harassment",
+          "parameters": {}
+        }
+      ],
+      "skillNarratives": {
+        "tactical_harassment_Immediate": "{>对方组织了一次意想不到的突袭——在造成任何损失之前就撤退了，你的士兵恼火不已。||对方三天两头的骚扰让你的前线指挥乱成一团，军官们谁都不愿意加夜班。}"
+      },
+      "effect": "对手 -5 财力；使用方 +8 战力；并抽取一张手牌"
+    },
+    {
+      "name": "万圣节之夜",
+      "help": "特殊卡#通用\n技能:\n万圣节之夜-场地：为场地添加'万圣节'效果，持续3个回合。\n:万圣节之夜-伤害：手牌中每有一张自己阵营的角色卡，对对手武力造成2点伤害。",
+      "factions": ["Human", "Demon"],
+      "rarity": "Epic",
+      "type": "Festival",
+      "innateSkills": [
+        {
+          "skillId": "add_field_effect",
+          "parameters": {
+            "FieldTag": "Halloween",
+            "Duration": 3
+          }
+        },
+        {
+          "skillId": "halloween_night_damage",
+          "parameters": {
+            "DamagePerCard": 2
+          }
+        }
+      ],
+      "skillNarratives": {
+        "add_field_effect_Immediate": "南瓜灯笼点亮了街道，孩子们戴着面具四处游荡，诡异的气氛笼罩着整座城镇，万圣节的魔力将持续三个回合。",
+        "halloween_night_damage_Immediate": "{>你的角色们化身恶灵，向对手发起突袭，每个人都贡献了自己的一份力量。||月光下，你的追随者们如同幽灵般袭来，敌人的防线在恐惧中瓦解。}"
+      },
+      "effect": "为场地添加'万圣节'效果（持续3回合）；手牌中每有一张自己阵营的角色卡，对对手武力造成2点伤害"
+    },
+    {
+      "name": "劝降",
+      "help": "特殊卡#通用\n技能:\n劝降：从指定场地随机移除一个角色。此角色的稀有度越高，移除成功率越低。",
+      "factions": ["Human", "Demon"],
+      "rarity": "Rare",
+      "type": "Disaster",
+      "innateSkills": [
+        {
+          "skillId": "persuasion",
+          "parameters": {
+            "CommonSuccessRate": 100,
+            "RareSuccessRate": 80,
+            "EpicSuccessRate": 50,
+            "LegendarySuccessRate": 20
+          }
+        }
+      ],
+      "skillNarratives": {
+        "persuasion_Immediate": "你向对方军账送去一件女装，劝他速速来降。"
+      },
+      "effect": "从对方的指定场地（前中后任选其一）随机移除一个角色；成功概率根据被移除角色的稀有度决定，普通角色必定成功，稀有75%，史诗50%，传奇25%"
+    },
+    {
+      "name": "气泡酒",
+      "help": "特殊卡#通用\n技能:\n气泡酒：消耗2d10点财力，抽取2张卡牌。",
+      "factions": ["Human", "Demon"],
+      "rarity": "Rare",
+      "type": "Festival",
+      "innateSkills": [
+        {
+          "skillId": "bubble_wine",
+          "parameters": {}
+        }
+      ],
+      "skillNarratives": {
+        "bubble_wine_Immediate": "你喝了不知道多少酒，钱包一点点瘪下去，但绝妙的点子一个又一个地冒出来。"
+      },
+      "effect": "消耗2D10点财力，再抽取两张卡"
+    },
+    {
+      "name": "逃跑",
+      "help": "特殊卡#通用\n技能:\n逃跑：消耗d10点声望，移除自己指定位置的随机一个角色，抽取一张卡。",
+      "factions": ["Human", "Demon"],
+      "rarity": "Rare",
+      "type": "Disaster",
+      "innateSkills": [
+        {
+          "skillId": "escape",
+          "parameters": {}
+        }
+      ],
+      "skillNarratives": {
+        "escape_Immediate": "XXX因为日夜无歇的996工作逃跑了，但是他推荐了自己的远房侄子来代他的班。"
+      },
+      "effect": "消耗D10点名声，指定自己的某个场地，移除其中的一个角色，再抽取一张角色卡"
+    }
+  ]
+}

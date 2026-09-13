@@ -1,0 +1,1323 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+             xmlns:local="using:CustomizedReply.UI"
+             x:Class="CustomizedReply.UI.CustomizedReplyPanel"
+             Background="#141927">
+
+    <!-- 转换器资源 -->
+    <UserControl.Resources>
+        <local:BoolNegationConverter x:Key="BoolNegationConverter"/>
+        <local:ConditionTypeColorConverter x:Key="ConditionTypeColorConverter"/>
+        <local:IsMatchTypeConverter x:Key="IsMatchTypeConverter"/>
+        <local:MatchConditionTypeDisplayConverter x:Key="MatchConditionTypeDisplayConverter"/>
+
+        <!-- 覆盖 Fluent ComboBox PointerOver 使用的主题刷子，只在本面板内生效 -->
+        <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="Transparent"/>
+        <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="Transparent"/>
+
+        <!-- （保留占位注释）为避免破坏默认 Fluent ComboBox 模板，这里不再自定义 ComboBox 的 ControlTheme -->
+
+        <!-- 1. 匹配类型卡片（仅左侧，无按钮） -->
+        <DataTemplate x:Key="MatchTypeTemplate" DataType="local:MatchConditionCard">
+            <Border Background="#26334A"
+                   BorderBrush="#555555"
+                   BorderThickness="1"
+                   CornerRadius="2"
+                   Padding="10,8,10,8"
+                   MinWidth="140">
+                <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*">
+                    <!-- 上部：类型标签（只读，不可切换） -->
+                    <TextBlock Grid.Row="0"
+                              Text="匹配类型"
+                              Foreground="#FFFFFF"
+                              FontSize="12"
+                              FontWeight="Bold"
+                              MinHeight="32"
+                              Padding="0,8"
+                              VerticalAlignment="Center"
+                              HorizontalAlignment="Left"/>
+
+                    <!-- 下部：选择匹配类型的ComboBox -->
+                    <ComboBox Grid.Row="1"
+                             SelectedItem="{Binding Value, Mode=TwoWay}"
+                             SelectedIndex="0"
+                             Background="Transparent"
+                             BorderBrush="Transparent"
+                             BorderThickness="0"
+                             Padding="0,8"
+                             Foreground="#FFFFFF"
+                             FontSize="12"
+                             Margin="0,4,0,0"
+                             HorizontalAlignment="Left">
+                        <sys:String>精确匹配</sys:String>
+                        <sys:String>正则表达式</sys:String>
+                        <sys:String>模糊匹配</sys:String>
+                    </ComboBox>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!-- 2. 账号限制卡片（左右分割，有按钮） -->
+        <DataTemplate x:Key="QQRestrictionTemplate" DataType="local:MatchConditionCard">
+            <Border Background="#E9B949"
+                   BorderBrush="#555555"
+                   BorderThickness="1"
+                   CornerRadius="2"
+                   Padding="10,8,10,8"
+                   MinWidth="200">
+                <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
+                    <!-- 左上部：ComboBox -->
+                    <ComboBox Grid.Row="0" Grid.Column="0"
+                             SelectedItem="{Binding ConditionTypeDisplay, Mode=TwoWay}"
+                             SelectedIndex="0"
+                             Background="Transparent"
+                             BorderBrush="Transparent"
+                             BorderThickness="0"
+                             Padding="0,8"
+                             MinHeight="32"
+                             Foreground="#FFFFFF"
+                             FontSize="12"
+                             FontWeight="Bold"
+                             HorizontalAlignment="Left">
+                        <sys:String>账号限制</sys:String>
+                        <sys:String>群号限制</sys:String>
+                        <sys:String>名牌等级限制</sys:String>
+                        <sys:String>每日次数限制</sys:String>
+                        <sys:String>时间限制</sys:String>
+                    </ComboBox>
+
+                    <!-- 右侧按钮 -->
+                    <StackPanel Grid.Row="0" Grid.RowSpan="2" Grid.Column="1"
+                               Orientation="Vertical" Spacing="2"
+                               Margin="6,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Button Click="OnDeleteConditionCard" Width="32" Height="32" Padding="0"
+                               Background="Transparent" BorderThickness="0"
+                               ToolTip.Tip="删除此条件">
+                            <Image Source="avares://CustomizedReply/Assets/Sprite/Close.png" Stretch="Uniform" Width="20" Height="20"/>
+                        </Button>
+                        <Button Click="OnToggleInverted" Width="32" Height="32" Padding="0"
+                               Background="Transparent" BorderThickness="0"
+                               ToolTip.Tip="切换白名单/黑名单">
+                            <Image Stretch="Uniform" x:Name="InvertImageQQ" Source="avares://CustomizedReply/Assets/Sprite/WriteListMode.png" Width="20" Height="20"/>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- 左下部：编辑栏 -->
+                    <StackPanel Grid.Row="1" Grid.Column="0" Spacing="4" Margin="0,4,0,0">
+                        <TextBox Text="{Binding Value}"
+                                Padding="6,4"
+                                Background="#141927"
+                                BorderBrush="#2C354B"
+                                BorderThickness="1"
+                                CornerRadius="2"
+                                Foreground="#FFFFFF"
+                                FontSize="12"
+                                Watermark="输入QQ号..."/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!-- 3. 群号限制卡片（左右分割，有按钮） -->
+        <DataTemplate x:Key="GroupRestrictionTemplate" DataType="local:MatchConditionCard">
+            <Border Background="#2E6F5C"
+                   BorderBrush="#555555"
+                   BorderThickness="1"
+                   CornerRadius="2"
+                   Padding="10,8,10,8"
+                   MinWidth="200">
+                <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
+                    <!-- 左上部：ComboBox -->
+                    <ComboBox Grid.Row="0" Grid.Column="0"
+                             SelectedItem="{Binding ConditionTypeDisplay, Mode=TwoWay}"
+                             SelectedIndex="0"
+                             Background="Transparent"
+                             BorderBrush="Transparent"
+                             BorderThickness="0"
+                             Padding="0,4"
+                             Foreground="#FFFFFF"
+                             FontSize="12"
+                             FontWeight="Bold"
+                             HorizontalAlignment="Left">
+                        <sys:String>账号限制</sys:String>
+                        <sys:String>群号限制</sys:String>
+                        <sys:String>名牌等级限制</sys:String>
+                        <sys:String>每日次数限制</sys:String>
+                        <sys:String>时间限制</sys:String>
+                    </ComboBox>
+
+                    <!-- 右侧按钮 -->
+                    <StackPanel Grid.Row="0" Grid.RowSpan="2" Grid.Column="1"
+                               Orientation="Vertical" Spacing="2"
+                               Margin="6,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Button Click="OnDeleteConditionCard" Width="32" Height="32" Padding="0"
+                               Background="Transparent" BorderThickness="0"
+                               ToolTip.Tip="删除此条件">
+                            <Image Source="avares://CustomizedReply/Assets/Sprite/Close.png" Width="20" Height="20"/>
+                        </Button>
+                        <Button Click="OnToggleInverted" Width="32" Height="32" Padding="0"
+                               Background="Transparent" BorderThickness="0"
+                               ToolTip.Tip="切换白名单/黑名单">
+                            <Image x:Name="InvertImageGroup" Source="avares://CustomizedReply/Assets/Sprite/WriteListMode.png" Width="20" Height="20"/>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- 左下部：编辑栏 -->
+                    <StackPanel Grid.Row="1" Grid.Column="0" Spacing="4" Margin="0,4,0,0">
+                        <TextBox Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                Padding="6,4"
+                                Background="#141927"
+                                BorderBrush="#2C354B"
+                                BorderThickness="1"
+                                CornerRadius="2"
+                                Foreground="#FFFFFF"
+                                FontSize="12"
+                                Watermark="输入群号 (多个用;分隔)..."/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!-- 4. 名牌等级限制卡片（左右分割，有按钮） -->
+        <DataTemplate x:Key="LevelRestrictionTemplate" DataType="local:MatchConditionCard">
+            <Border Background="#2E6F5C"
+                   BorderBrush="#555555"
+                   BorderThickness="1"
+                   CornerRadius="2"
+                   Padding="10,8,10,8"
+                   MinWidth="200">
+                <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
+                    <!-- 左上部：ComboBox -->
+                    <ComboBox Grid.Row="0" Grid.Column="0"
+                             SelectedItem="{Binding ConditionTypeDisplay, Mode=TwoWay}"
+                             SelectedIndex="0"
+                             Background="Transparent"
+                             BorderBrush="Transparent"
+                             BorderThickness="0"
+                             Padding="0,8"
+                             MinHeight="32"
+                             Foreground="#FFFFFF"
+                             FontSize="12"
+                             FontWeight="Bold"
+                             HorizontalAlignment="Left">
+                        <sys:String>账号限制</sys:String>
+                        <sys:String>群号限制</sys:String>
+                        <sys:String>名牌等级限制</sys:String>
+                        <sys:String>每日次数限制</sys:String>
+                        <sys:String>时间限制</sys:String>
+                    </ComboBox>
+
+                    <!-- 右侧按钮 -->
+                    <StackPanel Grid.Row="0" Grid.RowSpan="2" Grid.Column="1"
+                               Orientation="Vertical" Spacing="2"
+                               Margin="6,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Button Click="OnDeleteConditionCard" Width="32" Height="32" Padding="0"
+                               Background="Transparent" BorderThickness="0"
+                               ToolTip.Tip="删除此条件">
+                            <Image Source="avares://CustomizedReply/Assets/Sprite/Close.png" Width="20" Height="20"/>
+                        </Button>
+                        <Button Click="OnToggleInverted" Width="32" Height="32" Padding="0"
+                               Background="Transparent" BorderThickness="0"
+                               ToolTip.Tip="切换白名单/黑名单">
+                            <Image x:Name="InvertImageLevel" Source="avares://CustomizedReply/Assets/Sprite/WriteListMode.png" Width="20" Height="20"/>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- 左下部：编辑栏 -->
+                    <StackPanel Grid.Row="1" Grid.Column="0" Spacing="4" Margin="0,4,0,0">
+                        <TextBox Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                Padding="6,4"
+                                Background="#141927"
+                                BorderBrush="#2C354B"
+                                BorderThickness="1"
+                                CornerRadius="2"
+                                Foreground="#FFFFFF"
+                                FontSize="12"
+                                Watermark="输入范围 (如: 1-5, 或 3)..."/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!-- 5. 每日次数限制卡片（左右分割，仅删除按钮） -->
+        <DataTemplate x:Key="DailyLimitTemplate" DataType="local:MatchConditionCard">
+            <Border Background="#5a9fcd"
+                   BorderBrush="#555555"
+                   BorderThickness="1"
+                   CornerRadius="2"
+                   Padding="10,8,10,8"
+                   MinWidth="280">
+                <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto,Auto">
+                    <!-- 左上部：ComboBox -->
+                    <ComboBox Grid.Row="0" Grid.Column="0"
+                             SelectedItem="{Binding ConditionTypeDisplay, Mode=TwoWay}"
+                             SelectedIndex="0"
+                             Background="Transparent"
+                             BorderBrush="Transparent"
+                             BorderThickness="0"
+                             Padding="0,8"
+                             MinHeight="32"
+                             Foreground="#FFFFFF"
+                             FontSize="12"
+                             FontWeight="Bold"
+                             HorizontalAlignment="Left">
+                        <sys:String>账号限制</sys:String>
+                        <sys:String>群号限制</sys:String>
+                        <sys:String>名牌等级限制</sys:String>
+                        <sys:String>每日次数限制</sys:String>
+                        <sys:String>时间限制</sys:String>
+                    </ComboBox>
+
+                    <!-- 右侧删除按钮 -->
+                    <StackPanel Grid.Row="0" Grid.RowSpan="2" Grid.Column="2"
+                               Orientation="Vertical" Spacing="2"
+                               Margin="6,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Button Click="OnDeleteConditionCard" Width="32" Height="32" Padding="0"
+                               Background="Transparent" BorderThickness="0"
+                               ToolTip.Tip="删除此条件">
+                            <Image Source="avares://CustomizedReply/Assets/Sprite/Close.png" Width="20" Height="20"/>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- 左下部：限额数量输入 -->
+                    <StackPanel Grid.Row="1" Grid.Column="0" Spacing="4" Margin="0,4,0,0">
+                        <TextBox Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                Padding="6,4"
+                                Background="#141927"
+                                BorderBrush="#2C354B"
+                                BorderThickness="1"
+                                CornerRadius="2"
+                                Foreground="#FFFFFF"
+                                FontSize="12"
+                                Watermark="每日限额数..."/>
+                    </StackPanel>
+
+                    <!-- 中间列：作用域选择 -->
+                    <ComboBox Grid.Row="1" Grid.Column="1"
+                             SelectedIndex="0"
+                             SelectedItem="{Binding Value2, Mode=TwoWay}"
+                             Padding="0,4"
+                             Background="Transparent"
+                             BorderBrush="Transparent"
+                             BorderThickness="0"
+                             CornerRadius="2"
+                             Foreground="#FFFFFF"
+                             FontSize="12"
+                             Margin="4,4,0,0">
+                        <sys:String>按用户</sys:String>
+                        <sys:String>全局</sys:String>
+                    </ComboBox>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+
+        <!-- 6. 时间限制（冷却时间）卡片（左右分割，仅删除按钮） -->
+        <DataTemplate x:Key="TimeCooldownTemplate" DataType="local:MatchConditionCard">
+            <Border Background="#d4869f"
+                   BorderBrush="#555555"
+                   BorderThickness="1"
+                   CornerRadius="2"
+                   Padding="10,8,10,8"
+                   MinWidth="320">
+                <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto,Auto">
+                    <!-- 左上部：ComboBox -->
+                    <ComboBox Grid.Row="0" Grid.Column="0"
+                             SelectedItem="{Binding ConditionTypeDisplay, Mode=TwoWay}"
+                             SelectedIndex="0"
+                             Background="Transparent"
+                             BorderBrush="Transparent"
+                             BorderThickness="0"
+                             Padding="0,8"
+                             MinHeight="32"
+                             Foreground="#FFFFFF"
+                             FontSize="12"
+                             FontWeight="Bold"
+                             HorizontalAlignment="Left">
+                        <sys:String>账号限制</sys:String>
+                        <sys:String>群号限制</sys:String>
+                        <sys:String>名牌等级限制</sys:String>
+                        <sys:String>每日次数限制</sys:String>
+                        <sys:String>时间限制</sys:String>
+                    </ComboBox>
+
+                    <!-- 右侧删除按钮 -->
+                    <StackPanel Grid.Row="0" Grid.RowSpan="2" Grid.Column="2"
+                               Orientation="Vertical" Spacing="2"
+                               Margin="6,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Button Click="OnDeleteConditionCard" Width="32" Height="32" Padding="0"
+                               Background="Transparent" BorderThickness="0"
+                               ToolTip.Tip="删除此条件">
+                            <Image Source="avares://CustomizedReply/Assets/Sprite/Close.png" Width="20" Height="20"/>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- 左下部：时间长度输入 -->
+                    <StackPanel Grid.Row="1" Grid.Column="0" Spacing="4" Margin="0,4,0,0">
+                        <TextBox Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                Padding="6,4"
+                                Background="#141927"
+                                BorderBrush="#2C354B"
+                                BorderThickness="1"
+                                CornerRadius="2"
+                                Foreground="#FFFFFF"
+                                FontSize="12"
+                                Watermark="冷却时长..."/>
+                    </StackPanel>
+
+                    <!-- 中间列：时间单位选择 -->
+                    <ComboBox Grid.Row="1" Grid.Column="1"
+                             SelectedIndex="0"
+                             SelectedItem="{Binding Value2, Mode=TwoWay}"
+                             Padding="0,4"
+                             Background="Transparent"
+                             BorderBrush="Transparent"
+                             BorderThickness="0"
+                             Foreground="#FFFFFF"
+                             FontSize="12"
+                             Margin="4,4,0,0">
+                        <sys:String>秒</sys:String>
+                        <sys:String>分钟</sys:String>
+                        <sys:String>小时</sys:String>
+                    </ComboBox>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!-- 模板选择器 -->
+        <local:MatchTypeTemplateSelector x:Key="MatchTypeSelector" Template="{StaticResource MatchTypeTemplate}"/>
+        <local:QQRestrictionTemplateSelector x:Key="QQRestrictionSelector" Template="{StaticResource QQRestrictionTemplate}"/>
+        <local:GroupRestrictionTemplateSelector x:Key="GroupRestrictionSelector" Template="{StaticResource GroupRestrictionTemplate}"/>
+        <local:LevelRestrictionTemplateSelector x:Key="LevelRestrictionSelector" Template="{StaticResource LevelRestrictionTemplate}"/>
+        <local:DailyLimitTemplateSelector x:Key="DailyLimitSelector" Template="{StaticResource DailyLimitTemplate}"/>
+        <local:TimeCooldownTemplateSelector x:Key="TimeCooldownSelector" Template="{StaticResource TimeCooldownTemplate}"/>
+    </UserControl.Resources>
+
+    <!-- 局部样式：移除本面板中 ComboBox 悬停时的黑色背景 -->
+    <UserControl.Styles>
+        <Style Selector="TabItem">
+            <Setter Property="Padding" Value="18,11"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="CornerRadius" Value="2"/>
+            <Setter Property="BorderBrush" Value="#323B51"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected Border.ruleCard">
+            <Setter Property="Background" Value="#242A40"/>
+            <Setter Property="BorderBrush" Value="#8B7CF6"/>
+        </Style>
+        <Style Selector="ListBoxItem:pointerover Border.ruleCard">
+            <Setter Property="BorderBrush" Value="#4A5573"/>
+        </Style>
+        <Style Selector="ComboBox:pointerover">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+        <Style Selector="ComboBoxItem:pointerover">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+    </UserControl.Styles>
+
+    <!-- 主容器 -->
+    <Grid RowDefinitions="76,*">
+
+        <!-- 标题栏 -->
+        <Grid Grid.Row="0" ColumnDefinitions="10,*,Auto" Margin="0,0,0,12">
+            <Border Background="#F05A47"/>
+            <StackPanel Grid.Column="1" Margin="18,0,0,0" VerticalAlignment="Center" Spacing="2">
+                <TextBlock Text="AUTOMATION STUDIO" FontSize="9" Foreground="#7C86A3" LetterSpacing="1.8"/>
+                <TextBlock Text="自定义回复" FontWeight="Black" FontSize="21" LetterSpacing="0.6"/>
+            </StackPanel>
+            <Button Grid.Column="2" Height="38" Padding="14,0" VerticalAlignment="Center" CornerRadius="2"
+                    Background="#202638" BorderBrush="#343C53" Click="OnRefreshClick" ToolTip.Tip="刷新规则">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Image Source="avares://MDiceV2.Core/Assets/Sprite/Reset.png" Width="15" Height="15"/>
+                    <TextBlock Text="刷新数据" FontSize="10" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <!-- 内容区域 - TabControl 占满整个右侧 -->
+        <TabControl Grid.Row="1" Background="Transparent">
+
+            <!-- TabItem 1: 规则编辑 -->
+            <TabItem Header="规则编辑" Background="#141927" Foreground="#FFFFFF">
+                <Grid ColumnDefinitions="330,*" VerticalAlignment="Stretch">
+
+                    <!-- 左侧：规则列表 -->
+                    <Border Grid.Column="0"
+                           BorderBrush="#2C354B"
+                           BorderThickness="0,0,1,0"
+                           Background="#141927"
+                           VerticalAlignment="Stretch">
+
+                        <Grid RowDefinitions="Auto,*,Auto" VerticalAlignment="Stretch">
+                            <Grid Grid.Row="0" ColumnDefinitions="*" Margin="12,12,12,8">
+                                <Border Grid.Column="0" Background="#1A2030" BorderBrush="#2C354B" BorderThickness="1"
+                                       CornerRadius="2" Padding="10">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBox Grid.Column="0"
+                                                Text="{Binding SearchText, Mode=TwoWay}"
+                                                VerticalAlignment="Center"
+                                                VerticalContentAlignment="Center"
+                                                Height="32"
+                                                BorderThickness="0"
+                                                Padding="10,0"
+                                                Watermark="搜索规则..."
+                                                FontSize="12"
+                                                Background="#101521"
+                                                Foreground="White"/>
+                                        <Button Grid.Column="1"
+                                               Width="40"
+                                               Height="40"
+                                               CornerRadius="2"
+                                               Padding="0"
+                                               Background="Transparent"
+                                               BorderThickness="0"
+                                               Click="OnAddRuleClick"
+                                               ToolTip.Tip="添加新规则"
+                                               Margin="8,0,0,0">
+                                            <Image Source="avares://MDiceV2.Core/Assets/Sprite/Add.png" Width="20" Height="20"/>
+                                        </Button>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                            <!-- 规则列表 -->
+                            <ListBox Grid.Row="1"
+                                    ItemsSource="{Binding Rules}"
+                                    SelectedItem="{Binding SelectedRule, Mode=TwoWay}"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    VerticalAlignment="Stretch">
+
+                        <ListBox.Styles>
+                            <Style Selector="ListBoxItem">
+                                <Setter Property="Margin" Value="0"/>
+                                <Setter Property="Padding" Value="0"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                            </Style>
+                            <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+                                <Setter Property="Background" Value="Transparent"/>
+                            </Style>
+                            <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+                                <Setter Property="Background" Value="Transparent"/>
+                            </Style>
+                        </ListBox.Styles>
+
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <!-- 卡片容器：仿ConfigContainer风格 -->
+                                <Border Classes="ruleCard" CornerRadius="2"
+                                        Margin="12,4,12,7"
+                                        Height="68"
+                                        Background="#1A2030"
+                                        BorderBrush="#2C354B"
+                                        BorderThickness="1">
+                                    <Border.Transitions>
+                                        <Transitions>
+                                            <DoubleTransition Property="Height"
+                                                              Duration="0:0:0.2"
+                                                              Easing="QuadraticEaseInOut" />
+                                        </Transitions>
+                                    </Border.Transitions>
+                                    <!-- 卡片内容网格 -->
+                                    <Grid Margin="12,8" Background="Transparent">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <!-- 触发词 -->
+                                        <TextBlock Grid.Row="0"
+                                                  Text="{Binding Trigger}"
+                                                  FontWeight="Bold"
+                                                  Foreground="#FFFFFF"
+                                                  FontSize="13"
+                                                  TextTrimming="CharacterEllipsis"/>
+
+                                        <!-- 匹配类型 + 回复数 -->
+                                        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+                                            <TextBlock Text="{Binding MatchType}"
+                                                      FontSize="11"
+                                                      Foreground="#909AB5"/>
+                                            <TextBlock Text="{Binding Replies.Count, StringFormat='({0}个回复)'}"
+                                                      FontSize="11"
+                                                      Foreground="#68718A"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!-- 底部状态信息 -->
+                    <Border Grid.Row="2"
+                           BorderBrush="#252D40"
+                           BorderThickness="0,1,0,0"
+                           Background="#1A2030"
+                           Padding="15,12">
+                        <StackPanel Spacing="5">
+                            <TextBlock Text="{Binding Rules.Count, StringFormat='规则总数: {0}'}"
+                                      FontSize="12"
+                                      Foreground="#B7C0D4"
+                                      FontWeight="Bold"/>
+                            <TextBlock Text="选中规则进行编辑"
+                                      FontSize="11"
+                                      Foreground="#7C86A3"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+                    <!-- 右侧：规则编辑区 -->
+                    <Border Grid.Column="1" Background="#141927" VerticalAlignment="Stretch">
+                        <ScrollViewer>
+                            <StackPanel Spacing="20" Margin="25">
+                        <!-- 标题 -->
+                        <TextBlock Text="规则编辑"
+                                  FontSize="18"
+                                  FontWeight="Bold"
+                                  Foreground="#FFFFFF"
+                                  Margin="0,0,0,10"
+                                  IsVisible="{Binding SelectedRule, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+
+                        <!-- 未选中提示 -->
+                        <TextBlock Text="请从左侧选择一条规则进行编辑"
+                                  FontSize="14"
+                                  Foreground="#7C86A3"
+                                  TextAlignment="Center"
+                                  Margin="0,40,0,0"
+                                  IsVisible="{Binding SelectedRule, Converter={x:Static ObjectConverters.IsNull}}"/>
+
+                        <!-- 编辑表单 -->
+                        <StackPanel Spacing="15" IsVisible="{Binding SelectedRule, Converter={x:Static ObjectConverters.IsNotNull}}">
+                            <!-- 触发词输入 -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="触发词"
+                                          FontWeight="Bold"
+                                          Foreground="#FFFFFF"
+                                          FontSize="13"/>
+                                <TextBox Text="{Binding SelectedRule.Trigger}"
+                                        Padding="12,10"
+                                        Background="#1A2030"
+                                        BorderBrush="#2C354B"
+                                        BorderThickness="1"
+                                        CornerRadius="2"
+                                        Height="40"
+                                        Foreground="#FFFFFF"
+                                        Watermark="输入触发词..."/>
+                            </StackPanel>
+
+                            <!-- 匹配规则 - 卡片网格布局 -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="匹配规则"
+                                          FontWeight="Bold"
+                                          Foreground="#FFFFFF"
+                                          FontSize="13"/>
+                                <TextBlock Text="所有卡片的逻辑判断均通过时才会响应"
+                                          FontSize="11"
+                                          Foreground="#7C86A3"/>
+
+                                <!-- 匹配条件卡片容器 -->
+                                <Border Background="#141927"
+                                       BorderBrush="#252D40"
+                                       BorderThickness="1"
+                                       CornerRadius="2"
+                                       Padding="8,8">
+                                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Padding="0,4,0,0">
+                                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Top" Margin="0,0,0,24">
+                                            <!-- 匹配条件卡片列表 -->
+                                            <ItemsControl ItemsSource="{Binding SelectedRule.MatchConditions}"
+                                                         IsVisible="{Binding SelectedRule, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                                         x:Name="MatchConditionsItemsControl">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <ContentControl Content="{Binding}" x:Name="CardContent"/>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <StackPanel Orientation="Horizontal" Spacing="8"/>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                            </ItemsControl>
+
+                                            <!-- 添加条件按钮 -->
+                                            <Button Click="OnAddConditionCard"
+                                                   Width="40"
+                                                   Height="40"
+                                                   Background="Transparent"
+                                                   BorderThickness="1"
+                                                   BorderBrush="#252D40"
+                                                   CornerRadius="2"
+                                                   Padding="0"
+                                                   ToolTip.Tip="添加新条件"
+                                                   IsVisible="{Binding SelectedRule, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                <Image Source="avares://CustomizedReply/Assets/Sprite/Add.png"
+                                                       Width="20" Height="20"/>
+                                            </Button>
+                                        </StackPanel>
+                                    </ScrollViewer>
+                                </Border>
+                            </StackPanel>
+
+                            <!-- 回复内容输入 -->
+                            <StackPanel Spacing="8">
+                                <!-- 标题和切换按钮 -->
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                                        <TextBlock Text="回复内容"
+                                                  FontWeight="Bold"
+                                                  Foreground="#FFFFFF"
+                                                  FontSize="13"/>
+                                        <TextBlock Text="{Binding IsScriptEditMode, StringFormat='多个回复用分号(;)分隔，系统会随机选择一个|脚本模式：多个回复用分号(;)分隔，与脚本输出通过&lt;output:N&gt;标签结合'}"
+                                                  FontSize="11"
+                                                  Foreground="#7C86A3"/>
+                                    </StackPanel>
+
+                                    <!-- 脚本编辑模式切换按钮 -->
+                                    <ToggleButton Grid.Column="1"
+                                                 IsChecked="{Binding IsScriptEditMode}"
+                                                 Height="32"
+                                                 Width="32"
+                                                 Padding="0"
+                                                 Background="Transparent"
+                                                 BorderThickness="1"
+                                                 BorderBrush="#2C354B"
+                                                 CornerRadius="2"
+                                                 ToolTip.Tip="切换脚本模式">
+                                        <TextBlock Text="Ƒ"
+                                                   VerticalAlignment="Center"
+                                                   HorizontalAlignment="Center"
+                                                   Foreground="#FFFFFF"
+                                                   FontSize="14"
+                                                   FontWeight="Bold"/>
+                                    </ToggleButton>
+                                </Grid>
+
+                                <!-- 回复文本编辑框（普通和脚本模式都显示） -->
+                                <TextBox Text="{Binding SelectedRepliesText}"
+                                        Padding="12,10"
+                                        Background="#1A2030"
+                                        BorderBrush="#2C354B"
+                                        BorderThickness="1"
+                                        CornerRadius="2"
+                                        Height="120"
+                                        TextWrapping="Wrap"
+                                        AcceptsReturn="True"
+                                        Foreground="#FFFFFF"
+                                        Watermark="输入回复内容..."/>
+
+                                <!-- 脚本相关控件（仅脚本模式显示） -->
+                                <StackPanel Spacing="8" IsVisible="{Binding IsScriptEditMode}">
+
+                                    <!-- 脚本文件选择器 -->
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="选择脚本文件"
+                                                  FontWeight="Bold"
+                                                  Foreground="#FFFFFF"
+                                                  FontSize="12"/>
+                                        <ComboBox ItemsSource="{Binding AvailableScriptFiles}"
+                                                 SelectedItem="{Binding SelectedScriptFile, Mode=TwoWay}"
+                                                 Background="#1A2030"
+                                                 BorderBrush="#2C354B"
+                                                 BorderThickness="1"
+                                                 CornerRadius="2"
+                                                 Padding="10,8"
+                                                 Foreground="#FFFFFF"
+                                                 Height="40"
+                                                 x:Name="ScriptFileComboBox"/>
+                                    </StackPanel>
+
+                                    <!-- 脚本实例选择器 -->
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="脚本实例 (UID)"
+                                                  FontWeight="Bold"
+                                                  Foreground="#FFFFFF"
+                                                  FontSize="12"/>
+                                        <TextBlock Text="选择脚本后会自动生成实例 UID"
+                                                  FontSize="10"
+                                                  Foreground="#7C86A3"/>
+
+                                        <!-- 脚本实例 UID 输入/选择 -->
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBox Grid.Column="0"
+                                                    Text="{Binding SelectedRule.ScriptInstanceUid, Mode=TwoWay}"
+                                                    Background="#1A2030"
+                                                    BorderBrush="#2C354B"
+                                                    BorderThickness="1"
+                                                    CornerRadius="2"
+                                                    Padding="10,8"
+                                                    Foreground="#FFFFFF"
+                                                    Watermark="脚本实例 UID（自动生成）..."/>
+
+                                            <Button Grid.Column="1"
+                                                   Width="40"
+                                                   Height="40"
+                                                   Content="清除"
+                                                   Click="OnClearScriptInstanceClick"
+                                                   Background="#E75B62"
+                                                   Foreground="White"
+                                                   BorderThickness="0"
+                                                   CornerRadius="2"
+                                                   FontSize="11"
+                                                   IsVisible="{Binding SelectedRule.ScriptInstanceUid, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                   Margin="8,0,0,0"/>
+                                        </Grid>
+                                    </StackPanel>
+
+
+                                </StackPanel>
+
+                                <!-- 脚本函数列表 -->
+                                <StackPanel Spacing="6" Margin="0,8,0,0" IsVisible="{Binding IsScriptEditMode}">
+                                    <TextBlock Text="脚本函数列表"
+                                              FontWeight="Bold"
+                                              Foreground="#FFFFFF"
+                                              FontSize="12"/>
+                                    <TextBlock Text="脚本中定义的所有函数"
+                                              FontSize="10"
+                                              Foreground="#7C86A3"/>
+
+                                    <!-- 函数列表 -->
+                                    <ItemsControl ItemsSource="{Binding SelectedRule.ScriptCalls}"
+                                                 Background="#1A2030"
+                                                 BorderBrush="#2C354B"
+                                                 BorderThickness="1"
+                                                 CornerRadius="2"
+                                                 Padding="8"
+                                                 MinHeight="60">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="#151B29"
+                                                       BorderBrush="#252D40"
+                                                       BorderThickness="1"
+                                                       CornerRadius="2"
+                                                       Padding="8"
+                                                       Margin="0,2,0,2">
+                                                    <TextBlock Text="{Binding}"
+                                                              Foreground="#58D6A9"
+                                                              FontFamily="Courier New"
+                                                              FontSize="11"
+                                                              VerticalAlignment="Center"/>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- 操作按钮 -->
+                        <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,20,0,0" IsVisible="{Binding SelectedRule, Converter={x:Static ObjectConverters.IsNotNull}}">
+                            <Button Content="覆写"
+                                   Click="OnOverwriteRuleClick"
+                                   Height="40"
+                                   Background="#E9B949"
+                                   Foreground="White"
+                                   BorderThickness="0"
+                                   CornerRadius="2"
+                                   FontSize="12"
+                                   FontWeight="Bold"
+                                   Padding="16,0"
+                                   HorizontalContentAlignment="Center"
+                                   VerticalContentAlignment="Center"/>
+
+                            <Button Content="删除"
+                                   Click="OnDeleteRuleClick"
+                                   Height="40"
+                                   Background="#E75B62"
+                                   Foreground="White"
+                                   BorderThickness="0"
+                                   CornerRadius="2"
+                                   FontSize="12"
+                                   FontWeight="Bold"
+                                   Padding="16,0"
+                                   HorizontalContentAlignment="Center"
+                                   VerticalContentAlignment="Center"/>
+                        </StackPanel>
+
+                        <!-- 提示信息 -->
+                        <Border Background="#1B2B2B"
+                               BorderBrush="#2C354B"
+                               BorderThickness="1"
+                               CornerRadius="2"
+                               Padding="15"
+                               Margin="0,20,0,0"
+                               IsVisible="{Binding SelectedRule, Converter={x:Static ObjectConverters.IsNotNull}}">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="💡 提示"
+                                          FontWeight="Bold"
+                                          Foreground="#58D6A9"
+                                          FontSize="12"/>
+                                <TextBlock Text="规则数据保存在 data.json 中，可以直接编辑该文件进行批量操作。"
+                                          FontSize="11"
+                                          Foreground="#B7C0D4"
+                                          TextWrapping="Wrap"/>
+                                <Button Content="打开规则文件"
+                                       Click="OnOpenRuleFileClick"
+                                       Height="32"
+                                       Background="#6659C2"
+                                       Foreground="White"
+                                       BorderThickness="0"
+                                       CornerRadius="2"
+                                       FontSize="11"
+                                       Margin="0,8,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- TabItem 2: 脚本管理 -->
+            <TabItem Header="脚本管理" Background="#141927" Foreground="#FFFFFF">
+                <Grid ColumnDefinitions="320,*" VerticalAlignment="Stretch">
+
+                            <!-- 左侧：脚本列表 -->
+                            <Border Grid.Column="0"
+                                   BorderBrush="#2C354B"
+                                   BorderThickness="0,0,1,0"
+                                   Background="#141927"
+                                   VerticalAlignment="Stretch">
+                                <Grid RowDefinitions="Auto,*,Auto" VerticalAlignment="Stretch" Margin="0,0,15,0">
+
+                                    <!-- 搜索框 -->
+                                    <Grid Grid.Row="0" ColumnDefinitions="*" Margin="0,0,0,12">
+                                        <Border Grid.Column="0" Background="#1A2030" BorderBrush="#2C354B" BorderThickness="1"
+                                               CornerRadius="2" Padding="10">
+                                            <Grid ColumnDefinitions="*,Auto,Auto">
+                                                <TextBox Grid.Column="0"
+                                                        Text="{Binding ScriptSearchText, Mode=TwoWay}"
+                                                        VerticalAlignment="Center"
+                                                        VerticalContentAlignment="Center"
+                                                        Height="32"
+                                                        BorderThickness="0"
+                                                        Padding="10,0"
+                                                        Watermark="搜索脚本..."
+                                                        FontSize="12"
+                                                        Background="#101521"
+                                                        Foreground="White"/>
+                                                <Button Grid.Column="1"
+                                                       Width="40"
+                                                       Height="40"
+                                                       CornerRadius="2"
+                                                       Padding="0"
+                                                       Background="Transparent"
+                                                       BorderThickness="0"
+                                                       Click="OnCreateNewScript"
+                                                       ToolTip.Tip="新建脚本"
+                                                       Margin="8,0,0,0">
+                                                    <Image Source="avares://MDiceV2.Core/Assets/Sprite/Add.png" Width="20" Height="20"/>
+                                                </Button>
+                                                <Button Grid.Column="2"
+                                                       Width="40"
+                                                       Height="40"
+                                                       CornerRadius="2"
+                                                       Padding="0"
+                                                       Background="Transparent"
+                                                       BorderThickness="0"
+                                                       Click="OnImportScriptFile"
+                                                       ToolTip.Tip="导入脚本"
+                                                       Margin="8,0,0,0">
+                                                    <Image Source="avares://MDiceV2.Core/Assets/Sprite/Add.png" Width="20" Height="20"/>
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                    </Grid>
+
+                                    <!-- 脚本资源列表 -->
+                                    <ListBox Grid.Row="1"
+                                            ItemsSource="{Binding ScriptResources}"
+                                            SelectedItem="{Binding SelectedScriptResource, Mode=TwoWay}"
+                                            Background="Transparent"
+                                            BorderThickness="0">
+
+                                        <ListBox.Styles>
+                                            <Style Selector="ListBoxItem">
+                                                <Setter Property="Margin" Value="0"/>
+                                                <Setter Property="Padding" Value="0"/>
+                                            </Style>
+                                        </ListBox.Styles>
+
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Classes="ruleCard" CornerRadius="2"
+                                                        Margin="0,4,0,8"
+                                                        Padding="12,8"
+                                                        Background="#1A2030"
+                                                        BorderBrush="#2C354B"
+                                                        BorderThickness="1"
+                                                        MinHeight="50">
+                                                    <StackPanel Spacing="4">
+                                                        <TextBlock Text="{Binding FileName}"
+                                                                  FontWeight="Bold"
+                                                                  Foreground="#FFFFFF"
+                                                                  FontSize="12"/>
+                                                        <TextBlock Text="{Binding Description}"
+                                                                  Foreground="#7C86A3"
+                                                                  FontSize="11"
+                                                                  TextTrimming="CharacterEllipsis"/>
+                                                        <TextBlock Text="{Binding LastModified, StringFormat='修改于: {0:yyyy-MM-dd HH:mm:ss}'}"
+                                                                  Foreground="#68718A"
+                                                                  FontSize="10"/>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+
+                                    <!-- 底部预留 -->
+                                    <Border Grid.Row="2"
+                                           BorderBrush="#252D40"
+                                           BorderThickness="0,1,0,0"
+                                           Background="#1A2030"
+                                           Padding="15,12">
+                                        <TextBlock Text="脚本列表"
+                                                  FontSize="11"
+                                                  Foreground="#7C86A3"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+
+                            <!-- 右侧：脚本编辑器 -->
+                            <Border Grid.Column="1"
+                                   Background="#1A2030"
+                                   BorderBrush="#2C354B"
+                                   BorderThickness="1"
+                                   CornerRadius="2"
+                                   Margin="15,0,0,0"
+                                   Padding="15"
+                                   VerticalAlignment="Stretch">
+                                <ScrollViewer>
+                                    <StackPanel Spacing="15">
+                                        <!-- 标题 -->
+                                        <TextBlock Text="脚本编辑器"
+                                                  FontSize="16"
+                                                  FontWeight="Bold"
+                                                  Foreground="#FFFFFF"
+                                                  IsVisible="{Binding SelectedScriptResource, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+
+                                        <TextBlock Text="请从左侧选择脚本或创建新脚本"
+                                                  FontSize="14"
+                                                  Foreground="#7C86A3"
+                                                  TextAlignment="Center"
+                                                  Margin="0,40,0,0"
+                                                  IsVisible="{Binding SelectedScriptResource, Converter={x:Static ObjectConverters.IsNull}}"/>
+
+                                        <!-- 脚本编辑表单 -->
+                                        <StackPanel Spacing="12" IsVisible="{Binding SelectedScriptResource, Converter={x:Static ObjectConverters.IsNotNull}}">
+
+                                            <!-- 文件名 -->
+                                            <StackPanel Spacing="6">
+                                                <TextBlock Text="文件名"
+                                                          FontWeight="Bold"
+                                                          Foreground="#FFFFFF"
+                                                          FontSize="12"/>
+                                                <TextBox Text="{Binding SelectedScriptResource.FileName, Mode=TwoWay}"
+                                                        Padding="10,8"
+                                                        Background="#141927"
+                                                        BorderBrush="#2C354B"
+                                                        BorderThickness="1"
+                                                        CornerRadius="2"
+                                                        Foreground="#FFFFFF"
+                                                        Watermark="script_name.lua"/>
+                                            </StackPanel>
+
+                                            <!-- 描述 -->
+                                            <StackPanel Spacing="6">
+                                                <TextBlock Text="脚本描述"
+                                                          FontWeight="Bold"
+                                                          Foreground="#FFFFFF"
+                                                          FontSize="12"/>
+                                                <TextBox Text="{Binding SelectedScriptResource.Description, Mode=TwoWay}"
+                                                        Padding="10,8"
+                                                        Background="#141927"
+                                                        BorderBrush="#2C354B"
+                                                        BorderThickness="1"
+                                                        CornerRadius="2"
+                                                        Foreground="#FFFFFF"
+                                                        Height="60"
+                                                        TextWrapping="Wrap"
+                                                        AcceptsReturn="True"
+                                                        Watermark="Script 用途说明..."/>
+                                            </StackPanel>
+
+                                            <!-- 脚本内容 -->
+                                            <StackPanel Spacing="6">
+                                                <TextBlock Text="Lua 脚本内容"
+                                                          FontWeight="Bold"
+                                                          Foreground="#FFFFFF"
+                                                          FontSize="12"/>
+                                                <TextBox Text="{Binding SelectedScriptResource.Content, Mode=TwoWay}"
+                                                        Padding="10,8"
+                                                        Background="#141927"
+                                                        BorderBrush="#2C354B"
+                                                        BorderThickness="1"
+                                                        CornerRadius="2"
+                                                        Foreground="#FFFFFF"
+                                                        FontFamily="Courier New"
+                                                        FontSize="11"
+                                                        Height="300"
+                                                        TextWrapping="Wrap"
+                                                        AcceptsReturn="True"
+                                                        Watermark="function MainProcess() ..."/>
+                                            </StackPanel>
+
+                                            <!-- 操作按钮 -->
+                                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,15,0,0">
+                                                <Button Content="保存脚本"
+                                                       Click="OnSaveScriptClick"
+                                                       Height="40"
+                                                       Background="#58D6A9"
+                                                       Foreground="White"
+                                                       BorderThickness="0"
+                                                       CornerRadius="2"
+                                                       FontSize="12"
+                                                       FontWeight="Bold"
+                                                       Padding="16,0"
+                                                       HorizontalContentAlignment="Center"/>
+
+                                                <Button Content="删除脚本"
+                                                       Click="OnDeleteScriptClick"
+                                                       Height="40"
+                                                       Background="#E75B62"
+                                                       Foreground="White"
+                                                       BorderThickness="0"
+                                                       CornerRadius="2"
+                                                       FontSize="12"
+                                                       FontWeight="Bold"
+                                                       Padding="16,0"
+                                                       HorizontalContentAlignment="Center"/>
+                                            </StackPanel>
+
+                                            <!-- 模板按钮 -->
+                                            <Button Content="插入脚本模板"
+                                                   Click="OnInsertScriptTemplate"
+                                                   Height="36"
+                                                   Background="#6659C2"
+                                                   Foreground="White"
+                                                   BorderThickness="0"
+                                                   CornerRadius="2"
+                                                   FontSize="12"
+                                                   Margin="0,10,0,0"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </Border>
+                        </Grid>
+            </TabItem>
+
+            <!-- Help Tab -->
+            <TabItem Header="帮助">
+                <Grid Background="#141927" VerticalAlignment="Stretch">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                 HorizontalAlignment="Stretch"
+                                 VerticalAlignment="Stretch"
+                                 Padding="12,12,8,12">
+                        <StackPanel Spacing="10">
+                            <!-- Random Selection Format Section -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="🎲 随机选择格式"
+                                          FontSize="15"
+                                          FontWeight="Bold"
+                                          Foreground="#FFC107"
+                                          Margin="0,0,0,2"/>
+
+                                <!-- Basic Random -->
+                                <Border Background="#1A2030" BorderBrush="#252D40" BorderThickness="1" CornerRadius="2" Padding="10">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="基础随机选择" FontWeight="Bold" Foreground="#FFFFFF" FontSize="13"/>
+                                        <TextBlock Text="使用双竖号分隔选项，随机选择一个" Foreground="#AAAAAA" FontSize="11"/>
+                                        <TextBlock Text="格式：选项1||选项2||选项3" Foreground="#58D6A9" FontFamily="Courier New" FontSize="12" Margin="0,2,0,0"/>
+                                        <TextBlock Text="示例：你好||你好啊||Hey" Foreground="#7C86A3" FontSize="11" FontFamily="Courier New"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Weight Format -->
+                                <Border Background="#1A2030" BorderBrush="#252D40" BorderThickness="1" CornerRadius="2" Padding="10">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="权重随机选择" FontWeight="Bold" Foreground="#FFFFFF" FontSize="13"/>
+                                        <TextBlock Text="按权重（数值越大概率越高）随机选择" Foreground="#AAAAAA" FontSize="11"/>
+                                        <TextBlock Text="格式：选项1&lt;weight 2&gt;||选项2||选项3&lt;weight 3&gt;" Foreground="#58D6A9" FontFamily="Courier New" FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                        <TextBlock Text="示例：稀有&lt;weight 1&gt;||普通&lt;weight 5&gt;||常见&lt;weight 10&gt;" Foreground="#7C86A3" FontSize="11" FontFamily="Courier New" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- ID Filter -->
+                                <Border Background="#1A2030" BorderBrush="#252D40" BorderThickness="1" CornerRadius="2" Padding="10">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="按用户ID过滤" FontWeight="Bold" Foreground="#FFFFFF" FontSize="13"/>
+                                        <TextBlock Text="只有指定ID的用户能看到相应选项" Foreground="#AAAAAA" FontSize="11"/>
+                                        <TextBlock Text="格式：选项1&lt;id 111&gt;||选项2&lt;id 222&gt;||默认回复" Foreground="#58D6A9" FontFamily="Courier New" FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                        <TextBlock Text="支持多ID：&lt;id 111,222,333&gt;" Foreground="#7C86A3" FontSize="11" FontFamily="Courier New"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Group Filter -->
+                                <Border Background="#1A2030" BorderBrush="#252D40" BorderThickness="1" CornerRadius="2" Padding="10">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="按群号过滤" FontWeight="Bold" Foreground="#FFFFFF" FontSize="13"/>
+                                        <TextBlock Text="只有指定群的成员能看到相应选项" Foreground="#AAAAAA" FontSize="11"/>
+                                        <TextBlock Text="格式：选项1&lt;group 123&gt;||选项2&lt;group 456&gt;||默认回复" Foreground="#58D6A9" FontFamily="Courier New" FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                        <TextBlock Text="支持多群号：&lt;group 123,456,789&gt;" Foreground="#7C86A3" FontSize="11" FontFamily="Courier New"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Combined Usage -->
+                                <Border Background="#1A2030" BorderBrush="#252D40" BorderThickness="1" CornerRadius="2" Padding="10">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="组合使用" FontWeight="Bold" Foreground="#FFFFFF" FontSize="13"/>
+                                        <TextBlock Text="一个选项可同时使用条件和权重标签" Foreground="#AAAAAA" FontSize="11"/>
+                                        <TextBlock Text="格式：VIP选项&lt;id 111&gt;&lt;weight 5&gt;||普通&lt;weight 2&gt;||访客" Foreground="#58D6A9" FontFamily="Courier New" FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                        <TextBlock Text="处理顺序：先按条件过滤(AND) → 再按权重随机" Foreground="#7C86A3" FontSize="11" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+
+                            <!-- Divider -->
+                            <Separator Background="#252D40" Height="1" Margin="0,4,0,4"/>
+
+                            <!-- Message Format Section -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="✏️ 消息格式"
+                                          FontSize="15"
+                                          FontWeight="Bold"
+                                          Foreground="#2196F3"
+                                          Margin="0,0,0,2"/>
+
+                                <TextBlock Text="特殊格式列表" FontWeight="SemiBold" Foreground="#FFFFFF" FontSize="12"/>
+                                <TextBlock Foreground="#B7C0D4" FontSize="11" TextWrapping="Wrap">
+                                    <Run Text="• "/>
+                                    <Run Text="&lt;name&gt;" Foreground="#58D6A9" FontFamily="Courier New"/>
+                                    <Run Text=" - 用户名"/>
+                                </TextBlock>
+                                <TextBlock Foreground="#B7C0D4" FontSize="11" TextWrapping="Wrap">
+                                    <Run Text="• "/>
+                                    <Run Text="&lt;id&gt;" Foreground="#58D6A9" FontFamily="Courier New"/>
+                                    <Run Text=" - 用户ID"/>
+                                </TextBlock>
+                                <TextBlock Foreground="#B7C0D4" FontSize="11" TextWrapping="Wrap">
+                                    <Run Text="• "/>
+                                    <Run Text="&lt;time&gt;" Foreground="#58D6A9" FontFamily="Courier New"/>
+                                    <Run Text=" - 当前时间"/>
+                                </TextBlock>
+                                <TextBlock Foreground="#B7C0D4" FontSize="11" TextWrapping="Wrap">
+                                    <Run Text="• "/>
+                                    <Run Text="&lt;dice 表达式&gt;" Foreground="#58D6A9" FontFamily="Courier New"/>
+                                    <Run Text=" - 掷骰结果"/>
+                                </TextBlock>
+                                <TextBlock Foreground="#B7C0D4" FontSize="11" TextWrapping="Wrap">
+                                    <Run Text="• "/>
+                                    <Run Text="&lt;deck 键值&gt;" Foreground="#58D6A9" FontFamily="Courier New"/>
+                                    <Run Text=" - 从卡组随机选择"/>
+                                </TextBlock>
+                                <TextBlock Foreground="#B7C0D4" FontSize="11" TextWrapping="Wrap">
+                                    <Run Text="• "/>
+                                    <Run Text="&lt;read 键值&gt;" Foreground="#58D6A9" FontFamily="Courier New"/>
+                                    <Run Text=" - 读取存储值"/>
+                                </TextBlock>
+                                <TextBlock Foreground="#B7C0D4" FontSize="11" TextWrapping="Wrap">
+                                    <Run Text="• "/>
+                                    <Run Text="&lt;write 键,值&gt;" Foreground="#58D6A9" FontFamily="Courier New"/>
+                                    <Run Text=" - 写入存储值"/>
+                                </TextBlock>
+                                <TextBlock Foreground="#B7C0D4" FontSize="11" TextWrapping="Wrap">
+                                    <Run Text="• "/>
+                                    <Run Text="&lt;func 函数名&gt;" Foreground="#58D6A9" FontFamily="Courier New"/>
+                                    <Run Text=" - 调用Lua脚本函数"/>
+                                </TextBlock>
+                            </StackPanel>
+
+                            <!-- Divider -->
+                            <Separator Background="#252D40" Height="1" Margin="0,4,0,4"/>
+
+                            <!-- Dynamic Functions Section -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="⚙️ 动态功能格式"
+                                          FontSize="15"
+                                          FontWeight="Bold"
+                                          Foreground="#E9B949"
+                                          Margin="0,0,0,2"/>
+
+                                <!-- Dice Rolling -->
+                                <Border Background="#1A2030" BorderBrush="#252D40" BorderThickness="1" CornerRadius="2" Padding="10">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="掷骰" FontWeight="Bold" Foreground="#FFFFFF" FontSize="13"/>
+                                        <TextBlock Text="执行掷骰表达式并替换为结果" Foreground="#AAAAAA" FontSize="11"/>
+                                        <TextBlock Text="格式：&lt;dice 表达式&gt;" Foreground="#58D6A9" FontFamily="Courier New" FontSize="11" Margin="0,2,0,0"/>
+                                        <TextBlock Text="示例：&lt;dice 1d6&gt;、&lt;dice 3d20+5&gt;" Foreground="#7C86A3" FontSize="11" FontFamily="Courier New" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Card Deck -->
+                                <Border Background="#1A2030" BorderBrush="#252D40" BorderThickness="1" CornerRadius="2" Padding="10">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="卡组随机" FontWeight="Bold" Foreground="#FFFFFF" FontSize="13"/>
+                                        <TextBlock Text="从指定卡组中随机选择项目" Foreground="#AAAAAA" FontSize="11"/>
+                                        <TextBlock Text="格式：&lt;deck 卡组键值&gt;" Foreground="#58D6A9" FontFamily="Courier New" FontSize="11" Margin="0,2,0,0"/>
+                                        <TextBlock Text="示例：&lt;deck reward&gt;、&lt;deck treasure&gt;" Foreground="#7C86A3" FontSize="11" FontFamily="Courier New" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Variable Storage -->
+                                <Border Background="#1A2030" BorderBrush="#252D40" BorderThickness="1" CornerRadius="2" Padding="10">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="变量存储和读取" FontWeight="Bold" Foreground="#FFFFFF" FontSize="13"/>
+                                        <TextBlock Text="持久化存储和检索数据" Foreground="#AAAAAA" FontSize="11"/>
+                                        <TextBlock Text="读取：&lt;read 键值&gt;  写入：&lt;write 键,值&gt;" Foreground="#58D6A9" FontFamily="Courier New" FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                        <TextBlock Text="示例：&lt;write score,100&gt; 然后 &lt;read score&gt;" Foreground="#7C86A3" FontSize="11" FontFamily="Courier New" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Lua Function Call -->
+                                <Border Background="#1A2030" BorderBrush="#252D40" BorderThickness="1" CornerRadius="2" Padding="10">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Lua脚本函数调用" FontWeight="Bold" Foreground="#FFFFFF" FontSize="13"/>
+                                        <TextBlock Text="调用自定义Lua脚本函数并获得返回值" Foreground="#AAAAAA" FontSize="11"/>
+                                        <TextBlock Text="格式：&lt;func 函数名()&gt;" Foreground="#58D6A9" FontFamily="Courier New" FontSize="11" Margin="0,2,0,0"/>
+                                        <TextBlock Text="示例：&lt;func GetReward()&gt;、&lt;func CheckLevel()&gt;" Foreground="#7C86A3" FontSize="11" FontFamily="Courier New" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+
+                            <!-- Divider -->
+                            <Separator Background="#252D40" Height="1" Margin="0,4,0,4"/>
+
+                            <!-- Processing Order Section -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="🔄 处理顺序"
+                                          FontSize="15"
+                                          FontWeight="Bold"
+                                          Foreground="#58D6A9"
+                                          Margin="0,0,0,2"/>
+
+                                <TextBlock Foreground="#B7C0D4" FontSize="11" TextWrapping="Wrap" Margin="0,2,0,4">
+                                    消息处理流程（按顺序执行）：
+                                </TextBlock>
+
+                                <TextBlock Foreground="#B7C0D4" FontSize="10" TextWrapping="Wrap">
+                                    <Run Text="1. 随机选择处理：先过滤条件(AND) → 再按权重选择" Foreground="#FFEB3B"/>
+                                </TextBlock>
+                                <TextBlock Foreground="#B7C0D4" FontSize="10" TextWrapping="Wrap">
+                                    <Run Text="2. 动态表达式：掷骰、卡组、函数等执行"/>
+                                </TextBlock>
+                                <TextBlock Foreground="#B7C0D4" FontSize="10" TextWrapping="Wrap">
+                                    <Run Text="3. 变量替换：read/write/name/id/time等替换"/>
+                                </TextBlock>
+                                <TextBlock Foreground="#B7C0D4" FontSize="10" TextWrapping="Wrap">
+                                    <Run Text="4. 最终输出：完成处理后返回用户"/>
+                                </TextBlock>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+
+</UserControl>

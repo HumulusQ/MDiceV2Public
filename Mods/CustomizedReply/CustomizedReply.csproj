@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- ============ 妞ゅ湱娲伴崺鐑樻拱娣団剝浼?============ -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Mod閻楃懓鐣鹃柊宥囩枂 -->
+    <!-- 鏉堟挸鍤稉绡婰L閿涘苯鎮曠粔棰佽礋CustomizedReply.dll -->
+    <OutputType>Library</OutputType>
+    <AssemblyName>CustomizedReply</AssemblyName>
+    <!-- 閻楀牊婀版穱鈩冧紖 -->
+    <Version>0.3.1</Version>
+    <Authors>YourName</Authors>
+    <Description>A Mod example for MDiceV2 that provides customized reply functionality</Description>
+    <!-- 娑撳秶鏁撻幋鎬塻semblyInfo閿涘奔濞囬悽鈥昳rectory.Build.props -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <SelfContained>false</SelfContained>
+    <AssemblyVersion>0.3.1</AssemblyVersion>
+    <FileVersion>0.3.1</FileVersion>
+    <InformationalVersion>beta</InformationalVersion>
+  </PropertyGroup>
+  <!-- ============ 妞ゅ湱娲版笟婵婄 ============ -->
+  <ItemGroup>
+    <!-- 瀵洜鏁?Interfaces 娴犮儴骞忛崣?IConfigurable 閹恒儱褰?-->
+    <ProjectReference Include="..\..\MDiceV2.Interfaces\MDiceV2.Interfaces.csproj" />
+    <!-- 瀵洜鏁?Core 娴犮儴骞忛崣?Mod 閹恒儱褰涚€规矮绠?-->
+    <!-- Core is supplied by the host. Keep the compile-time reference, but
+         do not package a second Core copy beside the plug-in. -->
+    <ProjectReference Include="..\..\MDiceV2.Core\MDiceV2.Core.csproj" Private="false" />
+  </ItemGroup>
+  <!-- ============ Lua 閼存碍婀伴幍褑顢戝鏇熸惛 ============ -->
+  <ItemGroup>
+    <!-- MoonSharp: 缁剧枌#鐎圭偟骞囬惃鍑﹗a鐟欙綁鍣撮崳?-->
+    <PackageReference Include="MoonSharp" Version="2.0.0" />
+  </ItemGroup>
+  <!-- ============ Avalonia 鐠у嫭绨柊宥囩枂 ============ -->
+  <ItemGroup>
+    <!-- 鐏?Assets 閺傚洣娆㈡径閫涜厬閻ㄥ嫭澧嶉張澶庣カ濠ф劖鏋冩禒鍫曟肠閹存劕鍩岀粙瀣碍闂?-->
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+  <!-- ============ 鏉堟挸鍤柊宥囩枂 ============ -->
+  <PropertyGroup>
+    <!-- 
+      Mod鎼存棁绶崙鍝勫煂閻楃懓鐣鹃惄顔肩秿娴犮儰绌堕柈銊ц
+      娴ｅ棜绻栨稉顏堝帳缂冾喗妲搁崣顖炩偓澶屾畱閿涘苯鐤勯梽鍛村劥缂冨弶妞傞悽杈╂暏閹村嘲鍠呯€?
+    -->
+  </PropertyGroup>
+</Project>

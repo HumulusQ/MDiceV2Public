@@ -1,0 +1,7 @@
+LIBRARY mscoree.dll
+EXPORTS
+    _CorDllMain
+    _CorExeMain
+    _CorExeMain2
+    _CorImageUnloading
+    _CorValidateImage

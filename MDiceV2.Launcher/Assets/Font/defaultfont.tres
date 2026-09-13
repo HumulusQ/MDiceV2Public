@@ -1,0 +1,8 @@
+[gd_resource type="FontVariation" load_steps=3 format=3 uid="uid://cnwuy2klxa0ii"]
+
+[ext_resource type="FontFile" uid="uid://bveum0j1rvpvs" path="res://Resource/CommonResource/Theme/Font/PlayfairDisplay-Black.ttf" id="1_25chv"]
+[ext_resource type="FontFile" uid="uid://cxsbucko3bbw1" path="res://Resource/CommonResource/Theme/Font/Alibaba-PuHuiTi-B.ttf" id="2_b6yrs"]
+
+[resource]
+fallbacks = Array[Font]([ExtResource("2_b6yrs")])
+base_font = ExtResource("1_25chv")

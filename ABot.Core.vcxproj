@@ -1,0 +1,124 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- 鍦ㄦ渶寮€濮嬬鐢ㄥ伐鍏烽泦妫€鏌?-->
+  <PropertyGroup>
+    <_SkipToolsetVersionCheck>true</_SkipToolsetVersionCheck>
+    <ToolsetNotFoundWarningSupression>true</ToolsetNotFoundWarningSupression>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{8D35CA5E-0061-F067-17B7-DFA6F3758F45}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>ABot.Core</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <AssemblyName>ABot.Core</AssemblyName>
+    <VCToolsVersion>14.51.36014</VCToolsVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <Optimization>Disabled</Optimization>
+    <OutDir>$(SolutionDir)bin\Debug\x64\</OutDir>
+    <IntDir>$(SolutionDir)obj\Debug\$(ProjectName)\x64\</IntDir>
+    <AdditionalIncludeDirectories>$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    <PreprocessorDefinitions>_DEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    <LanguageStandard>stdcpp17</LanguageStandard>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <DebugSymbols>false</DebugSymbols>
+    <GenerateDebugInformation>false</GenerateDebugInformation>
+    <Optimization>MaxSpeed</Optimization>
+    <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+    <OutDir>$(SolutionDir)bin\Release\x64\</OutDir>
+    <IntDir>$(SolutionDir)obj\Release\$(ProjectName)\x64\</IntDir>
+    <AdditionalIncludeDirectories>$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    <PreprocessorDefinitions>NDEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    <LanguageStandard>stdcpp17</LanguageStandard>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <DebugSymbols>true</DebugSymbols>
+    <Optimization>Disabled</Optimization>
+    <OutDir>$(SolutionDir)bin\Debug\x86\</OutDir>
+    <IntDir>$(SolutionDir)obj\Debug\$(ProjectName)\x86\</IntDir>
+    <AdditionalIncludeDirectories>$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    <PreprocessorDefinitions>_DEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    <LanguageStandard>stdcpp17</LanguageStandard>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <DebugSymbols>false</DebugSymbols>
+    <Optimization>MaxSpeed</Optimization>
+    <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+    <OutDir>$(SolutionDir)bin\Release\x86\</OutDir>
+    <IntDir>$(SolutionDir)obj\Release\$(ProjectName)\x86\</IntDir>
+    <AdditionalIncludeDirectories>$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    <PreprocessorDefinitions>NDEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    <LanguageStandard>stdcpp17</LanguageStandard>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <!-- 娣诲姞缂栬瘧閫夐」浠ユ敮鎸佸苟琛?PDB 璁块棶 -->
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Lexer.cpp" />
+    <ClCompile Include="src\Parser.cpp" />
+    <ClCompile Include="src\Bytecode.cpp" />
+    <ClCompile Include="src\VM.cpp" />
+    <ClCompile Include="src\C_API.cpp" />
+    <ClCompile Include="src\Value.cpp" />
+    <ClCompile Include="src\Scope.cpp" />
+    <ClCompile Include="src\Character.cpp" />
+    <ClCompile Include="src\ParameterParser.cpp" />
+    <ClCompile Include="src\Battle.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Value.h" />
+    <ClInclude Include="src\Scope.h" />
+    <ClInclude Include="src\Lexer.h" />
+    <ClInclude Include="src\Parser.h" />
+    <ClInclude Include="src\Bytecode.h" />
+    <ClInclude Include="src\VM.h" />
+    <ClInclude Include="src\C_API.h" />
+    <ClInclude Include="src\Character.h" />
+    <ClInclude Include="src\ParameterParser.h" />
+    <ClInclude Include="src\Battle.h" />
+  </ItemGroup>
+  <!-- 绂佺敤 MSB8020 宸ュ叿闆嗘鏌ラ敊璇?-->
+  <Target Name="DisableToolsetCheck" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <_SkipToolsetVersionCheck>true</_SkipToolsetVersionCheck>
+    </PropertyGroup>
+  </Target>
+  <!-- Force rebuild 04/01/2026 01:15:45 -->
+</Project>

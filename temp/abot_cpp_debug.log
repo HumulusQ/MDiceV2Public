@@ -1,0 +1,351 @@
+
+[abot_create] Called at thread 14816
+[abot_create] Creating new ABotContext...
+[abot_create] ABotContext allocated at 00000222D531BC00
+[abot_create] Checking vm: 00000222D53311A0
+[abot_create] Checking scope: 00000222D531BE40
+[abot_create] SUCCESS: Returning handle 00000222D531BC00
+[00000000000039E0] abot_is_ready() called with handle=00000222D531BC00
+[00000000000039E0] context pointer cast successful: 00000222D531BC00
+[00000000000039E0] RETURNING 1: abot_is_ready() = true
+
+[abot_create] Called at thread 14816
+[abot_create] Creating new ABotContext...
+[abot_create] ABotContext allocated at 00000222E4583590
+[abot_create] Checking vm: 00000222D5331500
+[abot_create] Checking scope: 00000222E4582BD0
+[abot_create] SUCCESS: Returning handle 00000222E4583590
+[00000000000039E0] abot_is_ready() called with handle=00000222E4583590
+[00000000000039E0] context pointer cast successful: 00000222E4583590
+[00000000000039E0] RETURNING 1: abot_is_ready() = true
+[Parser::Constructor] START - tokens count: 1
+[Parser::ParseProgram] START - tokens count: 1
+[Parser::ParseProgram] Iter 1: current=0, type=3, IsAtEnd=0
+[Parser::ParseProgram] Statement added, count=1
+[Parser::ParseProgram] FINISHED - statements=1, iterations=1, has_error=0
+[BytecodeCompiler::Compile] START - 1 statements
+[BytecodeCompiler::Compile] Compiling statement 0
+[BytecodeCompiler::Compile] FINISHED - 2 instructions generated
+[BytecodeCompiler::Compile]  Instr 0: opcode=5
+[BytecodeCompiler::Compile]  Instr 1: opcode=37
+[Parser::Constructor] START - tokens count: 1
+[Parser::ParseProgram] START - tokens count: 1
+[Parser::ParseProgram] FINISHED - statements=0, iterations=0, has_error=0
+[BytecodeCompiler::Compile] START - 0 statements
+[BytecodeCompiler::Compile] FINISHED - 1 instructions generated
+[BytecodeCompiler::Compile]  Instr 0: opcode=37
+[Parser::Constructor] START - tokens count: 5
+[Parser::ParseProgram] START - tokens count: 5
+[Parser::ParseProgram] Iter 1: current=0, type=3, IsAtEnd=0
+[Parser::ParseProgram] Statement added, count=1
+[Parser::ParseProgram] FINISHED - statements=1, iterations=1, has_error=0
+[BytecodeCompiler::Compile] START - 1 statements
+[BytecodeCompiler::Compile] Compiling statement 0
+[BytecodeCompiler::Compile] FINISHED - 6 instructions generated
+[BytecodeCompiler::Compile]  Instr 0: opcode=0
+[BytecodeCompiler::Compile]  Instr 1: opcode=0
+[BytecodeCompiler::Compile]  Instr 2: opcode=6
+[BytecodeCompiler::Compile]  Instr 3: opcode=6
+[BytecodeCompiler::Compile]  Instr 4: opcode=26
+[BytecodeCompiler::Compile]  Instr 5: opcode=37
+[Parser::Constructor] START - tokens count: 5
+[Parser::ParseProgram] START - tokens count: 5
+[Parser::ParseProgram] Iter 1: current=0, type=3, IsAtEnd=0
+[Parser::ParseProgram] Statement added, count=1
+[Parser::ParseProgram] FINISHED - statements=1, iterations=1, has_error=0
+[BytecodeCompiler::Compile] START - 1 statements
+[BytecodeCompiler::Compile] Compiling statement 0
+[BytecodeCompiler::Compile] FINISHED - 6 instructions generated
+[BytecodeCompiler::Compile]  Instr 0: opcode=0
+[BytecodeCompiler::Compile]  Instr 1: opcode=0
+[BytecodeCompiler::Compile]  Instr 2: opcode=6
+[BytecodeCompiler::Compile]  Instr 3: opcode=6
+[BytecodeCompiler::Compile]  Instr 4: opcode=26
+[BytecodeCompiler::Compile]  Instr 5: opcode=37
+[Parser::Constructor] START - tokens count: 5
+[Parser::ParseProgram] START - tokens count: 5
+[Parser::ParseProgram] Iter 1: current=0, type=3, IsAtEnd=0
+[Parser::ParseProgram] Statement added, count=1
+[Parser::ParseProgram] FINISHED - statements=1, iterations=1, has_error=0
+[BytecodeCompiler::Compile] START - 1 statements
+[BytecodeCompiler::Compile] Compiling statement 0
+[BytecodeCompiler::Compile] FINISHED - 6 instructions generated
+[BytecodeCompiler::Compile]  Instr 0: opcode=0
+[BytecodeCompiler::Compile]  Instr 1: opcode=0
+[BytecodeCompiler::Compile]  Instr 2: opcode=6
+[BytecodeCompiler::Compile]  Instr 3: opcode=6
+[BytecodeCompiler::Compile]  Instr 4: opcode=26
+[BytecodeCompiler::Compile]  Instr 5: opcode=37
+[Parser::Constructor] START - tokens count: 5
+[Parser::ParseProgram] START - tokens count: 5
+[Parser::ParseProgram] Iter 1: current=0, type=3, IsAtEnd=0
+[Parser::ParseProgram] Statement added, count=1
+[Parser::ParseProgram] FINISHED - statements=1, iterations=1, has_error=0
+[BytecodeCompiler::Compile] START - 1 statements
+[BytecodeCompiler::Compile] Compiling statement 0
+[BytecodeCompiler::Compile] FINISHED - 6 instructions generated
+[BytecodeCompiler::Compile]  Instr 0: opcode=0
+[BytecodeCompiler::Compile]  Instr 1: opcode=0
+[BytecodeCompiler::Compile]  Instr 2: opcode=6
+[BytecodeCompiler::Compile]  Instr 3: opcode=6
+[BytecodeCompiler::Compile]  Instr 4: opcode=26
+[BytecodeCompiler::Compile]  Instr 5: opcode=37
+[Parser::Constructor] START - tokens count: 10
+[Parser::ParseProgram] START - tokens count: 10
+[Parser::ParseProgram] Iter 1: current=0, type=3, IsAtEnd=0
+[Parser::ParseProgram] Statement added, count=1
+[Parser::ParseProgram] Iter 2: current=5, type=3, IsAtEnd=0
+[Parser::ParseProgram] Statement added, count=2
+[Parser::ParseProgram] FINISHED - statements=2, iterations=2, has_error=0
+[BytecodeCompiler::Compile] START - 2 statements
+[BytecodeCompiler::Compile] Compiling statement 0
+[BytecodeCompiler::Compile] Compiling statement 1
+[BytecodeCompiler::Compile] FINISHED - 11 instructions generated
+[BytecodeCompiler::Compile]  Instr 0: opcode=0
+[BytecodeCompiler::Compile]  Instr 1: opcode=0
+[BytecodeCompiler::Compile]  Instr 2: opcode=6
+[BytecodeCompiler::Compile]  Instr 3: opcode=6
+[BytecodeCompiler::Compile]  Instr 4: opcode=26
+[BytecodeCompiler::Compile]  Instr 5: opcode=0
+[BytecodeCompiler::Compile]  Instr 6: opcode=0
+[BytecodeCompiler::Compile]  Instr 7: opcode=6
+[BytecodeCompiler::Compile]  Instr 8: opcode=6
+[BytecodeCompiler::Compile]  Instr 9: opcode=26
+[BytecodeCompiler::Compile]  Instr 10: opcode=37
+[00000000000039E0] abot_is_ready() called with handle=00000222E4583590
+[00000000000039E0] context pointer cast successful: 00000222E4583590
+[00000000000039E0] RETURNING 1: abot_is_ready() = true
+
+[abot_create] Called at thread 59304
+[abot_create] Creating new ABotContext...
+[abot_create] ABotContext allocated at 000001B7A34EF050
+[abot_create] Checking vm: 000001B7B2496C10
+[abot_create] Checking scope: 000001B7A34EDA90
+[abot_create] SUCCESS: Returning handle 000001B7A34EF050
+[000000000000E7A8] abot_is_ready() called with handle=000001B7A34EF050
+[000000000000E7A8] context pointer cast successful: 000001B7A34EF050
+[000000000000E7A8] RETURNING 1: abot_is_ready() = true
+
+[abot_create] Called at thread 59304
+[abot_create] Creating new ABotContext...
+[abot_create] ABotContext allocated at 000001B7A34EDB50
+[abot_create] Checking vm: 000001B7B24971B0
+[abot_create] Checking scope: 000001B7A34EF710
+[abot_create] SUCCESS: Returning handle 000001B7A34EDB50
+[000000000000E7A8] abot_is_ready() called with handle=000001B7A34EDB50
+[000000000000E7A8] context pointer cast successful: 000001B7A34EDB50
+[000000000000E7A8] RETURNING 1: abot_is_ready() = true
+[Parser::Constructor] START - tokens count: 1
+[Parser::ParseProgram] START - tokens count: 1
+[Parser::ParseProgram] Iter 1: current=0, type=3, IsAtEnd=0
+[Parser::ParseProgram] Statement added, count=1
+[Parser::ParseProgram] FINISHED - statements=1, iterations=1, has_error=0
+[BytecodeCompiler::Compile] START - 1 statements
+[BytecodeCompiler::Compile] Compiling statement 0
+[BytecodeCompiler::Compile] FINISHED - 2 instructions generated
+[BytecodeCompiler::Compile]  Instr 0: opcode=5
+[BytecodeCompiler::Compile]  Instr 1: opcode=37
+[Parser::Constructor] START - tokens count: 1
+[Parser::ParseProgram] START - tokens count: 1
+[Parser::ParseProgram] FINISHED - statements=0, iterations=0, has_error=0
+[BytecodeCompiler::Compile] START - 0 statements
+[BytecodeCompiler::Compile] FINISHED - 1 instructions generated
+[BytecodeCompiler::Compile]  Instr 0: opcode=37
+[Parser::Constructor] START - tokens count: 5
+[Parser::ParseProgram] START - tokens count: 5
+[Parser::ParseProgram] Iter 1: current=0, type=3, IsAtEnd=0
+[Parser::ParseProgram] Statement added, count=1
+[Parser::ParseProgram] FINISHED - statements=1, iterations=1, has_error=0
+[BytecodeCompiler::Compile] START - 1 statements
+[BytecodeCompiler::Compile] Compiling statement 0
+[BytecodeCompiler::Compile] FINISHED - 6 instructions generated
+[BytecodeCompiler::Compile]  Instr 0: opcode=0
+[BytecodeCompiler::Compile]  Instr 1: opcode=0
+[BytecodeCompiler::Compile]  Instr 2: opcode=6
+[BytecodeCompiler::Compile]  Instr 3: opcode=6
+[BytecodeCompiler::Compile]  Instr 4: opcode=26
+[BytecodeCompiler::Compile]  Instr 5: opcode=37
+[Parser::Constructor] START - tokens count: 5
+[Parser::ParseProgram] START - tokens count: 5
+[Parser::ParseProgram] Iter 1: current=0, type=3, IsAtEnd=0
+[Parser::ParseProgram] Statement added, count=1
+[Parser::ParseProgram] FINISHED - statements=1, iterations=1, has_error=0
+[BytecodeCompiler::Compile] START - 1 statements
+[BytecodeCompiler::Compile] Compiling statement 0
+[BytecodeCompiler::Compile] FINISHED - 6 instructions generated
+[BytecodeCompiler::Compile]  Instr 0: opcode=0
+[BytecodeCompiler::Compile]  Instr 1: opcode=0
+[BytecodeCompiler::Compile]  Instr 2: opcode=6
+[BytecodeCompiler::Compile]  Instr 3: opcode=6
+[BytecodeCompiler::Compile]  Instr 4: opcode=26
+[BytecodeCompiler::Compile]  Instr 5: opcode=37
+[Parser::Constructor] START - tokens count: 5
+[Parser::ParseProgram] START - tokens count: 5
+[Parser::ParseProgram] Iter 1: current=0, type=3, IsAtEnd=0
+[Parser::ParseProgram] Statement added, count=1
+[Parser::ParseProgram] FINISHED - statements=1, iterations=1, has_error=0
+[BytecodeCompiler::Compile] START - 1 statements
+[BytecodeCompiler::Compile] Compiling statement 0
+[BytecodeCompiler::Compile] FINISHED - 6 instructions generated
+[BytecodeCompiler::Compile]  Instr 0: opcode=0
+[BytecodeCompiler::Compile]  Instr 1: opcode=0
+[BytecodeCompiler::Compile]  Instr 2: opcode=6
+[BytecodeCompiler::Compile]  Instr 3: opcode=6
+[BytecodeCompiler::Compile]  Instr 4: opcode=26
+[BytecodeCompiler::Compile]  Instr 5: opcode=37
+[Parser::Constructor] START - tokens count: 5
+[Parser::ParseProgram] START - tokens count: 5
+[Parser::ParseProgram] Iter 1: current=0, type=3, IsAtEnd=0
+[Parser::ParseProgram] Statement added, count=1
+[Parser::ParseProgram] FINISHED - statements=1, iterations=1, has_error=0
+[BytecodeCompiler::Compile] START - 1 statements
+[BytecodeCompiler::Compile] Compiling statement 0
+[BytecodeCompiler::Compile] FINISHED - 6 instructions generated
+[BytecodeCompiler::Compile]  Instr 0: opcode=0
+[BytecodeCompiler::Compile]  Instr 1: opcode=0
+[BytecodeCompiler::Compile]  Instr 2: opcode=6
+[BytecodeCompiler::Compile]  Instr 3: opcode=6
+[BytecodeCompiler::Compile]  Instr 4: opcode=26
+[BytecodeCompiler::Compile]  Instr 5: opcode=37
+[Parser::Constructor] START - tokens count: 10
+[Parser::ParseProgram] START - tokens count: 10
+[Parser::ParseProgram] Iter 1: current=0, type=3, IsAtEnd=0
+[Parser::ParseProgram] Statement added, count=1
+[Parser::ParseProgram] Iter 2: current=5, type=3, IsAtEnd=0
+[Parser::ParseProgram] Statement added, count=2
+[Parser::ParseProgram] FINISHED - statements=2, iterations=2, has_error=0
+[BytecodeCompiler::Compile] START - 2 statements
+[BytecodeCompiler::Compile] Compiling statement 0
+[BytecodeCompiler::Compile] Compiling statement 1
+[BytecodeCompiler::Compile] FINISHED - 11 instructions generated
+[BytecodeCompiler::Compile]  Instr 0: opcode=0
+[BytecodeCompiler::Compile]  Instr 1: opcode=0
+[BytecodeCompiler::Compile]  Instr 2: opcode=6
+[BytecodeCompiler::Compile]  Instr 3: opcode=6
+[BytecodeCompiler::Compile]  Instr 4: opcode=26
+[BytecodeCompiler::Compile]  Instr 5: opcode=0
+[BytecodeCompiler::Compile]  Instr 6: opcode=0
+[BytecodeCompiler::Compile]  Instr 7: opcode=6
+[BytecodeCompiler::Compile]  Instr 8: opcode=6
+[BytecodeCompiler::Compile]  Instr 9: opcode=26
+[BytecodeCompiler::Compile]  Instr 10: opcode=37
+[000000000000E7A8] abot_is_ready() called with handle=000001B7A34EDB50
+[000000000000E7A8] context pointer cast successful: 000001B7A34EDB50
+[000000000000E7A8] RETURNING 1: abot_is_ready() = true
+
+[abot_create] Called at thread 18964
+[abot_create] Creating new ABotContext...
+[abot_create] ABotContext allocated at 00000214D21786A0
+[abot_create] Checking vm: 00000214D22320A0
+[abot_create] Checking scope: 00000214D2178760
+[abot_create] SUCCESS: Returning handle 00000214D21786A0
+[0000000000004A14] abot_is_ready() called with handle=00000214D21786A0
+[0000000000004A14] context pointer cast successful: 00000214D21786A0
+[0000000000004A14] RETURNING 1: abot_is_ready() = true
+
+[abot_create] Called at thread 18964
+[abot_create] Creating new ABotContext...
+[abot_create] ABotContext allocated at 00000214D2179DE0
+[abot_create] Checking vm: 00000214D22319E0
+[abot_create] Checking scope: 00000214D217A260
+[abot_create] SUCCESS: Returning handle 00000214D2179DE0
+[0000000000004A14] abot_is_ready() called with handle=00000214D2179DE0
+[0000000000004A14] context pointer cast successful: 00000214D2179DE0
+[0000000000004A14] RETURNING 1: abot_is_ready() = true
+[Parser::Constructor] START - tokens count: 1
+[Parser::ParseProgram] START - tokens count: 1
+[Parser::ParseProgram] Iter 1: current=0, type=3, IsAtEnd=0
+[Parser::ParseProgram] Statement added, count=1
+[Parser::ParseProgram] FINISHED - statements=1, iterations=1, has_error=0
+[BytecodeCompiler::Compile] START - 1 statements
+[BytecodeCompiler::Compile] Compiling statement 0
+[BytecodeCompiler::Compile] FINISHED - 2 instructions generated
+[BytecodeCompiler::Compile]  Instr 0: opcode=5
+[BytecodeCompiler::Compile]  Instr 1: opcode=37
+[Parser::Constructor] START - tokens count: 1
+[Parser::ParseProgram] START - tokens count: 1
+[Parser::ParseProgram] FINISHED - statements=0, iterations=0, has_error=0
+[BytecodeCompiler::Compile] START - 0 statements
+[BytecodeCompiler::Compile] FINISHED - 1 instructions generated
+[BytecodeCompiler::Compile]  Instr 0: opcode=37
+[Parser::Constructor] START - tokens count: 5
+[Parser::ParseProgram] START - tokens count: 5
+[Parser::ParseProgram] Iter 1: current=0, type=3, IsAtEnd=0
+[Parser::ParseProgram] Statement added, count=1
+[Parser::ParseProgram] FINISHED - statements=1, iterations=1, has_error=0
+[BytecodeCompiler::Compile] START - 1 statements
+[BytecodeCompiler::Compile] Compiling statement 0
+[BytecodeCompiler::Compile] FINISHED - 6 instructions generated
+[BytecodeCompiler::Compile]  Instr 0: opcode=0
+[BytecodeCompiler::Compile]  Instr 1: opcode=0
+[BytecodeCompiler::Compile]  Instr 2: opcode=6
+[BytecodeCompiler::Compile]  Instr 3: opcode=6
+[BytecodeCompiler::Compile]  Instr 4: opcode=26
+[BytecodeCompiler::Compile]  Instr 5: opcode=37
+[Parser::Constructor] START - tokens count: 5
+[Parser::ParseProgram] START - tokens count: 5
+[Parser::ParseProgram] Iter 1: current=0, type=3, IsAtEnd=0
+[Parser::ParseProgram] Statement added, count=1
+[Parser::ParseProgram] FINISHED - statements=1, iterations=1, has_error=0
+[BytecodeCompiler::Compile] START - 1 statements
+[BytecodeCompiler::Compile] Compiling statement 0
+[BytecodeCompiler::Compile] FINISHED - 6 instructions generated
+[BytecodeCompiler::Compile]  Instr 0: opcode=0
+[BytecodeCompiler::Compile]  Instr 1: opcode=0
+[BytecodeCompiler::Compile]  Instr 2: opcode=6
+[BytecodeCompiler::Compile]  Instr 3: opcode=6
+[BytecodeCompiler::Compile]  Instr 4: opcode=26
+[BytecodeCompiler::Compile]  Instr 5: opcode=37
+[Parser::Constructor] START - tokens count: 5
+[Parser::ParseProgram] START - tokens count: 5
+[Parser::ParseProgram] Iter 1: current=0, type=3, IsAtEnd=0
+[Parser::ParseProgram] Statement added, count=1
+[Parser::ParseProgram] FINISHED - statements=1, iterations=1, has_error=0
+[BytecodeCompiler::Compile] START - 1 statements
+[BytecodeCompiler::Compile] Compiling statement 0
+[BytecodeCompiler::Compile] FINISHED - 6 instructions generated
+[BytecodeCompiler::Compile]  Instr 0: opcode=0
+[BytecodeCompiler::Compile]  Instr 1: opcode=0
+[BytecodeCompiler::Compile]  Instr 2: opcode=6
+[BytecodeCompiler::Compile]  Instr 3: opcode=6
+[BytecodeCompiler::Compile]  Instr 4: opcode=26
+[BytecodeCompiler::Compile]  Instr 5: opcode=37
+[Parser::Constructor] START - tokens count: 5
+[Parser::ParseProgram] START - tokens count: 5
+[Parser::ParseProgram] Iter 1: current=0, type=3, IsAtEnd=0
+[Parser::ParseProgram] Statement added, count=1
+[Parser::ParseProgram] FINISHED - statements=1, iterations=1, has_error=0
+[BytecodeCompiler::Compile] START - 1 statements
+[BytecodeCompiler::Compile] Compiling statement 0
+[BytecodeCompiler::Compile] FINISHED - 6 instructions generated
+[BytecodeCompiler::Compile]  Instr 0: opcode=0
+[BytecodeCompiler::Compile]  Instr 1: opcode=0
+[BytecodeCompiler::Compile]  Instr 2: opcode=6
+[BytecodeCompiler::Compile]  Instr 3: opcode=6
+[BytecodeCompiler::Compile]  Instr 4: opcode=26
+[BytecodeCompiler::Compile]  Instr 5: opcode=37
+[Parser::Constructor] START - tokens count: 10
+[Parser::ParseProgram] START - tokens count: 10
+[Parser::ParseProgram] Iter 1: current=0, type=3, IsAtEnd=0
+[Parser::ParseProgram] Statement added, count=1
+[Parser::ParseProgram] Iter 2: current=5, type=3, IsAtEnd=0
+[Parser::ParseProgram] Statement added, count=2
+[Parser::ParseProgram] FINISHED - statements=2, iterations=2, has_error=0
+[BytecodeCompiler::Compile] START - 2 statements
+[BytecodeCompiler::Compile] Compiling statement 0
+[BytecodeCompiler::Compile] Compiling statement 1
+[BytecodeCompiler::Compile] FINISHED - 11 instructions generated
+[BytecodeCompiler::Compile]  Instr 0: opcode=0
+[BytecodeCompiler::Compile]  Instr 1: opcode=0
+[BytecodeCompiler::Compile]  Instr 2: opcode=6
+[BytecodeCompiler::Compile]  Instr 3: opcode=6
+[BytecodeCompiler::Compile]  Instr 4: opcode=26
+[BytecodeCompiler::Compile]  Instr 5: opcode=0
+[BytecodeCompiler::Compile]  Instr 6: opcode=0
+[BytecodeCompiler::Compile]  Instr 7: opcode=6
+[BytecodeCompiler::Compile]  Instr 8: opcode=6
+[BytecodeCompiler::Compile]  Instr 9: opcode=26
+[BytecodeCompiler::Compile]  Instr 10: opcode=37
+[0000000000004A14] abot_is_ready() called with handle=00000214D2179DE0
+[0000000000004A14] context pointer cast successful: 00000214D2179DE0
+[0000000000004A14] RETURNING 1: abot_is_ready() = true

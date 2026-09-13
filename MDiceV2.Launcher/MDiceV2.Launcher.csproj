@@ -1,0 +1,109 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <UseAppHost>true</UseAppHost>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <PublishTrimmed>false</PublishTrimmed>
+    <ApplicationIcon>Assets/Sprite/icon.ico</ApplicationIcon>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <!-- Disable CET compatibility for Windows 10 21H2 compatibility -->
+    <CETCompat>false</CETCompat>
+    <!-- Single file publishing configuration -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <Version>0.3.1</Version>
+    <AssemblyVersion>0.3.1</AssemblyVersion>
+    <FileVersion>0.3.1</FileVersion>
+    <InformationalVersion>beta</InformationalVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Build-order only: ensure Core is built before copying its output; no compile-time reference -->
+    <ProjectReference Include="..\MDiceV2.Core\MDiceV2.Core.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\MDiceV2.Abstractions\MDiceV2.Abstractions.csproj" />
+    <!-- Note: Avalonia is NOT referenced here - it's embedded in Core.dll via Costura -->
+    <!-- Launcher loads Avalonia dynamically via reflection to avoid dependency duplication -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+  </ItemGroup>
+  <!-- Ensure Launcher.dll is included in publish output -->
+  <!-- This target explicitly copies Launcher.dll to prevent accidental exclusion due to ProjectReference -->
+  <!-- Only run for non-single-file builds (PublishSingleFile=false) -->
+  <Target Name="CopyLauncherDll" AfterTargets="Publish" Condition="'$(PublishSingleFile)' != 'true'">
+    <PropertyGroup>
+      <LauncherBuildDir>$(MSBuildThisFileDirectory)bin\$(Configuration)\net10.0-windows\win-x64\</LauncherBuildDir>
+      <PublishDest Condition="'$(PublishDir)' != ''">$(PublishDir)</PublishDest>
+      <PublishDest Condition="'$(PublishDir)' == ''">$(OutputPath)</PublishDest>
+    </PropertyGroup>
+    <ItemGroup>
+      <LauncherFiles Include="$(LauncherBuildDir)MDiceV2.Launcher.dll" />
+      <LauncherFiles Include="$(LauncherBuildDir)MDiceV2.Launcher.runtimeconfig.json" />
+      <LauncherFiles Include="$(LauncherBuildDir)MDiceV2.Launcher.deps.json" />
+    </ItemGroup>
+    <Copy SourceFiles="@(LauncherFiles)" DestinationFolder="$(PublishDest)" SkipUnchangedFiles="true" />
+    <Message Text="[CopyLauncherDll] Copied Launcher files to $(PublishDest)" Importance="high" />
+  </Target>
+  <!-- Copy Core artifacts and dependencies with new structure: Core DLLs to root, others to deps/ -->
+  <!-- Only run this for non-single-file builds (PublishSingleFile=false) since single-file packing is automatic -->
+  <Target Name="CopyCoreToOutputRoot" AfterTargets="Build;Publish" Condition="'$(PublishSingleFile)' != 'true'">
+    <PropertyGroup>
+      <!-- Core uses RuntimeIdentifier=win-x64, so output is in win-x64\ subdirectory -->
+      <CoreBuildDir>$(MSBuildThisFileDirectory)..\MDiceV2.Core\bin\$(Configuration)\net10.0-windows\win-x64\</CoreBuildDir>
+      <!-- Always use OutputPath for Build, PublishDir for Publish -->
+      <CoreCopyDestination>$(OutputPath)</CoreCopyDestination>
+      <CoreCopyDestination Condition="'$(PublishDir)' != '' and '$(IsCopyingPublishFiles)' == 'true'">$(PublishDir)</CoreCopyDestination>
+      <DepsCopyDestination>$(CoreCopyDestination)deps</DepsCopyDestination>
+    </PropertyGroup>
+    <Message Text="[CopyCoreToOutputRoot] 濮濓絽婀崚鍡欘瀲娓氭繆绂嗛敓?deps 鐎涙劖鏋冩禒璺恒仚..." Importance="high" />
+    <ItemGroup>
+      <!-- 閺嶇绺炬稉姘 DLL 婢跺秴鍩楅崚鐗堢壌閻╊喖缍?-->
+      <CoreDlls Include="$(CoreBuildDir)MDiceV2.Core.dll" />
+      <CoreDlls Include="$(CoreBuildDir)MDiceV2.Abstractions.dll" />
+      <CoreDlls Include="$(CoreBuildDir)MDiceV2.Interfaces.dll" />
+      <!-- 閸忔湹绮幍鈧敓?DLL 閸滃矁绻嶇悰灞炬闁板秶鐤嗘径宥呭煑閿?deps -->
+      <DepsDlls Include="$(CoreBuildDir)*.dll" Exclude="$(CoreBuildDir)MDiceV2.Core.dll;$(CoreBuildDir)MDiceV2.Abstractions.dll;$(CoreBuildDir)MDiceV2.Interfaces.dll" />
+      <DepsJsons Include="$(CoreBuildDir)*.json" />
+      <NativeDlls Include="$(MSBuildThisFileDirectory)..\MDiceV2.Core\bin\$(Configuration)\net10.0-windows\runtimes\win-x64\native\*.dll" />
+    </ItemGroup>
+    <MakeDir Directories="$(CoreCopyDestination)" />
+    <MakeDir Directories="$(DepsCopyDestination)" />
+    <MakeDir Directories="$(DepsCopyDestination)\native" />
+    <!-- 婢跺秴鍩楅弽绋跨妇 DLL 閸掔増鐗撮惄顔肩秿 -->
+    <Copy SourceFiles="@(CoreDlls)" DestinationFolder="$(CoreCopyDestination)" SkipUnchangedFiles="true" />
+    <!-- 婢跺秴鍩楅崗鏈电铂娓氭繆绂嗛敓?deps 鐎涙劖鏋冩禒璺恒仚 -->
+    <Copy SourceFiles="@(DepsDlls)" DestinationFolder="$(DepsCopyDestination)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(DepsJsons)" DestinationFolder="$(DepsCopyDestination)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(NativeDlls)" DestinationFolder="$(DepsCopyDestination)\native" SkipUnchangedFiles="true" />
+    <Message Text="[CopyCoreToOutputRoot] 閺嶇绺綝LL: @(CoreDlls-&gt;Count()) 娑擃亜鍩岄弽鍦窗閿? 娓氭繆绂? @(DepsDlls-&gt;Count())+@(DepsJsons-&gt;Count())+@(NativeDlls-&gt;Count()) 娑擃亜鍩?deps/" Importance="high" />
+  </Target>
+  <!-- DISABLED: Do NOT copy Core.dll for PublishSingleFile=true - everything must be in the single file exe -->
+  <!-- When PublishSingleFile=true is used, all dependencies are embedded in the exe, root must be clean -->
+  <Target Name="CopyCoreDllForSingleFile" AfterTargets="Build;Publish" Condition="false">
+    <!-- This target is disabled - no files should be copied to root when using PublishSingleFile=true -->
+  </Target>
+  <!-- DISABLED: When PublishSingleFile=true, there should be NO DLL files in root - all are in the exe -->
+  <Target Name="MoveExtraDllsToDeps" AfterTargets="CopyCoreToOutputRoot" Condition="false">
+    <!-- This target is disabled for PublishSingleFile=true builds -->
+  </Target>
+  <!-- Copy Mods into the output mods directory for build only -->
+  <!-- DISABLED FOR PUBLISH: Mods are copied separately by tools/publish.ps1 to avoid path issues -->
+  <Target Name="CopyModsToOutput" AfterTargets="Build" Condition="'$(Configuration)' == 'Release' and '$(PublishDir)' == ''">
+    <PropertyGroup>
+      <ModsSourceDir>$(MSBuildThisFileDirectory).\Mods</ModsSourceDir>
+      <ModsOutputDestination>$(OutputPath)mods</ModsOutputDestination>
+    </PropertyGroup>
+    <ItemGroup>
+      <!-- Find all mod directories -->
+      <ModDirectories Include="$(ModsSourceDir)/*" />
+    </ItemGroup>
+    <Message Text="[CopyModsToOutput] Copying mods from $(ModsSourceDir) to $(ModsOutputDestination)" Importance="high" />
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;$modsDir = '$(ModsSourceDir)'; $outputDir = '$(ModsOutputDestination)'; if (Test-Path $modsDir) { Get-ChildItem -Path $modsDir -Directory | Where-Object { $_.Name -notmatch '^\.' } | ForEach-Object { $modName = $_.Name; $srcBinDir = Join-Path $_.FullName 'bin\$(Configuration)\net10.0-windows'; if (Test-Path $srcBinDir) { $targetDir = Join-Path $outputDir $modName; New-Item -ItemType Directory -Path $targetDir -Force | Out-Null; Copy-Item -Path &quot;$srcBinDir\$modName.dll&quot; -Destination $targetDir -Force -ErrorAction SilentlyContinue; Copy-Item -Path &quot;$srcBinDir\$modName.pdb&quot; -Destination $targetDir -Force -ErrorAction SilentlyContinue; Write-Host &quot;Copied mod: $modName&quot; } }; Copy-Item -Path '$(ModsSourceDir)\*\mod.json' -Destination $outputDir -Force -ErrorAction SilentlyContinue -Recurse; };&quot;" />
+  </Target>
+</Project>

@@ -1,0 +1,8 @@
+[gd_resource type="SystemFont" load_steps=2 format=3 uid="uid://da6ma1ykibnbh"]
+
+[sub_resource type="SystemFont" id="SystemFont_srgnp"]
+oversampling = 4.0
+
+[resource]
+fallbacks = Array[Font]([SubResource("SystemFont_srgnp")])
+oversampling = 3.0

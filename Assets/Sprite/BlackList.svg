@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+   sodipodi:docname="BlackList.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="2.2878991"
+     inkscape:cx="120.19761"
+     inkscape:cy="127.19092"
+     inkscape:window-width="1920"
+     inkscape:window-height="1130"
+     inkscape:window-x="-6"
+     inkscape:window-y="-6"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1">
+    <linearGradient
+       id="linearGradient5"
+       inkscape:collect="always">
+      <stop
+         style="stop-color:#4fa723;stop-opacity:1;"
+         offset="0"
+         id="stop4" />
+      <stop
+         style="stop-color:#48d7b9;stop-opacity:1;"
+         offset="1"
+         id="stop5" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient2"
+       inkscape:collect="always">
+      <stop
+         style="stop-color:#ad1d3a;stop-opacity:1;"
+         offset="0"
+         id="stop2" />
+      <stop
+         style="stop-color:#d48f52;stop-opacity:1;"
+         offset="1"
+         id="stop3" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient2"
+       id="linearGradient3"
+       x1="22.840525"
+       y1="115.6272"
+       x2="128.11267"
+       y2="115.6272"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient5"
+       id="linearGradient4"
+       gradientUnits="userSpaceOnUse"
+       x1="22.840525"
+       y1="115.6272"
+       x2="128.11267"
+       y2="115.6272"
+       gradientTransform="translate(0.34413909,18.040961)" />
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:url(#linearGradient3);stroke:#ffffff;stroke-width:4.03701;stroke-opacity:0"
+       id="rect1"
+       width="101.23513"
+       height="14.064979"
+       x="24.85903"
+       y="108.59471"
+       ry="6.0739622"
+       inkscape:export-filename="Active.png"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96" />
+    <rect
+       style="fill:url(#linearGradient4);stroke:#ffffff;stroke-width:4.03701;stroke-opacity:0"
+       id="rect1-4"
+       width="101.23513"
+       height="14.064979"
+       x="25.203167"
+       y="126.63567"
+       ry="6.0739622" />
+    <rect
+       style="fill:#000000;fill-opacity:0;stroke:#ffffff;stroke-width:4.03701;stroke-opacity:0"
+       id="rect3"
+       width="0.040886562"
+       height="0.10221641"
+       x="126.05328"
+       y="114.42105"
+       ry="0.020443281" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;font-family:YouYuan;-inkscape-font-specification:YouYuan;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.332999;stroke-dasharray:none;stroke-opacity:0"
+       x="52.271389"
+       y="39.550476"
+       id="text6"><tspan
+         sodipodi:role="line"
+         id="tspan6"
+         style="stroke-width:0.333"
+         x="52.271389"
+         y="39.550476" /></text>
+    <text
+       xml:space="preserve"
+       style="font-size:2.09602px;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;white-space:pre;inline-size:27.7308;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1.83146;stroke-dasharray:none;stroke-opacity:0"
+       x="12.048467"
+       y="39.990734"
+       id="text5-2-1-9-5-1-9-3-6-6"
+       transform="matrix(1.6160432,0,0,1.6160432,103.7771,-18.89573)" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1.41111px;font-family:YouYuan;-inkscape-font-specification:YouYuan;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#a0d54d;fill-opacity:1;stroke:none;stroke-width:0.2;stroke-dasharray:none;stroke-opacity:1"
+       x="77.481934"
+       y="73.665649"
+       id="text8"><tspan
+         sodipodi:role="line"
+         id="tspan8"
+         style="stroke-width:0.2"
+         x="77.481934"
+         y="73.665649">                    </tspan></text>
+    <rect
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:4.44071;stroke-dasharray:none;stroke-opacity:1"
+       id="rect9"
+       width="17.46483"
+       height="17.637751"
+       x="31.366577"
+       y="-6.2652159"
+       ry="0.71643347"
+       transform="rotate(45.77108)"
+       inkscape:export-filename="WriteListMode.png"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96" />
+    <rect
+       style="fill:#000000;fill-opacity:1;stroke:#ffffff;stroke-width:1.69874;stroke-dasharray:none;stroke-opacity:1"
+       id="rect9-7"
+       width="6.100019"
+       height="6.1604156"
+       x="46.041245"
+       y="-9.1691666"
+       ry="0.085413165"
+       transform="rotate(45.77108)" />
+    <rect
+       style="fill:#000000;fill-opacity:1;stroke:#ffffff;stroke-width:4.69199;stroke-dasharray:none;stroke-opacity:1"
+       id="rect9-4"
+       width="18.453114"
+       height="18.635818"
+       x="-74.714882"
+       y="13.672705"
+       ry="0.75697428"
+       transform="rotate(-134.22892)"
+       inkscape:export-filename="BlackListMode.png"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96" />
+    <rect
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.71065;stroke-dasharray:none;stroke-opacity:1"
+       id="rect9-7-9"
+       width="6.142776"
+       height="6.2035961"
+       x="-59.520802"
+       y="10.74175"
+       ry="0.086011849"
+       transform="rotate(-134.22892)" />
+  </g>
+</svg>

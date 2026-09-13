@@ -1,0 +1,96 @@
+生成启动时间为 4/20/2026 7:25:10 PM。
+
+__________________________________________________
+项目“C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\ABot.Core.vcxproj”(默认目标):
+
+目标 PrepareForBuild:
+    正在创建目录“C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\”。
+    已启用结构化输出。编译器诊断的格式设置将反映错误层次结构。有关详细信息，请参阅 https://aka.ms/cpp/structured-output。
+    正在创建目录“C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\bin\Debug\x86\”。
+    正在创建目录“C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\ABot.Core.tlog\”。
+目标 InitializeBuildStatus:
+    正在创建“C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\ABot.Core.tlog\unsuccessfulbuild”，因为已指定“AlwaysCreate”。
+    正在对“C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\ABot.Core.tlog\unsuccessfulbuild”执行 Touch 任务。
+目标 ClCompile:
+    C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Tools\MSVC\14.51.36014\bin\HostX86\x86\CL.exe /c /Zi /nologo /W1 /WX- /diagnostics:column /MP /O2 /Oy- /D _WINDLL /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\\" /Fd"C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\vc145.pdb" /external:W1 /Gd /TP /analyze- /FC /errorReport:queue /FS /utf-8 src\Lexer.cpp src\Parser.cpp src\Bytecode.cpp src\VM.cpp src\C_API.cpp src\TypeSystem.cpp src\Value.cpp src\SchemaValue.cpp src\ValueV2.cpp src\Scope.cpp src\Character.cpp src\ParameterParser.cpp src\Battle.cpp src\RoundManager.cpp src\SkillTriggerSystem.cpp src\SkillMessageImplementations.cpp src\SkillMessageDefinitions.cpp src\SkillDefinitionImplementations.cpp src\SkillSystem.cpp src\SkillExecutor.cpp src\PresetSystem.cpp src\ExecutionEnvironment.cpp src\BuiltinPresets.cpp src\ScriptExecutionContainer.cpp src\ObjectTable.cpp
+    Lexer.cpp
+    Parser.cpp
+    Bytecode.cpp
+    VM.cpp
+    C_API.cpp
+    TypeSystem.cpp
+    Value.cpp
+    SchemaValue.cpp
+    ValueV2.cpp
+    Scope.cpp
+    Character.cpp
+    ParameterParser.cpp
+    Battle.cpp
+    RoundManager.cpp
+    SkillTriggerSystem.cpp
+    SkillMessageImplementations.cpp
+    SkillMessageDefinitions.cpp
+    SkillDefinitionImplementations.cpp
+    SkillSystem.cpp
+    SkillExecutor.cpp
+    PresetSystem.cpp
+    ExecutionEnvironment.cpp
+    BuiltinPresets.cpp
+    ScriptExecutionContainer.cpp
+    ObjectTable.cpp
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\src\C_API.cpp(2531,20): warning C4190: 'FilterDiagnosticLogs' 已指定 C 链接，但返回了与 C 不兼容的 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>'
+        C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Tools\MSVC\14.51.36014\include\xstring(589,7):
+        参见“std::basic_string<char,std::char_traits<char>,std::allocator<char>>”的声明
+    
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\src\C_API.cpp(3095,20): warning C4190: 'JsonEscape' 已指定 C 链接，但返回了与 C 不兼容的 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>'
+        C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Tools\MSVC\14.51.36014\include\xstring(589,7):
+        参见“std::basic_string<char,std::char_traits<char>,std::allocator<char>>”的声明
+    
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\src\C_API.cpp(3237,20): warning C4190: 'ExtractJsonStringField' 已指定 C 链接，但返回了与 C 不兼容的 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>'
+        C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Tools\MSVC\14.51.36014\include\xstring(589,7):
+        参见“std::basic_string<char,std::char_traits<char>,std::allocator<char>>”的声明
+    
+已完成在项目“ABot.Core.vcxproj”中生成目标“ClCompile”的操作。
+目标 Link:
+    C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Tools\MSVC\14.51.36014\bin\HostX86\x86\link.exe /ERRORREPORT:QUEUE /OUT:"C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\bin\Debug\x86\ABot.Core.dll" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG:FULL /PDB:"C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\bin\Debug\x86\ABot.Core.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\bin\Debug\x86\ABot.Core.lib" /MACHINE:X86 /SAFESEH /DLL C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\Lexer.obj
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\Parser.obj
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\Bytecode.obj
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\VM.obj
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\C_API.obj
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\TypeSystem.obj
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\Value.obj
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\SchemaValue.obj
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\ValueV2.obj
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\Scope.obj
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\Character.obj
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\ParameterParser.obj
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\Battle.obj
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\RoundManager.obj
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\SkillTriggerSystem.obj
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\SkillMessageImplementations.obj
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\SkillMessageDefinitions.obj
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\SkillDefinitionImplementations.obj
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\SkillSystem.obj
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\SkillExecutor.obj
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\PresetSystem.obj
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\ExecutionEnvironment.obj
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\BuiltinPresets.obj
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\ScriptExecutionContainer.obj
+    C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\ObjectTable.obj
+      正在创建库 C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\bin\Debug\x86\ABot.Core.lib 和对象 C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\bin\Debug\x86\ABot.Core.exp
+    ABot.Core.vcxproj -> C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\bin\Debug\x86\ABot.Core.dll
+目标 FinalizeBuildStatus:
+    正在删除文件“C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\ABot.Core.tlog\unsuccessfulbuild”。
+    正在对“C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\obj\Debug\ABot.Core\x86\ABot.Core.tlog\ABot.Core.lastbuildstate”执行 Touch 任务。
+
+已完成生成项目“ABot.Core.vcxproj”的操作。
+
+已成功生成。
+
+C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\src\C_API.cpp(2531,20): warning C4190: 'FilterDiagnosticLogs' 已指定 C 链接，但返回了与 C 不兼容的 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>'
+C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\src\C_API.cpp(3095,20): warning C4190: 'JsonEscape' 已指定 C 链接，但返回了与 C 不兼容的 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>'
+C:\Users\Humulus.MSI\Documents\Mydata\Programming\MDiceV2\ABot\ABot.Core\src\C_API.cpp(3237,20): warning C4190: 'ExtractJsonStringField' 已指定 C 链接，但返回了与 C 不兼容的 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>'
+    3 个警告
+    0 个错误
+
+已用时间 00:00:06.78

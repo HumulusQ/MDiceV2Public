@@ -1,0 +1,9 @@
+<Project>
+  <Import Project="Version.props" />
+  <PropertyGroup>
+    <!-- Preserve the central values before individual projects define local package metadata. -->
+    <CentralAssemblyVersion>$(AssemblyVersion)</CentralAssemblyVersion>
+    <CentralInformationalVersion>$(InformationalVersion)</CentralInformationalVersion>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+</Project>

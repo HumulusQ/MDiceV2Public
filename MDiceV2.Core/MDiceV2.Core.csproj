@@ -1,0 +1,88 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <PublishTrimmed>false</PublishTrimmed>
+    <EnableAotAnalyzer>false</EnableAotAnalyzer>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <!-- Disable CET compatibility for Windows 10 21H2 compatibility -->
+    <CETCompat>false</CETCompat>
+    <!-- 搴旂敤鍥炬爣 - 涓?Launcher 涓€鏍?-->
+    <ApplicationIcon>Assets/Sprite/icon.ico</ApplicationIcon>
+    <!-- Single file publishing configuration -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <Version>0.3.1</Version>
+    <AssemblyVersion>0.3.1</AssemblyVersion>
+    <FileVersion>0.3.1</FileVersion>
+    <InformationalVersion>beta</InformationalVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.6" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.6" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.6" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.6" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.6" />
+    <PackageReference Include="Semi.Avalonia" Version="11.1.0" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+    <PackageReference Include="System.Data.SQLite" Version="1.0.119" />
+    <PackageReference Include="MoonSharp" Version="2.0.0" />
+    <!-- Polly: shared dependency for AIMod (HTTP retry). Must be in host bundle for slim plugin packages. -->
+    <PackageReference Include="Polly" Version="8.5.0" />
+    <!-- DI Container -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+    <!-- gRPC Server -->
+    <PackageReference Include="Grpc.AspNetCore" Version="2.60.0" />
+    <!-- Override transitive vulnerable versions -->
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
+    <PackageReference Include="System.Drawing.Common" Version="8.0.10" />
+  </ItemGroup>
+  <!-- Include Assets folder as Avalonia resources -->
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**\*.*" />
+    <!-- The workspace default is maintained in the shared project asset folder. -->
+    <AvaloniaResource Remove="Assets\Sprite\Background.png" />
+    <AvaloniaResource Include="..\Assets\Sprite\Background.png" Link="Assets\Sprite\Background.png" />
+    <!-- Also include top-level repository Assets/Font so Playfair and other fonts
+         are embedded into the Core assembly and available via avares:// MDiceV2.Core URIs -->
+    <AvaloniaResource Include="..\Assets\Font\**\*.*" />
+  </ItemGroup>
+  <!-- Embedded Lua scripts -->
+  <ItemGroup>
+    <EmbeddedResource Include="GameBattle\Scripts\*.lua" />
+    <EmbeddedResource Include="GameBattle\Data\*.json" />
+  </ItemGroup>
+  <!-- Models are in the Core project's folder; rely on SDK implicit include for .cs files -->
+  <!-- If explicit control is needed set EnableDefaultCompileItems to false and add explicit includes -->
+  <!-- Reference to Abstractions project -->
+  <ItemGroup>
+    <ProjectReference Include="..\MDiceV2.Abstractions\MDiceV2.Abstractions.csproj" />
+    <ProjectReference Include="..\MDiceV2.Interfaces\MDiceV2.Interfaces.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="UI\" />
+    <Folder Include="UI\Views\" />
+    <Folder Include="UI\ViewModels\" />
+    <Folder Include="Services\" />
+  </ItemGroup>
+  <!-- Rename exe to .Dice extension to indicate it's not meant for direct execution -->
+  <Target Name="RenameOutputToGameExe" AfterTargets="Build;Publish">
+    <PropertyGroup>
+      <OutputExePath>$(OutputPath)MDiceV2.Core.exe</OutputExePath>
+      <OutputGamePath>$(OutputPath)MDiceV2.Core.Dice</OutputGamePath>
+      <PublishExePath Condition="'$(PublishDir)' != ''">$(PublishDir)MDiceV2.Core.exe</PublishExePath>
+      <PublishGamePath Condition="'$(PublishDir)' != ''">$(PublishDir)MDiceV2.Core.Dice</PublishGamePath>
+    </PropertyGroup>
+    <!-- For Build output -->
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;if (Test-Path '$(OutputExePath)') { Move-Item -Path '$(OutputExePath)' -Destination '$(OutputGamePath)' -Force -ErrorAction SilentlyContinue };&quot;" IgnoreExitCode="true" Condition="Exists('$(OutputExePath)')" />
+    <!-- For Publish output -->
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;if (Test-Path '$(PublishExePath)') { Move-Item -Path '$(PublishExePath)' -Destination '$(PublishGamePath)' -Force -ErrorAction SilentlyContinue };&quot;" IgnoreExitCode="true" Condition="'$(PublishDir)' != '' and Exists('$(PublishExePath)')" />
+  </Target>
+</Project>
