@@ -1,37 +1,137 @@
-# 排除脚本文件
-*.ps1
+# Public source upload rules; update.bat reads this file without rewriting it.
+# Keep source, project files, build scripts, documentation and source assets.
+
+# Build output at every level
+bin/
+obj/
+.vs/
+.avalonia-build-tasks/
+TestResults/
+BenchmarkDotNet.Artifacts/
+packages/
+.nuget/
+node_modules/
+__pycache__/
 *.dll
-*.bat
-*.txt
-*.cmd
-*.py
-*.sh
-ECHO is off.
-# 排除 Markdown 文件
-*.md
-ECHO is off.
-# 排除特定文件夹
-publish/
-releases/
-debug/
-.deepcode/
-.history/
-MDiceV2_Published/
-MDiceV2_Release/
-MDiceV2_Debug/
-ECHO is off.
-# 排除大文件
-*.Dice
-*.zip
+*.exe
 *.pdb
 *.idb
-ECHO is off.
-# 排除构建日志
-build-debug-output.txt
-build_output.txt
-build*.txt
-errors_only.txt
-COMPILATION_LOG.txt
-ECHO is off.
-# 排除本地配置文件
+*.obj
+*.o
+*.lib
+*.a
+*.so
+*.dylib
+*.tlog
+*.ilk
+*.exp
+*.pch
+*.ipch
+*.cache
+*.pyc
+*.nupkg
+*.snupkg
+*.deps.json
+*.runtimeconfig.json
+
+# Distribution packages belong in releases, not the source repository
+/MDiceV2_Debug/
+/MDiceV2_Release/
+/MDiceV2_Published/
+/publish/
+/releases/
+/artifacts/
+*.Dice
+*.dice
+*.mmod
+*.zip
+*.rar
+*.7z
+*.tar
+*.gz
+
+# Editor, agent and machine-local state
+.idea/
+.vscode/
+.deepcode/
+.history/
+.agents/
+.codex/
+*.user
+*.suo
+*.sln.docstates
+*.DotSettings.user
+.DS_Store
+Thumbs.db
+Desktop.ini
 .yuanzhi_chat_port
+
+# Credentials and mutable configuration; keep example templates
+token.txt
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+*.pfx
+*.p12
+secrets.json
+appsettings.Local.json
+appsettings.Development.json
+ai-config.json
+etbattle-relay.json
+
+# User/account data and session logs
+/data/*
+!/data/.gitkeep
+/trpglogs/
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+*.log
+logs/
+
+# Frameworks are downloaded on demand; keep only source metadata
+/BotFrameworks/*
+!/BotFrameworks/README.md
+!/BotFrameworks/sources.json
+/SnowLuma/
+/MDiceV2.Launcher/mods/
+
+# Scratch work, audit output, archives and generated voice previews
+/temp/
+/work/
+/outputs/
+/archived/
+/IMPORTANT/
+/KronaQuietIntro/
+/KronaVoiceOutput/
+/tools/HandlePoC_TestResults/
+# Standalone download diagnostics contain hard-coded authentication tokens
+/DownloadTest/
+*.tmp
+*.temp
+*.bak
+*.backup
+*.orig
+*.rej
+*.swp
+~$*
+/build.counter*
+/build*.txt
+/errors_only.txt
+/COMPILATION_LOG.txt
+/ABot/ABot.Core/src/Untitled-1.txt
+/BuiltinPresets.cpp
+/fix_patch.py
+/patch.py
+/patch_presetself.py
+/fix-getfield-calls.ps1
+/GIT_CLEANUP_REPORT.md
+/IMPLEMENTATION_SUMMARY.md
+/TRPG_TASK_MANAGEMENT_PLAN.md
+/白棘之塔的渊鬼.html
