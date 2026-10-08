@@ -303,7 +303,8 @@ public partial class ConfigContainer : UserControl
         if (_focusedTextBox == tb && _isTextBoxExpanded)
         {
             // 获取TextBox的DataContext（应该是ConfigItem）
-            if (tb.DataContext is ConfigItem item && tb.Text != item.Value)
+            if (tb.DataContext is ConfigItem item &&
+                !string.Equals(tb.Text, item.Value?.ToString(), StringComparison.Ordinal))
             {
                 // 推送值变更到远程（如果启用了同步模式）
                 await PushConfigUpdateAsync(item.Key, tb.Text ?? "");

@@ -97,6 +97,19 @@ public class AIModRuntimeDiagnosticsTests : IDisposable
     }
 
     [Fact]
+    public void DynamicallyRegisteredModCommand_IsActuallyRoutedWithOriginalArgumentCase()
+    {
+        var processor = new MessageProcessor();
+        var bridge = CreateBridgeWithFakeCommandProvider("duel", out var plugin);
+        processor.SetModEventBridge(bridge);
+
+        processor.OnHandleMessage(new Msg(10001, 20002, ".DuEl MiXeD ApiKey", MessageSource.group, isSimulationMode: true));
+
+        plugin.Invocations.Should().Be(1);
+        plugin.LastArgs.Should().Be(" MiXeD ApiKey");
+    }
+
+    [Fact]
     public void HeadlessSubcommandProviderReachableTest()
     {
         using var modsRoot = CreateIsolatedAimodModsRoot();
@@ -138,11 +151,14 @@ public class AIModRuntimeDiagnosticsTests : IDisposable
     }
 
     private static ModEventBridge CreateBridgeWithFakeCommandProvider(string commandName)
+        => CreateBridgeWithFakeCommandProvider(commandName, out _);
+
+    private static ModEventBridge CreateBridgeWithFakeCommandProvider(string commandName, out FakeCommandMod plugin)
     {
         var distribution = MessageDistribution.GetInstance();
         var modContext = new ModContextImpl(distribution, "fake");
         var bridge = new ModEventBridge(modContext);
-        var plugin = new FakeCommandMod(commandName);
+        plugin = new FakeCommandMod(commandName);
         var metadata = new ModMetadata
         {
             Id = "com.test.fakecommand",
@@ -250,6 +266,8 @@ public class AIModRuntimeDiagnosticsTests : IDisposable
     private sealed class FakeCommandMod : IModPlugin, ICommandProvider
     {
         private readonly string _commandName;
+        public int Invocations { get; private set; }
+        public string? LastArgs { get; private set; }
 
         public FakeCommandMod(string commandName)
         {
@@ -271,7 +289,12 @@ public class AIModRuntimeDiagnosticsTests : IDisposable
         {
             return new Dictionary<string, Func<string, object, string?>>
             {
-                [_commandName] = (_, _) => "late command handled"
+                [_commandName] = (args, _) =>
+                {
+                    Invocations++;
+                    LastArgs = args;
+                    return null;
+                }
             };
         }
     }

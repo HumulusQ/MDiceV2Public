@@ -1,5 +1,6 @@
 {
   "id": "com.example.customreply",
+  "commandName": "customreply",
   "name": "Custom Reply System",
   "version": "1.0.0",
   "author": "Example Author",

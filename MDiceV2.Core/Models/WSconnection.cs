@@ -54,7 +54,10 @@ public partial class WSconnection : ObservableObject
     /// <summary>
     /// 消息队列信号（用于通知发送任务有新消息）
     /// </summary>
-    private readonly System.Threading.ManualResetEvent _messageAvailable = new System.Threading.ManualResetEvent(false);
+    // One wake-up is sufficient: the sender drains the whole queue before it
+    // waits again. A ManualResetEvent stayed signalled after a successful send,
+    // causing this loop to spin at 100% CPU for the lifetime of the connection.
+    private readonly AutoResetEvent _messageAvailable = new(false);
 
     /// <summary>
     /// Echo计数器
@@ -377,13 +380,11 @@ public partial class WSconnection : ObservableObject
             try
             {
                 // 等待消息到达或超时（10秒），避免完全阻塞
-                bool signaled = _messageAvailable.WaitOne(10000);
+                _messageAvailable.WaitOne(10000);
                 
                 // 处理队列中的所有消息
-                bool hasMessages = false;
                 while (_requestQueue.TryDequeue(out var item) && !cancellationToken.IsCancellationRequested)
                 {
-                    hasMessages = true;
                     if (_wsClient != null && _wsClient.State == WebSocketState.Open)
                     {
                         try
@@ -409,11 +410,9 @@ public partial class WSconnection : ObservableObject
                     }
                 }
                 
-                // 如果没有消息被处理，重置信号以重新等待
-                if (!hasMessages && signaled)
-                {
-                    _messageAvailable.Reset();
-                }
+                // AutoResetEvent consumes the signal in WaitOne.  Do not reset
+                // it here: a message enqueued while this batch is being sent
+                // must leave a signal for the next iteration.
             }
             catch (Exception ex)
             {
@@ -761,6 +760,11 @@ public partial class WSconnection : ObservableObject
     /// </summary>
     public void SendGroupForwardMessage(long groupId, List<Dictionary<string, object>> messages)
     {
+        _ = SendGroupForwardMessageAsync(groupId, messages);
+    }
+
+    private async Task SendGroupForwardMessageAsync(long groupId, List<Dictionary<string, object>> messages)
+    {
         var request = new Dictionary<string, object>
         {
             ["action"] = "send_group_forward_msg",
@@ -770,6 +774,25 @@ public partial class WSconnection : ObservableObject
                 ["messages"] = messages
             }
         };
-        SendMessage(JsonSerializer.Serialize(request));
+
+        var response = await SendRequestAndAwaitResponseAsync(request);
+        if (response is null)
+        {
+            Log.Error($"发送群 {groupId} 合并转发消息失败：OneBot 未在超时时间内确认请求。");
+            return;
+        }
+
+        var root = response.Value;
+        var status = TryGetResponseString(root, "status");
+        var wording = TryGetResponseString(root, "wording", "message", "msg");
+        var failed = string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase) ||
+                     (TryGetResponseInt32(root, "retcode", out var retCode) && retCode != 0);
+        if (failed)
+        {
+            Log.Error($"发送群 {groupId} 合并转发消息失败{(string.IsNullOrWhiteSpace(wording) ? string.Empty : $"：{wording}")}");
+            return;
+        }
+
+        Log.InfoFormat($"群 {groupId} 合并转发消息已获 OneBot 确认（节点数：{messages.Count}）。");
     }
 }

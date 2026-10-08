@@ -148,7 +148,7 @@ namespace MDiceV2.Models
 
         /// <summary>
         /// 标准化表名：移除 _1、_2 等数字后缀和文件扩展名
-        /// 例如：dnd_1.json → dnd，duel_2.db → duel
+        /// 例如：dnd_1.json → dnd，coc7_2.db → coc7
         /// </summary>
         /// <param name="filename">文件名（包含或不包含扩展名）</param>
         /// <returns>标准化后的表名</returns>

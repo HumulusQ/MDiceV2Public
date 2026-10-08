@@ -1,0 +1,17 @@
+{
+  "snowluma": {
+    "displayName": "SnowLuma",
+    "repository": "SnowLuma/SnowLuma",
+    "releaseApi": "https://api.github.com/repos/SnowLuma/SnowLuma/releases/latest",
+    "asset": "SnowLuma-*-win-x64.zip",
+    "excludedAsset": "*-lite.zip",
+    "webSocketUrl": "ws://127.0.0.1:3001/"
+  },
+  "napcat": {
+    "displayName": "NapCat",
+    "repository": "NapNeko/NapCatQQ",
+    "releaseApi": "https://api.github.com/repos/NapNeko/NapCatQQ/releases/latest",
+    "asset": "NapCat.Shell.Windows.Node.zip",
+    "webSocketUrl": "ws://127.0.0.1:3001/"
+  }
+}

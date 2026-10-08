@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -168,7 +168,7 @@ public partial class MessageProcessor : ObservableObject
     /// 3. 仅修饰符或数字 → 直接使用该值
     /// 4. 技能不存在 → 若无修饰符则报错，有修饰符则按0处理
     /// </summary>
-    private (string detail, string exmessage) ProcessCoC7MainPartSimple(string fullText, List<string> subCmds, string skill, string value, ConcurrentDictionary<string, int> characterSkillsDict, ref List<string> lastSubCmds, ref string lastSkillName, ref int lastSkillValue)
+    private (string detail, string exmessage) ProcessCoC7MainPartSimple(string fullText, List<string> subCmds, string skill, string value, ConcurrentDictionary<string, int> characterSkillsDict, ref List<string> lastSubCmds, ref string lastSkillName, ref int lastSkillValue, string rule = "coc1")
     {
         string currentSkillName = "";
         int currentSkillValue = 0;
@@ -197,7 +197,7 @@ public partial class MessageProcessor : ObservableObject
                     ? $"{savedSkillName}{savedSkillValue}" 
                     : savedSkillValue.ToString();
                 
-                var (hashDetail, hashExmsg) = ProcessCoC7MainPartSimple(fullText, subCmds, recursiveSkill, "", characterSkillsDict, ref lastSubCmds, ref lastSkillName, ref lastSkillValue);
+                var (hashDetail, hashExmsg) = ProcessCoC7MainPartSimple(fullText, subCmds, recursiveSkill, "", characterSkillsDict, ref lastSubCmds, ref lastSkillName, ref lastSkillValue, rule);
                 hashResults.Add(hashDetail);
             }
 
@@ -391,7 +391,7 @@ public partial class MessageProcessor : ObservableObject
         int finalRoll = tensRolls[chosenTensIndex] * 10 + ones;
         if (finalRoll == 0) finalRoll = 100;
 
-        string checkResult = Dice.CoC7_Check(finalRoll, currentSkillValue);
+        string checkResult = Dice.CoC7_Check(finalRoll, currentSkillValue, rule);
         string detail = SafeFormatString(GlobalFeedbackMessages.FeedbackTemplates["CoCCheckResult"], finalRoll.ToString(), currentSkillValue.ToString(), diceNotation, checkResult, currentSkillName);
 
         // 根据检定结果获取个性化文本

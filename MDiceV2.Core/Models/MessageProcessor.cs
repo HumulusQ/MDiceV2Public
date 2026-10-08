@@ -200,11 +200,32 @@ public partial class MessageProcessor : ObservableObject
     /// </summary>
     private ConcurrentDictionary<long, string> defaultCheckModes = new();
 
+    // 按检定体系分别保存村规，切换 dnd 不会覆盖 coc。
+    private ConcurrentDictionary<long, ConcurrentDictionary<string, string>> userCheckRules = new();
+
     /// <summary>
     /// .ww 指令的用户加骰阈值缓存。
     /// Key: 用户ID, Value: 加骰阈值（大于10表示不加骰）。
     /// </summary>
     private ConcurrentDictionary<long, int> wwAddDiceThresholds = new();
+
+    /// <summary>
+    /// 用户默认骰面缓存（.set 指令）。未设置时使用 100。
+    /// </summary>
+    private ConcurrentDictionary<long, int> userDefaultDiceSides = new();
+
+    /// <summary>
+    /// 用户是否接收 .team call 私聊。未设置时默认接收。
+    /// </summary>
+    private ConcurrentDictionary<long, bool> teamCallPrivateEnabled = new();
+
+    private static readonly SemaphoreSlim TeamCallPrivateSendGate = new(1, 1);
+    private static bool _hasSentTeamCallPrivateMessage;
+    private readonly CancellationTokenSource _teamCallPrivateCancellation = new();
+    private Func<int> _teamCallDelaySecondsProvider = () => Random.Shared.Next(1, 4);
+    private Func<TimeSpan, CancellationToken, Task> _teamCallDelayAsync =
+        (delay, cancellationToken) => Task.Delay(delay, cancellationToken);
+    private Action<long, string>? TeamCallPrivateSenderOverride { get; set; }
 
     private static readonly HashSet<string> supportedCheckModes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
@@ -213,7 +234,7 @@ public partial class MessageProcessor : ObservableObject
     };
 
     /// <summary>
-    /// 每日计数缓存：好感度当日增量、当日 duel 回合数
+    /// 每日计数缓存：好感度当日增量
     /// Key: 用户ID, Value: 当日计数状态
     /// </summary>
     private ConcurrentDictionary<long, DailyRuntimeState> dailyRuntimeStates = new();
@@ -235,7 +256,6 @@ public partial class MessageProcessor : ObservableObject
     // 好感度与娱乐扣减的参数
     private const double TrustNormalIncrement = 0.1;     // 每次正常指令增加
     private const double TrustDailyGainLimit = 2.0;      // 每日增加上限
-    private const double TrustDuelPenalty = 0.2;         // 每次娱乐（duel）扣减
 
     /// <summary>
     /// 基本配置数据（直接使用GlobalFeedbackMessages管理）
@@ -258,6 +278,8 @@ public partial class MessageProcessor : ObservableObject
     /// </summary>
     private class TeamInfo
     {
+        public Dictionary<string, string> CheckRules { get; set; } = new();
+
         /// <summary>
         /// 队伍名称
         /// </summary>
@@ -357,6 +379,8 @@ public partial class MessageProcessor : ObservableObject
     /// </summary>
     private class UserDataRecord
     {
+        public Dictionary<string, string>? CheckRules { get; set; }
+
         /// <summary>
         /// 用户ID
         /// </summary>
@@ -421,6 +445,11 @@ public partial class MessageProcessor : ObservableObject
         public int DefaultDice { get; set; } = 100;
 
         /// <summary>
+        /// 是否接收 .team call 的私聊召集。旧数据缺失该字段时默认开启。
+        /// </summary>
+        public bool TeamCallPrivateEnabled { get; set; } = true;
+
+        /// <summary>
         /// .ww 指令的加骰阈值。未设置时使用默认8。
         /// </summary>
         public int? WwAddDiceThreshold { get; set; }
@@ -443,12 +472,6 @@ public partial class MessageProcessor : ObservableObject
     {
         public DateOnly Date { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
         public double TrustGainToday { get; set; }
-        public int DuelTurnsToday { get; set; }
-        /// <summary>
-        /// 该用户当日掷骰的 D3 结果缓存。
-        /// 仅缓存 D3 值（1-3），回合上限公式在每次调用时重新计算，使其随好感度动态变化。
-        /// </summary>
-        public int? DuelD6CachedToday { get; set; }
     }
 
     /// <summary>
@@ -486,11 +509,6 @@ public partial class MessageProcessor : ObservableObject
     /// </summary>
     private SyncConfigManager? _syncConfigManager;
 
-    /// <summary>
-    /// 游戏状态保留天数（超过该天数未活跃的游戏状态在保存时会被清理）
-    /// 默认 15 天，可通过基础设置键 "GameStateRetentionDays" 覆盖。
-    /// </summary>
-    private int gameStateRetentionDays = 15;
 
     /// <summary>
     /// MainViewModel引用，用于模拟模式回复
@@ -1042,7 +1060,7 @@ public partial class MessageProcessor : ObservableObject
     }
 
     /// <summary>
-    /// 获取/刷新指定用户的当日计数状态（好感度当日增量、当日 duel 回合数）。
+    /// 获取/刷新指定用户的当日好感度计数状态。
     /// </summary>
     private DailyRuntimeState GetDailyRuntimeState(long userId)
     {
@@ -1050,22 +1068,15 @@ public partial class MessageProcessor : ObservableObject
         return dailyRuntimeStates.AddOrUpdate(userId,
             _ =>
             {
-                Log.InfoFormat("[Duel] GetDailyRuntimeState 创建新用户 {0} 的状态（日期: {1}）", userId, today);
+                Log.InfoFormat("[DailyRuntime] 创建用户 {0} 的每日状态（日期: {1}）", userId, today);
                 return new DailyRuntimeState { Date = today };
             },
             (_, existing) =>
             {
                 if (existing.Date != today)
                 {
-                    Log.InfoFormat("[Duel] GetDailyRuntimeState 用户 {0} 日期变更（{1} -> {2}），重置 DuelTurnsToday", userId, existing.Date, today);
                     existing.Date = today;
                     existing.TrustGainToday = 0;
-                    existing.DuelTurnsToday = 0;
-                    existing.DuelD6CachedToday = null;  // 新的一天，清空D6缓存
-                }
-                else
-                {
-                    Log.InfoFormat("[Duel] GetDailyRuntimeState 用户 {0} 日期未变更，DuelTurnsToday: {1}", userId, existing.DuelTurnsToday);
                 }
                 return existing;
             });
@@ -1085,15 +1096,6 @@ public partial class MessageProcessor : ObservableObject
         double delta = Math.Min(TrustNormalIncrement, available);
         userTrust.AddOrUpdate(userId, delta, (_, current) => current + delta);
         runtime.TrustGainToday += delta;
-    }
-
-    /// <summary>
-    /// 娱乐功能（duel）扣减好感度，不受上限限制。
-    /// </summary>
-    private void ApplyDuelPenalty(long userId)
-    {
-        if (userId <= 0) return;
-        userTrust.AddOrUpdate(userId, -TrustDuelPenalty, (_, current) => current - TrustDuelPenalty);
     }
 
     /// <summary>
@@ -1129,151 +1131,21 @@ public partial class MessageProcessor : ObservableObject
         return null;
     }
 
-    /// <summary>
-    /// 计算用户当日可用的 duel 回合数。
-    /// <summary>
-    /// 计算用户当日可用的 duel 回合数（带缓存）。
-    /// 公式：D3 + lg(|好感度|) - 1，最小为 0
-    /// 对于 -1 ~ 1 的好感度，统一视为 0（跳过计算）
-    /// 对于 < -1 的好感度，使用 -lg(|好感度|)（负数对数为负）
-    /// 注：仅缓存 D3 值，好感度变化时上限会动态变化
-    /// </summary>
-    private int GetDuelDailyTurnLimit(long userId)
+    /// <summary>读取本体持久化的用户信任度，未记录用户视为 0。</summary>
+    public double GetUserTrust(long userId)
     {
-        var runtime = GetDailyRuntimeState(userId);
-        
-        // 获取缓存的 D6 值，如果不存在则掷骰并缓存
-        int _2d6Roll;
-        if (runtime.DuelD6CachedToday.HasValue)
-        {
-            _2d6Roll = runtime.DuelD6CachedToday.Value;
-        }
-        else
-        {
-            // 首次调用时掷 D6（1-6）并缓存
-            _2d6Roll = GlobalRandom.Next(1, 7)+GlobalRandom.Next(1, 7); // 2D6
-            runtime.DuelD6CachedToday = _2d6Roll;
-        }
-        
-        // 获取用户好感度
-        var userTrustValue = userTrust.TryGetValue(userId, out var trust) ? trust : 0;
-        
-        // 计算对数，处理不同好感度范围
-        double logTrust;
-        if (userTrustValue >= -1 && userTrustValue <= 1)
-        {
-            // -1 ~ 1 之间统一视为 0，跳过计算
-            logTrust = 0;
-        }
-        else if (userTrustValue < -1)
-        {
-            // < -1 的情况：使用 -lg(|好感度|)，结果为负数
-            logTrust = -Math.Log10(Math.Abs(userTrustValue));
-        }
-        else
-        {
-            // > 1 的情况：使用 lg(好感度)
-            logTrust = Math.Log10(userTrustValue);
-        }
-        
-        // 计算最终值：2D6 - 2 + 3×lg(好感度)，最小为 0
-        int limit = Math.Max(0, (int)(_2d6Roll - 2 + 3 * logTrust));
-        
-        return limit;
+        if (userId <= 0) return 0;
+        return userTrust.TryGetValue(userId, out var trust) && double.IsFinite(trust) ? trust : 0;
     }
 
-    /// <summary>
-    /// 检查当日 duel 回合是否超限。
-    /// </summary>
-    private bool IsDuelTurnLimited(long userId)
+    /// <summary>按增量调整并立即持久化用户信任度，供受信任的 Mod 效果复用本体数据。</summary>
+    public double AdjustUserTrust(long userId, double delta)
     {
-        var duelLimit = GetDuelDailyTurnLimit(userId);
-        var runtime = GetDailyRuntimeState(userId);
-        bool limited = runtime.DuelTurnsToday >= duelLimit;
-        Log.InfoFormat("[Duel] IsDuelTurnLimited 用户 {0}: DuelTurnsToday={1}, duelLimit={2}, limited={3}", userId, runtime.DuelTurnsToday, duelLimit, limited);
-        return limited;
-    }
-
-    /// <summary>
-    /// 获取用户当日剩余的 duel 回合数。
-    /// </summary>
-    private int GetDuelTurnsRemaining(long userId)
-    {
-        var duelLimit = GetDuelDailyTurnLimit(userId);
-        var runtime = GetDailyRuntimeState(userId);
-        return Math.Max(0, duelLimit - runtime.DuelTurnsToday);
-    }
-
-    /// <summary>
-    /// 记录一次 duel 回合。
-    /// </summary>
-    private void IncrementDuelTurn(long userId)
-    {
-        var runtime = GetDailyRuntimeState(userId);
-        runtime.DuelTurnsToday++;
-        Log.InfoFormat("[Duel] IncrementDuelTurn 用户 {0}: DuelTurnsToday 增加为 {1}", userId, runtime.DuelTurnsToday);
-
-        // 检查是否已经达到或超过每日回合限制，如果达到则立即强制终止游戏
-        var duelLimit = GetDuelDailyTurnLimit(userId);
-        if (runtime.DuelTurnsToday >= duelLimit)
-        {
-            Log.InfoFormat("[Duel] 用户 {0} 达到回合限制（已用: {1}, 限制: {2}），立即强制终止游戏", userId, runtime.DuelTurnsToday, duelLimit);
-            
-            // 查找并强制终止游戏
-            string userIdStr = userId.ToString();
-            var gameState = LoadUserGameState(userIdStr);
-            if (gameState != null)
-            {
-                gameState.IsGameOver = true;
-                Log.InfoFormat("[Duel] 游戏已标记为结束");
-            }
-        }
-    }
-
-    /// <summary>
-    /// 公共方法：记录一次 duel 回合（用于外部调用，如卡牌决策处理）。
-    /// </summary>
-    public void RecordDuelTurn(long userId)
-    {
-        IncrementDuelTurn(userId);
-    }
-
-    /// <summary>
-    /// 生成详细的 duel 回合限制信息（用于显示计算过程）。
-    /// </summary>
-    private string GetDuelLimitDetailedInfo(long userId)
-    {
-        var userTrustValue = userTrust.TryGetValue(userId, out var trust) ? trust : 0;
-        var runtime = GetDailyRuntimeState(userId);
-        var duelLimit = GetDuelDailyTurnLimit(userId);
-        var turnsRemaining = GetDuelTurnsRemaining(userId);
-        
-        Log.InfoFormat("[Duel] GetDuelLimitDetailedInfo 用户 {0}: runtime.DuelTurnsToday={1}, duelLimit={2}", userId, runtime.DuelTurnsToday, duelLimit);
-        
-        // 计算对数部分（用于展示）
-        double logTrust;
-        string logDescription;
-        if (userTrustValue >= -1 && userTrustValue <= 1)
-        {
-            logTrust = 0;
-            logDescription = "（范围 -1~1，统一为 0）";
-        }
-        else if (userTrustValue < -1)
-        {
-            logTrust = -Math.Log10(Math.Abs(userTrustValue));
-            logDescription = $"（负数对数: -lg|{userTrustValue:F1}| = {logTrust:F2}）";
-        }
-        else
-        {
-            logTrust = Math.Log10(userTrustValue);
-            logDescription = $"（正数对数: lg({userTrustValue:F1}) = {logTrust:F2}）";
-        }
-        
-        // 构建详细信息
-        var info = new System.Text.StringBuilder();
-        info.AppendLine($"每日上限: 2D6 - 2 + 3×lg(好感) = {duelLimit}");
-        info.Append($"已使用: {runtime.DuelTurnsToday}/{duelLimit}");
-        return info.ToString();
+        if (userId <= 0) throw new ArgumentOutOfRangeException(nameof(userId));
+        if (!double.IsFinite(delta)) throw new ArgumentOutOfRangeException(nameof(delta));
+        var updated = userTrust.AddOrUpdate(userId, delta, (_, current) => current + delta);
+        SaveUserData(userId);
+        return updated;
     }
 
     /// <summary>
@@ -1743,6 +1615,18 @@ public partial class MessageProcessor : ObservableObject
         return null;
     }
 
+    private int GetUserDefaultDice(long userId)
+    {
+        return userDefaultDiceSides.TryGetValue(userId, out var sides) && sides is > 0 and < 10000
+            ? sides
+            : 100;
+    }
+
+    private bool IsTeamCallPrivateEnabled(long userId)
+    {
+        return !teamCallPrivateEnabled.TryGetValue(userId, out var enabled) || enabled;
+    }
+
     private bool TrySetDefaultCheckMode(long userId, string mode)
     {
         var normalized = mode?.Trim().ToLowerInvariant();
@@ -1781,7 +1665,10 @@ public partial class MessageProcessor : ObservableObject
         userTrust.Clear();
         personAuth.Clear();
         defaultCheckModes.Clear();
+        userCheckRules.Clear();
         wwAddDiceThresholds.Clear();
+        userDefaultDiceSides.Clear();
+        teamCallPrivateEnabled.Clear();
         cardNameTemplates.Clear();
         cardNameSwitches.Clear();
 
@@ -1826,6 +1713,11 @@ public partial class MessageProcessor : ObservableObject
                 }
 
                 // 加载默认检定模式
+                if (record.CheckRules != null)
+                {
+                    userCheckRules[userId] = new ConcurrentDictionary<string, string>(record.CheckRules);
+                }
+
                 if (!string.IsNullOrWhiteSpace(record.DefaultCheckMode))
                 {
                     var mode = record.DefaultCheckMode.Trim().ToLowerInvariant();
@@ -1840,6 +1732,11 @@ public partial class MessageProcessor : ObservableObject
                 {
                     wwAddDiceThresholds[userId] = record.WwAddDiceThreshold.Value;
                 }
+
+                userDefaultDiceSides[userId] = record.DefaultDice is > 0 and < 10000
+                    ? record.DefaultDice
+                    : 100;
+                teamCallPrivateEnabled[userId] = record.TeamCallPrivateEnabled;
 
                 // 加载自定义指令
                 if (record.CustomCommands != null && record.CustomCommands.Count > 0)
@@ -1901,7 +1798,10 @@ public partial class MessageProcessor : ObservableObject
             foreach (var id in userTrust.Keys) set.Add(id);
             foreach (var id in personAuth.Keys) set.Add(id);
             foreach (var id in defaultCheckModes.Keys) set.Add(id);
+            foreach (var id in userCheckRules.Keys) set.Add(id);
             foreach (var id in wwAddDiceThresholds.Keys) set.Add(id);
+            foreach (var id in userDefaultDiceSides.Keys) set.Add(id);
+            foreach (var id in teamCallPrivateEnabled.Keys) set.Add(id);
             foreach (var id in userCustomCommands.Keys) set.Add(id);
             foreach (var id in cardNameTemplates.Keys) set.Add(id);
             // 从 cardNameSwitches 中提取所有用户ID（格式："UserId_GroupId"）
@@ -1925,6 +1825,8 @@ public partial class MessageProcessor : ObservableObject
             bool hasAuthLevel = personAuth.TryGetValue(userId, out var authLevel);
             defaultCheckModes.TryGetValue(userId, out var defaultMode);
             bool hasWwAddDiceThreshold = wwAddDiceThresholds.TryGetValue(userId, out var wwAddDiceThreshold);
+            int defaultDice = GetUserDefaultDice(userId);
+            bool callPrivateEnabled = IsTeamCallPrivateEnabled(userId);
             userCustomCommands.TryGetValue(userId, out var customCommands);
             cardNameTemplates.TryGetValue(userId, out var cardNameTemplate);
 
@@ -1947,6 +1849,9 @@ public partial class MessageProcessor : ObservableObject
                 Trust = trustValue,
                 AuthLevel = hasAuthLevel ? (int?)authLevel : null,
                 DefaultCheckMode = string.IsNullOrWhiteSpace(defaultMode) ? null : defaultMode,
+                CheckRules = userCheckRules.TryGetValue(userId, out var rules) ? rules.ToDictionary(k => k.Key, v => v.Value) : null,
+                DefaultDice = defaultDice,
+                TeamCallPrivateEnabled = callPrivateEnabled,
                 WwAddDiceThreshold = hasWwAddDiceThreshold ? wwAddDiceThreshold : null,
                 CustomCommands = customCommands != null && customCommands.Count > 0 ? new Dictionary<string, string>(customCommands) : null,
                 CardNameTemplate = string.IsNullOrWhiteSpace(cardNameTemplate) ? null : cardNameTemplate.Trim(),
@@ -2321,21 +2226,6 @@ public partial class MessageProcessor : ObservableObject
                     Log.InfoFormat("[MessageProcessor] 未找到保存的URL配置，使用默认值");
                 }
 
-                // 从基础设置加载游戏状态保留天数（可选配置项）
-                string retentionDaysSetting = GlobalFeedbackMessages.GetBasicSetting("GameStateRetentionDays");
-                if (!string.IsNullOrWhiteSpace(retentionDaysSetting) &&
-                    int.TryParse(retentionDaysSetting, out int parsedDays) && parsedDays > 0)
-                {
-                    gameStateRetentionDays = parsedDays;
-                    Log.InfoFormat($"[MessageProcessor] 已从基础设置加载游戏状态保留天数: {gameStateRetentionDays} 天");
-                }
-                else
-                {
-                    Log.InfoFormat($"[MessageProcessor] 使用默认游戏状态保留天数: {gameStateRetentionDays} 天");
-                }
-
-                // 注：duel 每日回合上限现在动态计算：D3 + lg(好感度) - 1，最小为 0
-
                 // 加载数据
                 Log.InfoFormat("[MessageProcessor] 开始加载所有数据...");
                 try
@@ -2375,22 +2265,11 @@ public partial class MessageProcessor : ObservableObject
                     throw;
                 }
 
-                // 加载游戏状态到内存
-                Log.InfoFormat("[MessageProcessor] 开始加载游戏状态到内存...");
-                try
-                {
-                    LoadAllGameStates();
-                    Log.InfoFormat("[MessageProcessor] LoadAllGameStates完成");
-                }
-                catch (Exception ex)
-                {
-                    Log.Error($"[MessageProcessor] LoadAllGameStates失败: {ex.Message}");
-                    Log.Error($"[MessageProcessor] 堆栈跟踪: {ex.StackTrace}");
-                    throw;
-                }
-                
                 // 加载完成后验证重要配置
-                WSconnection.wsUrl = GlobalFeedbackMessages.GetBasicSetting("Url");
+                if (!MDiceV2.Core.Program.HasCommandLineWebSocketUrl)
+                {
+                    WSconnection.wsUrl = GlobalFeedbackMessages.GetBasicSetting("Url");
+                }
                 Log.InfoFormat($"[MessageProcessor] 当前WebSocket URL配置: {WSconnection.wsUrl}");
                 
                 var masterGroup = GlobalFeedbackMessages.GetBasicSetting("MasterGroup");
@@ -2399,9 +2278,13 @@ public partial class MessageProcessor : ObservableObject
                 Log.InfoFormat("[MessageProcessor] 所有数据加载完成");
 
                 // 在所有设置加载完成后自动建立WebSocket连接
-                if (ServiceBootstrapper.IsMessageTestMode)
+                if (ServiceBootstrapper.IsMessageTestMode || MDiceV2.Core.Program.IsHeadlessMode)
                 {
-                    Log.InfoFormat("[MessageProcessor] Message test mode: skip automatic WebSocket connection.");
+                    Log.InfoFormat("[MessageProcessor] Message test/headless mode: skip automatic WebSocket connection.");
+                }
+                else if (BotFrameworkRuntimeManager.HasActiveInstalledRuntime())
+                {
+                    Log.InfoFormat("[MessageProcessor] 已配置托管 QQ 框架，等待 Main Panel 在账号登录后建立 WebSocket 连接。");
                 }
                 else if (MessageDistribution?.WSconnection != null)
                 {
@@ -2513,7 +2396,10 @@ public partial class MessageProcessor : ObservableObject
 
     private void InvalidateCommandHandlers(string reason)
     {
-        commandHandlers = null;
+        lock (_commandHandlersSync)
+        {
+            commandHandlers = null;
+        }
         Log.InfoFormat("[CommandInit] commandHandlers invalidated reason={0} bridgeId={1}", reason, GetObjectId(_modEventBridge));
     }
 
@@ -2771,7 +2657,12 @@ public partial class MessageProcessor : ObservableObject
         if (MessageDistribution?.WSconnection != null)
         {
             string urlToUse;
-            if (!string.IsNullOrEmpty(configuredUrl))
+            if (MDiceV2.Core.Program.HasCommandLineWebSocketUrl)
+            {
+                urlToUse = WSconnection.wsUrl;
+                Log.InfoFormat($"[MessageProcessor] 使用命令行指定的 URL: {urlToUse}");
+            }
+            else if (!string.IsNullOrEmpty(configuredUrl))
             {
                 urlToUse = configuredUrl;
                 Log.InfoFormat($"[MessageProcessor] 使用配置的 URL: {configuredUrl}");
@@ -3176,6 +3067,7 @@ public partial class MessageProcessor : ObservableObject
         }
 
         Console.WriteLine("Disposing MessageProcessor resources...");
+        _teamCallPrivateCancellation.Cancel();
         try
         {
             if (!skipSave)
@@ -3189,9 +3081,6 @@ public partial class MessageProcessor : ObservableObject
                 Log.InfoFormat("[MessageProcessor] 同步模式已启用，跳过保存数据");
             }
 
-            DataIO?.Close();
-            RuleDataIO?.Close();
-            _trpgLogManager?.Dispose();
         }
         catch (Exception ex)
         {
@@ -3199,6 +3088,35 @@ public partial class MessageProcessor : ObservableObject
         }
         finally
         {
+            // Closing the database must not depend on every save step succeeding. In
+            // particular, the final WAL checkpoint lives in DataIO.Close().
+            try
+            {
+                DataIO?.Close();
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Error closing main database: {ex.Message}");
+            }
+
+            try
+            {
+                RuleDataIO?.Close();
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Error closing rule database: {ex.Message}");
+            }
+
+            try
+            {
+                _trpgLogManager?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Error disposing TRPG log manager: {ex.Message}");
+            }
+
             _isDisposed = true;
         }
     }
@@ -3246,9 +3164,6 @@ public partial class MessageProcessor : ObservableObject
 
             Log.InfoFormat("[MessageProcessor] 保存冷却时间追踪...");
             SaveCooldownTracking();
-
-             Log.InfoFormat("[MessageProcessor] 保存游戏状态到数据库...");
-             SaveAllGameStates();
 
              Log.InfoFormat("[MessageProcessor] 保存反馈消息模板...");
              GlobalFeedbackMessages.SaveTemplates();
@@ -3319,8 +3234,7 @@ public partial class MessageProcessor : ObservableObject
         }
         
         // 获取用户的默认骰子面数（稍后在需要时使用）
-        int userDefaultDice = 100;
-        // TODO: 从用户数据中获取DefaultDice，暂时使用硬编码默认值
+        int userDefaultDice = GetUserDefaultDice(msg.UserId);
         
         // 执行掷骰
         string rollResulttText = string.Empty;
@@ -3958,6 +3872,12 @@ public partial class MessageProcessor : ObservableObject
         else
         {
             effectiveRulebook = "default_rule";
+        }
+
+        if (effectiveRulebook.Equals("duel", StringComparison.OrdinalIgnoreCase))
+        {
+            Reply("本体旧 Duel 规则已移除，请使用便携 Mod 的 .duel rule。", msg);
+            return;
         }
 
         string? value = RuleDataIO.ReadData(effectiveRulebook, key);

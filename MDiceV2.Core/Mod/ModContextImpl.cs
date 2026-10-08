@@ -366,6 +366,38 @@ public class ModContextImpl : IModContext
         }
     }
 
+    public double GetUserTrust(long userId)
+    {
+        try
+        {
+            return _messageDistribution.MessageProcessor?.GetUserTrust(userId) ?? 0;
+        }
+        catch (Exception ex)
+        {
+            Log(LogLevel.Error, $"Failed to get user trust for {userId}: {ex.Message}");
+            return 0;
+        }
+    }
+
+    public double AdjustUserTrust(long userId, double delta)
+    {
+        try
+        {
+            var processor = _messageDistribution.MessageProcessor;
+            if (processor == null)
+            {
+                Log(LogLevel.Warn, "MessageProcessor is null, cannot adjust user trust");
+                return 0;
+            }
+            return processor.AdjustUserTrust(userId, delta);
+        }
+        catch (Exception ex)
+        {
+            Log(LogLevel.Error, $"Failed to adjust user trust for {userId}: {ex.Message}");
+            return GetUserTrust(userId);
+        }
+    }
+
     public bool IsGroupAdministrator(long groupId, long userId)
     {
         try

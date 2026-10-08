@@ -130,6 +130,12 @@ public interface IModContext
     /// </remarks>
     int? GetUserAuthLevel(long userId);
 
+    /// <summary>读取本体持久化的用户信任度。</summary>
+    double GetUserTrust(long userId) => 0;
+
+    /// <summary>按增量调整本体持久化的用户信任度，并返回调整后的值。</summary>
+    double AdjustUserTrust(long userId, double delta) => GetUserTrust(userId);
+
     /// <summary>
     /// 检查Bot是否在当前会话（群聊/私聊）中启用
     /// </summary>

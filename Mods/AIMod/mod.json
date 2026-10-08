@@ -1,5 +1,6 @@
 {
   "id": "com.humulus.aimod",
+  "commandName": "aimod",
   "name": "AI Mod",
   "version": "2.0.0",
   "author": "Humulus",

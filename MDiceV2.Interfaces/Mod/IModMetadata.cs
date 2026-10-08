@@ -7,6 +7,12 @@ namespace MDiceV2.Interfaces.Mod;
 /// </summary>
 public interface IModMetadata
 {
+    /// <summary>用于 .mod 管理命令的唯一短名。旧 Mod 未声明时由宿主回退到 Id。</summary>
+    string CommandName => Id;
+
+    /// <summary>包类型。普通目录 Mod 为 standard，便携包为 portable。</summary>
+    string PackageType => "standard";
+
     /// <summary>
     /// Mod唯一标识符
     /// 格式建议：com.author.modname 或 author.modname
@@ -107,6 +113,8 @@ public interface IModMetadata
 /// </summary>
 public class ModMetadata : IModMetadata
 {
+    public string CommandName { get; init; } = string.Empty;
+    public string PackageType { get; init; } = "standard";
     public required string Id { get; init; }
     public required string Name { get; init; }
     public required string Version { get; init; }

@@ -11,6 +11,7 @@ using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Data.Converters;
@@ -54,6 +55,14 @@ namespace MDiceV2.Core.UI.ViewModels
         private ModManagerViewModel? _modManagerViewModel; // 缓存ModManagerViewModel实例，避免重复加载Mod
         private ScrollViewer? _logScrollViewer;
         private bool _wasAtBottom = true;
+        private readonly BotFrameworkRuntimeManager _botFrameworkRuntimeManager = new();
+        private CancellationTokenSource? _botFrameworkConnectionCts;
+        private Task? _botFrameworkConnectionTask;
+        private ManagedBotFramework? _activeManagedFramework;
+        private Action<bool>? _setBotFrameworkPanelExpanded;
+        private bool _managedFrameworkOwnsConnection;
+        private Border? _settingsWebSocketConnectFrame;
+        private Button? _settingsWebSocketConnectButton;
         
         // 同步相关字段
         private SyncConfigManager? _syncConfigManager;
@@ -244,6 +253,7 @@ namespace MDiceV2.Core.UI.ViewModels
                 LogSender.Warn($"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [MainViewModel] 自动启动本地 gRPC 服务器失败: {ex.Message}");
             }
             
+            IsBotFrameworkAutoConnect = _botFrameworkRuntimeManager.IsAutoConnectEnabled();
             InitializeViews();
             SelectedIndex = 0;
             UpdateCurrentView();
@@ -328,6 +338,7 @@ namespace MDiceV2.Core.UI.ViewModels
                     MDiceV2.Models.MessageProcessor.EnsureInitialized();
                     // MessageProcessor初始化后，再尝试一次加载URL
                     LoadWsUrlFromDatabase();
+                    StartActiveBotFrameworkConnection();
                 });
             }
             else
@@ -337,6 +348,7 @@ namespace MDiceV2.Core.UI.ViewModels
                     MDiceV2.Models.MessageProcessor.EnsureInitialized();
                     // MessageProcessor初始化后，再尝试一次加载URL
                     LoadWsUrlFromDatabase();
+                    StartActiveBotFrameworkConnection();
                 });
             }
         }
@@ -664,8 +676,12 @@ namespace MDiceV2.Core.UI.ViewModels
             var grid = new Grid
             {
                 HorizontalAlignment = HorizontalAlignment.Stretch,
-                VerticalAlignment = VerticalAlignment.Stretch
+                VerticalAlignment = VerticalAlignment.Stretch,
+                Margin = new Thickness(24, 28)
             };
+            var frameworkColumn = new ColumnDefinition { Width = new GridLength(280) };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(frameworkColumn);
 
             var mainStack = new StackPanel
             {
@@ -995,13 +1011,945 @@ namespace MDiceV2.Core.UI.ViewModels
                 BorderBrush = Brushes.Gray,
                 BorderThickness = new Thickness(1),
                 Padding = new Thickness(32),
+                MaxWidth = 620,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 20, 0),
                 Child = mainStack
             };
 
+            Grid.SetColumn(card, 0);
             grid.Children.Add(card);
+
+            var frameworkPanel = CreateBotFrameworkPanel(frameworkColumn);
+            Grid.SetColumn(frameworkPanel, 1);
+            grid.Children.Add(frameworkPanel);
+
             return grid;
+        }
+
+        private Control CreateBotFrameworkPanel(ColumnDefinition frameworkColumn)
+        {
+            const double collapsedWidth = 280;
+            const double expandedWidth = 440;
+            var railBackground = new SolidColorBrush(Color.Parse("#101522"));
+            var surface = new SolidColorBrush(Color.Parse("#171D2B"));
+            var raisedSurface = new SolidColorBrush(Color.Parse("#1E2534"));
+            var divider = new SolidColorBrush(Color.Parse("#30384B"));
+            var primaryText = new SolidColorBrush(Color.Parse("#E7ECF5"));
+            var secondaryText = new SolidColorBrush(Color.Parse("#98A3B9"));
+            var snowAccent = new SolidColorBrush(Color.Parse("#55D6BE"));
+            var napCatAccent = new SolidColorBrush(Color.Parse("#A8A0F2"));
+            var waitingAccent = new SolidColorBrush(Color.Parse("#E8B45A"));
+
+            IsSnowLumaInstalled = _botFrameworkRuntimeManager.IsInstalled(ManagedBotFramework.SnowLuma);
+            IsNapCatInstalled = _botFrameworkRuntimeManager.IsInstalled(ManagedBotFramework.NapCat);
+            var configuredSnowLumaAccount = _botFrameworkRuntimeManager.GetSelectedSnowLumaAccount();
+            SnowLumaStatus = IsSnowLumaInstalled
+                ? configuredSnowLumaAccount is null
+                    ? "已安装 · 请输入机器人账号"
+                    : $"已配置 QQ {configuredSnowLumaAccount}"
+                : "未安装";
+            NapCatStatus = IsNapCatInstalled ? "已安装 · 可启动连接" : "未安装";
+
+            var snowAccountInput = new TextBox
+            {
+                Text = configuredSnowLumaAccount ?? string.Empty,
+                Watermark = "输入机器人 QQ 号",
+                Height = 38,
+                FontSize = 13
+            };
+            var detectedAccountLabel = new TextBlock
+            {
+                Text = "已发现的账号",
+                FontSize = 11,
+                Foreground = secondaryText,
+                IsVisible = false
+            };
+            var snowAccounts = new ComboBox
+            {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                MinHeight = 36,
+                PlaceholderText = "选择已发现的 QQ",
+                IsVisible = false
+            };
+            var snowAccountSelector = new StackPanel { Spacing = 8, IsVisible = IsSnowLumaInstalled };
+            snowAccountSelector.Children.Add(new TextBlock
+            {
+                Text = "机器人账号",
+                FontSize = 11,
+                Foreground = secondaryText
+            });
+            snowAccountSelector.Children.Add(snowAccountInput);
+            snowAccountSelector.Children.Add(detectedAccountLabel);
+            snowAccountSelector.Children.Add(snowAccounts);
+            snowAccounts.SelectionChanged += (_, _) =>
+            {
+                if (snowAccounts.SelectedItem is ComboBoxItem { Tag: string userId })
+                {
+                    snowAccountInput.Text = userId;
+                }
+            };
+
+            async Task SelectSnowLumaAccountAsync()
+            {
+                var userId = snowAccountInput.Text?.Trim() ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(userId))
+                {
+                    SnowLumaStatus = "请输入机器人 QQ 号";
+                    return;
+                }
+
+                try
+                {
+                    if (!await EnsureSnowLumaConsentAsync())
+                    {
+                        SnowLumaStatus = "需要接受 SnowLuma 协议后才能启动";
+                        return;
+                    }
+
+                    IsBotFrameworkBusy = true;
+                    SnowLumaStatus = $"正在配置 QQ {userId}…";
+                    await _botFrameworkRuntimeManager.SelectSnowLumaAccountAsync(userId);
+                    SnowLumaStatus = $"QQ {userId} 已选择，等待登录…";
+                    StartBotFrameworkConnection(ManagedBotFramework.SnowLuma);
+                }
+                catch (Exception ex)
+                {
+                    SnowLumaStatus = $"账号配置失败：{ex.Message}";
+                    LogSender.Error($"[BotFramework] SnowLuma 账号配置失败: {ex}");
+                }
+                finally
+                {
+                    IsBotFrameworkBusy = false;
+                }
+            }
+
+            string[] knownSnowLumaAccountIds = Array.Empty<string>();
+            void RefreshSnowLumaAccounts()
+            {
+                if (!IsSnowLumaInstalled)
+                {
+                    return;
+                }
+
+                var selected = snowAccountInput.Text?.Trim()
+                    ?? _botFrameworkRuntimeManager.GetSelectedSnowLumaAccount();
+                var accounts = _botFrameworkRuntimeManager.GetDetectedSnowLumaAccounts();
+                var accountIds = accounts.Select(account => account.UserId).ToArray();
+                if (!knownSnowLumaAccountIds.SequenceEqual(accountIds, StringComparer.Ordinal))
+                {
+                    knownSnowLumaAccountIds = accountIds;
+                    snowAccounts.ItemsSource = accounts
+                        .Select(account => new ComboBoxItem { Content = account.DisplayName, Tag = account.UserId })
+                        .ToArray();
+                    snowAccounts.SelectedItem = (snowAccounts.ItemsSource as IEnumerable<ComboBoxItem>)?
+                        .FirstOrDefault(item => string.Equals(item.Tag as string, selected, StringComparison.Ordinal));
+                }
+                snowAccounts.IsVisible = accounts.Count > 0;
+                detectedAccountLabel.IsVisible = accounts.Count > 0;
+            }
+
+            Action<ManagedBotFramework>? toggleSection = null;
+            (Border Shell, Border Details, TextBlock Chevron) CreateFrameworkSection(
+                string title,
+                string description,
+                ManagedBotFramework framework,
+                Func<string> getStatus,
+                Func<bool> getInstalled,
+                IBrush accent,
+                Control? extraControl = null,
+                Func<Task>? primaryAction = null)
+            {
+                var stateDot = new TextBlock
+                {
+                    Text = "●",
+                    FontSize = 12,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                var compactState = new TextBlock
+                {
+                    FontSize = 11,
+                    FontWeight = FontWeight.SemiBold,
+                    Foreground = secondaryText,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                var badgeText = new TextBlock
+                {
+                    FontSize = 10,
+                    FontWeight = FontWeight.SemiBold,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                var badge = new Border
+                {
+                    CornerRadius = new CornerRadius(10),
+                    Padding = new Thickness(9, 4),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Child = badgeText
+                };
+                var chevron = new TextBlock
+                {
+                    Text = "⌄",
+                    FontSize = 17,
+                    Foreground = secondaryText,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    HorizontalAlignment = HorizontalAlignment.Center
+                };
+                var titleAndState = new StackPanel
+                {
+                    Spacing = 2,
+                    Margin = new Thickness(14, 0, 0, 0)
+                };
+                titleAndState.Children.Add(new TextBlock
+                {
+                    Text = title,
+                    FontSize = 16,
+                    FontWeight = FontWeight.Bold,
+                    Foreground = primaryText
+                });
+                var stateLine = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 7 };
+                stateLine.Children.Add(stateDot);
+                stateLine.Children.Add(compactState);
+                titleAndState.Children.Add(stateLine);
+
+                var headerGrid = new Grid();
+                headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(4) });
+                headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(28) });
+                var accentBar = new Border
+                {
+                    Width = 3,
+                    Height = 34,
+                    CornerRadius = new CornerRadius(2),
+                    Background = accent,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                Grid.SetColumn(accentBar, 0);
+                Grid.SetColumn(titleAndState, 1);
+                Grid.SetColumn(badge, 2);
+                Grid.SetColumn(chevron, 3);
+                headerGrid.Children.Add(accentBar);
+                headerGrid.Children.Add(titleAndState);
+                headerGrid.Children.Add(badge);
+                headerGrid.Children.Add(chevron);
+
+                var headerButton = new Button
+                {
+                    Height = 72,
+                    Padding = new Thickness(14, 0, 10, 0),
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                    Background = Brushes.Transparent,
+                    BorderThickness = new Thickness(0),
+                    Content = headerGrid
+                };
+                headerButton.Click += (_, _) => toggleSection?.Invoke(framework);
+
+                var statusText = new TextBlock
+                {
+                    Text = getStatus(),
+                    FontSize = 12,
+                    Foreground = new SolidColorBrush(Color.Parse("#CBD3E3")),
+                    TextWrapping = TextWrapping.Wrap
+                };
+                var detailsBody = new StackPanel { Spacing = 12 };
+                detailsBody.Children.Add(new TextBlock
+                {
+                    Text = description,
+                    FontSize = 11,
+                    Foreground = secondaryText,
+                    TextWrapping = TextWrapping.Wrap
+                });
+                detailsBody.Children.Add(new Border
+                {
+                    Background = railBackground,
+                    CornerRadius = new CornerRadius(7),
+                    Padding = new Thickness(12, 9),
+                    Child = statusText
+                });
+                if (extraControl != null)
+                {
+                    detailsBody.Children.Add(extraControl);
+                }
+                var autoConnect = new CheckBox
+                {
+                    Content = "启动 MDice 时自动连接",
+                    IsChecked = IsBotFrameworkAutoConnect,
+                    FontSize = 11,
+                    Foreground = new SolidColorBrush(Color.Parse("#CBD3E3"))
+                };
+                autoConnect.Bind(
+                    ToggleButton.IsCheckedProperty,
+                    new Avalonia.Data.Binding(nameof(IsBotFrameworkAutoConnect))
+                    {
+                        Source = this,
+                        Mode = Avalonia.Data.BindingMode.TwoWay
+                    });
+                detailsBody.Children.Add(autoConnect);
+
+                var download = new Button
+                {
+                    Content = $"安装 {title}",
+                    Height = 38,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    HorizontalContentAlignment = HorizontalAlignment.Center,
+                    Background = accent,
+                    Foreground = railBackground,
+                    IsVisible = !getInstalled()
+                };
+                download.Click += async (_, _) => await ConfirmDownloadBotFrameworkAsync(framework);
+                var action = new Button
+                {
+                    Content = framework == ManagedBotFramework.SnowLuma ? "连接此账号" : "启动并连接",
+                    Height = 38,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    HorizontalContentAlignment = HorizontalAlignment.Center,
+                    Background = accent,
+                    Foreground = railBackground,
+                    IsVisible = getInstalled()
+                };
+                action.Click += async (_, _) =>
+                {
+                    if (primaryAction != null)
+                    {
+                        await primaryAction();
+                    }
+                    else
+                    {
+                        StartBotFrameworkConnection(framework);
+                    }
+                };
+                var disconnect = new Button
+                {
+                    Content = "解除连接",
+                    Height = 38,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    HorizontalContentAlignment = HorizontalAlignment.Center,
+                    Background = new SolidColorBrush(Color.Parse("#30202A")),
+                    BorderBrush = new SolidColorBrush(Color.Parse("#9D566E")),
+                    Foreground = new SolidColorBrush(Color.Parse("#F2B8C7")),
+                    IsVisible = false
+                };
+                disconnect.Click += async (_, _) => await DisconnectManagedFrameworkAsync(framework);
+                var update = new Button
+                {
+                    Content = "检查更新",
+                    Height = 34,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    HorizontalContentAlignment = HorizontalAlignment.Center,
+                    FontSize = 11,
+                    Background = raisedSurface,
+                    BorderBrush = divider,
+                    Foreground = new SolidColorBrush(Color.Parse("#CBD3E3")),
+                    IsVisible = getInstalled()
+                };
+                update.Click += async (_, _) => await ConfirmDownloadBotFrameworkAsync(framework);
+                detailsBody.Children.Add(action);
+                detailsBody.Children.Add(disconnect);
+                detailsBody.Children.Add(download);
+                detailsBody.Children.Add(update);
+
+                var details = new Border
+                {
+                    Padding = new Thickness(18, 8, 18, 18),
+                    MaxHeight = 0,
+                    Opacity = 0,
+                    ClipToBounds = true,
+                    IsHitTestVisible = false,
+                    Child = new ScrollViewer
+                    {
+                        MaxHeight = 390,
+                        VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                        HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                        Content = detailsBody
+                    }
+                };
+                details.Transitions = new Transitions
+                {
+                    new DoubleTransition
+                    {
+                        Property = Layoutable.MaxHeightProperty,
+                        Duration = TimeSpan.FromMilliseconds(230),
+                        Easing = new CubicEaseOut()
+                    },
+                    new DoubleTransition
+                    {
+                        Property = Visual.OpacityProperty,
+                        Duration = TimeSpan.FromMilliseconds(160)
+                    }
+                };
+                var sectionBody = new StackPanel();
+                sectionBody.Children.Add(headerButton);
+                sectionBody.Children.Add(details);
+                var shell = new Border
+                {
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    Background = surface,
+                    BorderBrush = divider,
+                    BorderThickness = new Thickness(1),
+                    CornerRadius = new CornerRadius(12),
+                    ClipToBounds = true,
+                    Child = sectionBody
+                };
+
+                void RefreshState()
+                {
+                    var installed = getInstalled();
+                    var currentStatus = getStatus();
+                    var connected = currentStatus.Contains("已连接", StringComparison.Ordinal);
+                    var working = currentStatus.Contains("连接中", StringComparison.Ordinal) ||
+                                  currentStatus.Contains("正在", StringComparison.Ordinal) ||
+                                  currentStatus.Contains("等待", StringComparison.Ordinal);
+                    compactState.Text = connected ? "已连接" : working ? "连接中" : installed ? "待机" : "未安装";
+                    stateDot.Foreground = connected ? snowAccent : working ? waitingAccent : installed ? accent : secondaryText;
+                    statusText.Text = currentStatus;
+                    badgeText.Text = installed ? "已安装" : "未安装";
+                    badgeText.Foreground = installed ? accent : secondaryText;
+                    badge.Background = new SolidColorBrush(Color.Parse(installed ? "#192F33" : "#252B39"));
+                    download.IsVisible = !installed;
+                    var frameworkActive = _activeManagedFramework == framework;
+                    action.IsVisible = installed && !frameworkActive;
+                    disconnect.IsVisible = installed && frameworkActive;
+                    update.IsVisible = installed;
+                    if (extraControl != null)
+                    {
+                        extraControl.IsVisible = installed;
+                    }
+                }
+                RefreshState();
+                PropertyChanged += (_, args) =>
+                {
+                    if (args.PropertyName is nameof(SnowLumaStatus) or nameof(NapCatStatus) or
+                        nameof(IsSnowLumaInstalled) or nameof(IsNapCatInstalled))
+                    {
+                        RefreshState();
+                    }
+                };
+                return (shell, details, chevron);
+            }
+
+            var snowSection = CreateFrameworkSection(
+                "SnowLuma",
+                "使用当前桌面 QQ 会话提供 OneBot v11。输入机器人 QQ 后，MDice 会托管启动与重连。",
+                ManagedBotFramework.SnowLuma,
+                () => SnowLumaStatus,
+                () => IsSnowLumaInstalled,
+                snowAccent,
+                snowAccountSelector,
+                SelectSnowLumaAccountAsync);
+            var napCatSection = CreateFrameworkSection(
+                "NapCat",
+                "独立 QQ 协议运行时。启用后会停用 SnowLuma，单账号模式始终只保留一个连接。",
+                ManagedBotFramework.NapCat,
+                () => NapCatStatus,
+                () => IsNapCatInstalled,
+                napCatAccent);
+
+            ManagedBotFramework? expandedFramework = null;
+            CancellationTokenSource? layoutAnimationCts = null;
+            async Task AnimateColumnWidthAsync(double targetWidth)
+            {
+                layoutAnimationCts?.Cancel();
+                layoutAnimationCts?.Dispose();
+                layoutAnimationCts = new CancellationTokenSource();
+                var token = layoutAnimationCts.Token;
+                var startWidth = frameworkColumn.Width.Value;
+                const int frameCount = 14;
+                try
+                {
+                    for (var frame = 1; frame <= frameCount; frame++)
+                    {
+                        await Task.Delay(16, token);
+                        var progressValue = frame / (double)frameCount;
+                        var eased = 1 - Math.Pow(1 - progressValue, 3);
+                        frameworkColumn.Width = new GridLength(
+                            startWidth + ((targetWidth - startWidth) * eased));
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    // A new click continues the animation from the current width.
+                }
+            }
+
+            void SetExpanded(ManagedBotFramework? framework)
+            {
+                expandedFramework = framework;
+                var snowExpanded = framework == ManagedBotFramework.SnowLuma;
+                var napCatExpanded = framework == ManagedBotFramework.NapCat;
+                snowSection.Details.MaxHeight = snowExpanded ? 430 : 0;
+                snowSection.Details.Opacity = snowExpanded ? 1 : 0;
+                snowSection.Details.IsHitTestVisible = snowExpanded;
+                napCatSection.Details.MaxHeight = napCatExpanded ? 430 : 0;
+                napCatSection.Details.Opacity = napCatExpanded ? 1 : 0;
+                napCatSection.Details.IsHitTestVisible = napCatExpanded;
+                snowSection.Chevron.Text = snowExpanded ? "⌃" : "⌄";
+                napCatSection.Chevron.Text = napCatExpanded ? "⌃" : "⌄";
+                snowSection.Shell.BorderBrush = snowExpanded ? snowAccent : divider;
+                napCatSection.Shell.BorderBrush = napCatExpanded ? napCatAccent : divider;
+                _ = AnimateColumnWidthAsync(framework is null ? collapsedWidth : expandedWidth);
+            }
+            toggleSection = framework => SetExpanded(expandedFramework == framework ? null : framework);
+            _setBotFrameworkPanelExpanded = expanded =>
+                SetExpanded(expanded
+                    ? _botFrameworkRuntimeManager.GetActiveFramework() ?? ManagedBotFramework.SnowLuma
+                    : null);
+
+            var progress = new ProgressBar
+            {
+                Minimum = 0,
+                Maximum = 100,
+                Height = 3,
+                Value = BotFrameworkDownloadProgress,
+                IsVisible = IsBotFrameworkBusy,
+                Foreground = snowAccent,
+                Background = divider
+            };
+            PropertyChanged += (_, args) =>
+            {
+                if (args.PropertyName == nameof(BotFrameworkDownloadProgress))
+                {
+                    progress.Value = BotFrameworkDownloadProgress;
+                }
+                if (args.PropertyName == nameof(IsBotFrameworkBusy))
+                {
+                    progress.IsVisible = IsBotFrameworkBusy;
+                }
+            };
+
+            var railStack = new StackPanel
+            {
+                Spacing = 10,
+                VerticalAlignment = VerticalAlignment.Top
+            };
+            railStack.Children.Add(snowSection.Shell);
+            railStack.Children.Add(napCatSection.Shell);
+            railStack.Children.Add(progress);
+            var rail = new Border
+            {
+                Padding = new Thickness(10),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Top,
+                Background = railBackground,
+                BorderBrush = divider,
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(14),
+                Child = railStack
+            };
+
+            SetExpanded(null);
+            var accountTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+            accountTimer.Tick += (_, _) => RefreshSnowLumaAccounts();
+            accountTimer.Start();
+            RefreshSnowLumaAccounts();
+            return rail;
+        }
+
+        private async Task<bool> EnsureSnowLumaConsentAsync()
+        {
+            if (!_botFrameworkRuntimeManager.IsSnowLumaConsentRequired())
+            {
+                return true;
+            }
+
+            var owner = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+            if (owner is null)
+            {
+                return false;
+            }
+
+            SnowLumaAgreementBundle agreements;
+            try
+            {
+                agreements = _botFrameworkRuntimeManager.GetSnowLumaAgreements();
+            }
+            catch (Exception ex)
+            {
+                SnowLumaStatus = ex.Message;
+                return false;
+            }
+
+            TextBox AgreementText(string text) => new()
+            {
+                Text = text,
+                IsReadOnly = true,
+                AcceptsReturn = true,
+                TextWrapping = TextWrapping.Wrap,
+                FontSize = 12,
+                Background = new SolidColorBrush(Color.Parse("#111622")),
+                Foreground = new SolidColorBrush(Color.Parse("#CBD3E3")),
+                Padding = new Thickness(14)
+            };
+
+            var tabs = new TabControl { Height = 430 };
+            tabs.Items.Add(new TabItem { Header = "许可协议", Content = AgreementText(agreements.EulaText) });
+            tabs.Items.Add(new TabItem { Header = "隐私说明", Content = AgreementText(agreements.PrivacyText) });
+
+            var confirmation = new CheckBox
+            {
+                Content = "我已阅读并同意以上许可协议与隐私说明",
+                Foreground = new SolidColorBrush(Color.Parse("#E7ECF5"))
+            };
+            var cancel = new Button { Content = "暂不启用", MinWidth = 100 };
+            var accept = new Button
+            {
+                Content = "同意并启用 SnowLuma",
+                MinWidth = 176,
+                IsEnabled = false,
+                Background = new SolidColorBrush(Color.Parse("#8C7BFA")),
+                Foreground = Brushes.White
+            };
+            confirmation.IsCheckedChanged += (_, _) => accept.IsEnabled = confirmation.IsChecked == true;
+
+            var buttons = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Spacing = 10
+            };
+            buttons.Children.Add(cancel);
+            buttons.Children.Add(accept);
+            var content = new StackPanel { Spacing = 14 };
+            content.Children.Add(new TextBlock
+            {
+                Text = "启用 SnowLuma 前需要你的明确同意",
+                FontSize = 20,
+                FontWeight = FontWeight.Bold,
+                Foreground = new SolidColorBrush(Color.Parse("#E7ECF5"))
+            });
+            content.Children.Add(new TextBlock
+            {
+                Text = "协议内容发生变化时，MDice 会再次询问。不同意不会影响 MDice 的其他功能。",
+                FontSize = 12,
+                Foreground = new SolidColorBrush(Color.Parse("#98A3B9"))
+            });
+            content.Children.Add(tabs);
+            content.Children.Add(confirmation);
+            content.Children.Add(buttons);
+
+            var dialog = new Window
+            {
+                Title = "SnowLuma 使用协议",
+                Width = 780,
+                Height = 640,
+                CanResize = true,
+                MinWidth = 620,
+                MinHeight = 520,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Background = new SolidColorBrush(Color.Parse("#171D2B")),
+                Content = new Border { Padding = new Thickness(24), Child = content }
+            };
+            cancel.Click += (_, _) => dialog.Close(false);
+            accept.Click += (_, _) => dialog.Close(true);
+
+            if (!await dialog.ShowDialog<bool>(owner))
+            {
+                return false;
+            }
+
+            _botFrameworkRuntimeManager.RecordSnowLumaConsent(agreements.Version);
+            return true;
+        }
+
+        private async Task ConfirmDownloadBotFrameworkAsync(ManagedBotFramework framework)
+        {
+            if (IsBotFrameworkBusy)
+            {
+                return;
+            }
+
+            var displayName = framework == ManagedBotFramework.SnowLuma ? "SnowLuma" : "NapCat";
+            var repository = framework == ManagedBotFramework.SnowLuma
+                ? "SnowLuma/SnowLuma"
+                : "NapNeko/NapCatQQ";
+            var owner = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+            if (owner is null)
+            {
+                BotFrameworkStatus = "无法打开下载确认窗口";
+                return;
+            }
+
+            var cancelButton = new Button
+            {
+                Content = "取消",
+                MinWidth = 88,
+                HorizontalContentAlignment = HorizontalAlignment.Center
+            };
+            var confirmButton = new Button
+            {
+                Content = $"确认下载 {displayName}",
+                MinWidth = 150,
+                Background = new SolidColorBrush(Color.Parse("#55D6BE")),
+                Foreground = new SolidColorBrush(Color.Parse("#102025")),
+                HorizontalContentAlignment = HorizontalAlignment.Center
+            };
+            var buttonRow = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Spacing = 10
+            };
+            buttonRow.Children.Add(cancelButton);
+            buttonRow.Children.Add(confirmButton);
+
+            var body = new StackPanel { Spacing = 14 };
+            body.Children.Add(new TextBlock
+            {
+                Text = $"下载并托管 {displayName}？",
+                FontSize = 20,
+                FontWeight = FontWeight.Bold,
+                Foreground = Brushes.White
+            });
+            body.Children.Add(new TextBlock
+            {
+                Text = $"MDiceV2 将从 {repository} 的官方 GitHub Release 下载 Windows x64 完整包。\n该框架是独立第三方程序；继续即表示你同意自行阅读并遵守其许可、隐私和账号风险说明。",
+                TextWrapping = TextWrapping.Wrap,
+                Foreground = new SolidColorBrush(Color.Parse("#C8D0E6")),
+                LineHeight = 22
+            });
+            body.Children.Add(buttonRow);
+
+            var dialog = new Window
+            {
+                Title = $"安装 {displayName}",
+                Width = 520,
+                Height = 245,
+                CanResize = false,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Background = new SolidColorBrush(Color.Parse("#171D2B")),
+                Content = new Border
+                {
+                    Padding = new Thickness(24),
+                    Child = body
+                }
+            };
+            cancelButton.Click += (_, _) => dialog.Close(false);
+            confirmButton.Click += (_, _) => dialog.Close(true);
+
+            if (await dialog.ShowDialog<bool>(owner))
+            {
+                await DownloadAndConnectBotFrameworkAsync(framework);
+            }
+        }
+
+        private async Task DownloadAndConnectBotFrameworkAsync(ManagedBotFramework framework)
+        {
+            IsBotFrameworkBusy = true;
+            BotFrameworkDownloadProgress = 0;
+            var status = new Progress<string>(message => SetBotFrameworkStatus(framework, message));
+            var progress = new Progress<double>(value => BotFrameworkDownloadProgress = value);
+
+            try
+            {
+                await _botFrameworkRuntimeManager.InstallAsync(framework, status, progress);
+                if (framework == ManagedBotFramework.SnowLuma)
+                {
+                    IsSnowLumaInstalled = true;
+                    if (await EnsureSnowLumaConsentAsync())
+                    {
+                        _botFrameworkRuntimeManager.StartForAccountDiscovery(framework);
+                        SnowLumaStatus = "请输入机器人 QQ；已发现账号会自动列出";
+                    }
+                    else
+                    {
+                        SnowLumaStatus = "已安装 · 展开后同意协议以启用";
+                    }
+                }
+                else
+                {
+                    IsNapCatInstalled = true;
+                    StartBotFrameworkConnection(framework);
+                }
+            }
+            catch (Exception ex)
+            {
+                var detail = ex.InnerException is null
+                    ? ex.Message
+                    : $"{ex.Message}（{ex.InnerException.Message}）";
+                SetBotFrameworkStatus(framework, $"下载失败：{detail}");
+                LogSender.Error($"[BotFramework] {framework} 下载失败: {ex}");
+            }
+            finally
+            {
+                IsBotFrameworkBusy = false;
+            }
+        }
+
+        private void StartActiveBotFrameworkConnection()
+        {
+            var framework = _botFrameworkRuntimeManager.GetActiveFramework();
+            if (framework is null)
+            {
+                BotFrameworkStatus = "未选择托管框架";
+                return;
+            }
+
+            if (!IsBotFrameworkAutoConnect)
+            {
+                SetBotFrameworkStatus(framework.Value, "自动连接已关闭");
+                return;
+            }
+
+            if (framework == ManagedBotFramework.SnowLuma &&
+                _botFrameworkRuntimeManager.IsSnowLumaConsentRequired())
+            {
+                SnowLumaStatus = "已安装 · 展开后同意协议以启用";
+                return;
+            }
+
+            if (framework == ManagedBotFramework.SnowLuma &&
+                string.IsNullOrWhiteSpace(_botFrameworkRuntimeManager.GetSelectedSnowLumaAccount()))
+            {
+                _botFrameworkRuntimeManager.StartForAccountDiscovery(framework.Value);
+                SnowLumaStatus = "请输入机器人 QQ 后连接";
+                return;
+            }
+
+            StartBotFrameworkConnection(framework.Value);
+        }
+
+        private void SetBotFrameworkStatus(ManagedBotFramework framework, string message)
+        {
+            BotFrameworkStatus = message;
+            if (framework == ManagedBotFramework.SnowLuma) SnowLumaStatus = message;
+            else NapCatStatus = message;
+        }
+
+        partial void OnIsBotFrameworkAutoConnectChanged(bool value)
+        {
+            _botFrameworkRuntimeManager.SetAutoConnectEnabled(value);
+        }
+
+        private async Task DisconnectManagedFrameworkAsync(ManagedBotFramework framework)
+        {
+            if (_activeManagedFramework != framework)
+            {
+                return;
+            }
+
+            _botFrameworkConnectionCts?.Cancel();
+            var connection = _globalMessageProcessor?.MessageDistribution?.WSconnection;
+            if (connection?.IsWsConnected == true)
+            {
+                await connection.DisconnectAsync();
+            }
+
+            _activeManagedFramework = null;
+            _managedFrameworkOwnsConnection = false;
+            SetBotFrameworkStatus(framework, "已断开 · 可手动重新连接");
+            RefreshSettingsWebSocketConnectButton();
+        }
+
+        private void StartBotFrameworkConnection(ManagedBotFramework framework)
+        {
+            var previousFramework = _activeManagedFramework;
+            var resetExistingConnection = previousFramework != framework;
+            if (resetExistingConnection && previousFramework is { } previous)
+            {
+                SetBotFrameworkStatus(previous, $"已停止 · 已切换到 {framework}");
+            }
+            _activeManagedFramework = framework;
+            _managedFrameworkOwnsConnection = false;
+            SetBotFrameworkStatus(framework, "正在启动托管连接…");
+            RefreshSettingsWebSocketConnectButton();
+            _botFrameworkConnectionCts?.Cancel();
+            _botFrameworkConnectionCts?.Dispose();
+            _botFrameworkConnectionCts = new CancellationTokenSource();
+            _botFrameworkConnectionTask = RunBotFrameworkConnectionLoopAsync(
+                framework,
+                resetExistingConnection,
+                _botFrameworkConnectionCts.Token);
+        }
+
+        private async Task RunBotFrameworkConnectionLoopAsync(
+            ManagedBotFramework framework,
+            bool resetExistingConnection,
+            CancellationToken cancellationToken)
+        {
+            var displayName = framework == ManagedBotFramework.SnowLuma ? "SnowLuma" : "NapCat";
+            var status = new Progress<string>(message => SetBotFrameworkStatus(framework, message));
+
+            try
+            {
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    var connection = _globalMessageProcessor?.MessageDistribution?.WSconnection;
+                    if (connection is null)
+                    {
+                        SetBotFrameworkStatus(framework, "消息服务尚未就绪，正在重试…");
+                        await Task.Delay(1000, cancellationToken);
+                        continue;
+                    }
+
+                    if (resetExistingConnection)
+                    {
+                        resetExistingConnection = false;
+                        if (connection.IsWsConnected)
+                        {
+                            SetBotFrameworkStatus(framework, "正在切换托管框架…");
+                            await connection.DisconnectAsync();
+                        }
+                    }
+
+                    if (!connection.IsWsConnected)
+                    {
+                        var webSocketUrl = await _botFrameworkRuntimeManager.StartAndWaitForLoginAsync(
+                            framework,
+                            status,
+                            cancellationToken);
+                        if (string.IsNullOrWhiteSpace(webSocketUrl))
+                        {
+                            await Task.Delay(1000, cancellationToken);
+                            continue;
+                        }
+
+                        SetBotFrameworkStatus(framework, "连接中…");
+                        await connection.DisconnectAsync();
+                        WsUrl = webSocketUrl;
+                        WsConnectionUrl = webSocketUrl;
+                        WSconnection.wsUrl = webSocketUrl;
+                        await connection.StartConnection();
+
+                        if (!connection.IsWsConnected)
+                        {
+                            SetBotFrameworkStatus(framework, $"{displayName} 尚未就绪，等待账号登录…");
+                            await Task.Delay(2000, cancellationToken);
+                            continue;
+                        }
+                    }
+
+                    SetBotFrameworkStatus(framework, $"{displayName} 已连接");
+                    _managedFrameworkOwnsConnection = true;
+                    RefreshSettingsWebSocketConnectButton();
+                    Dispatcher.UIThread.Post(() => _setBotFrameworkPanelExpanded?.Invoke(false));
+                    while (connection.IsWsConnected && !cancellationToken.IsCancellationRequested)
+                    {
+                        await Task.Delay(1500, cancellationToken);
+                    }
+
+                    if (!cancellationToken.IsCancellationRequested)
+                    {
+                        _managedFrameworkOwnsConnection = false;
+                        RefreshSettingsWebSocketConnectButton();
+                        SetBotFrameworkStatus(framework, $"{displayName} 连接已断开，正在等待恢复…");
+                    }
+                }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // A different framework was selected or the application is closing.
+            }
+            catch (Exception ex)
+            {
+                if (_activeManagedFramework == framework)
+                {
+                    _managedFrameworkOwnsConnection = false;
+                    RefreshSettingsWebSocketConnectButton();
+                }
+                SetBotFrameworkStatus(framework, $"{displayName} 托管失败：{ex.Message}");
+                LogSender.Error($"[BotFramework] {displayName} 托管失败: {ex}");
+            }
         }
 
         private string ResolveVersionDisplay()
@@ -1715,11 +2663,6 @@ namespace MDiceV2.Core.UI.ViewModels
                 { "GroupJoinApproved", "群加入同意和好友同意通知" },
                 { "FriendRequestApproved", "群加入同意和好友同意通知" },
                 
-                // Duel 指令反馈
-                { "DuelNoTurnsAvailable", "Duel指令反馈" },
-                { "DuelNew", "Duel指令反馈" },
-                { "DuelContinue", "Duel指令反馈" },
-                
                 // Help指令反馈
                 { "HelpDefaultMessage", "Help指令反馈" },
                 
@@ -1964,6 +2907,8 @@ namespace MDiceV2.Core.UI.ViewModels
             // 设置 connect 按钮内容为 图标 + 文本
             if (connectButton.Child is Button innerButton)
             {
+                _settingsWebSocketConnectFrame = connectButton;
+                _settingsWebSocketConnectButton = innerButton;
                 var connectStack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, HorizontalAlignment = HorizontalAlignment.Center };
                 connectStack.Children.Add(new TextBlock { Text = "↻", FontSize = 17, VerticalAlignment = VerticalAlignment.Center });
                 connectStack.Children.Add(new TextBlock { Text = "RECONNECT", VerticalAlignment = VerticalAlignment.Center });
@@ -1990,6 +2935,7 @@ namespace MDiceV2.Core.UI.ViewModels
                     connectButton.Background = new SolidColorBrush(Color.Parse("#58D6A9"));
                     innerButton.Background = new SolidColorBrush(Color.Parse("#58D6A9"));
                 };
+                RefreshSettingsWebSocketConnectButton();
             }
 
             wsConfigPanel.Children.Add(connectButton);
@@ -2465,6 +3411,11 @@ namespace MDiceV2.Core.UI.ViewModels
         {
             try
             {
+                if (_managedFrameworkOwnsConnection)
+                {
+                    AddWSConnectionLog("Managed framework link is active; reconnect is controlled from Main Panel.");
+                    return;
+                }
                 AddWSConnectionLog("Attempting to connect to WebSocket...");
                 AddWSConnectionLog($"URL: {WsUrl}");
 
@@ -2865,6 +3816,10 @@ namespace MDiceV2.Core.UI.ViewModels
                     if (e.PropertyName == nameof(WSconnection.IsWsConnected))
                     {
                         WsConnectionStatus = wsConnection.IsWsConnected ? "Connected" : "Disconnected";
+                        if (!wsConnection.IsWsConnected)
+                        {
+                            _managedFrameworkOwnsConnection = false;
+                        }
                         AddWSConnectionLog($"Connection status: {WsConnectionStatus.ToLower()}");
                         UpdateWSConnectionInfoInSettings();
                     }
@@ -2884,11 +3839,80 @@ namespace MDiceV2.Core.UI.ViewModels
         /// </summary>
         private void UpdateWSConnectionInfoInSettings()
         {
+            RefreshSettingsWebSocketConnectButton();
             // 重新创建设置内容以更新logPanel
-            if (SelectedIndex == 2) // 如果当前是设置页面
+            if (SelectedIndex == 3) // 如果当前是设置页面
             {
                 UpdateCurrentView();
             }
+        }
+
+        private void RefreshSettingsWebSocketConnectButton()
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                var frame = _settingsWebSocketConnectFrame;
+                var button = _settingsWebSocketConnectButton;
+                if (frame is null || button is null)
+                {
+                    return;
+                }
+
+                var connection = _globalMessageProcessor?.MessageDistribution?.WSconnection;
+                var managedLinkActive = _managedFrameworkOwnsConnection &&
+                                        _activeManagedFramework is not null &&
+                                        connection?.IsWsConnected == true;
+                var content = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 8,
+                    HorizontalAlignment = HorizontalAlignment.Center
+                };
+
+                if (managedLinkActive)
+                {
+                    var frameworkName = _activeManagedFramework == ManagedBotFramework.SnowLuma
+                        ? "SNOWLUMA"
+                        : "NAPCAT";
+                    content.Children.Add(new TextBlock
+                    {
+                        Text = "●",
+                        FontSize = 11,
+                        VerticalAlignment = VerticalAlignment.Center
+                    });
+                    content.Children.Add(new TextBlock
+                    {
+                        Text = $"{frameworkName} 连携中",
+                        VerticalAlignment = VerticalAlignment.Center
+                    });
+                    button.IsEnabled = false;
+                    button.Foreground = new SolidColorBrush(Color.Parse("#9EE8D4"));
+                    button.Background = new SolidColorBrush(Color.Parse("#203A39"));
+                    frame.Background = new SolidColorBrush(Color.Parse("#203A39"));
+                    ToolTip.SetTip(button, "请在 Main Panel 的框架状态舱中解除连接");
+                }
+                else
+                {
+                    content.Children.Add(new TextBlock
+                    {
+                        Text = "↻",
+                        FontSize = 17,
+                        VerticalAlignment = VerticalAlignment.Center
+                    });
+                    content.Children.Add(new TextBlock
+                    {
+                        Text = "RECONNECT",
+                        VerticalAlignment = VerticalAlignment.Center
+                    });
+                    button.IsEnabled = true;
+                    button.Foreground = new SolidColorBrush(Color.Parse("#0B1816"));
+                    button.Background = new SolidColorBrush(Color.Parse("#58D6A9"));
+                    frame.Background = new SolidColorBrush(Color.Parse("#58D6A9"));
+                    ToolTip.SetTip(button, null);
+                }
+
+                button.Content = content;
+            });
         }
 
         /// <summary>

@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -13,62 +14,27 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using MDiceV2.Models;
-using MDiceV2.Core.GameBattle;
 using MDiceV2.Core.Infrastructure;
+using MDiceV2.Core.Mod;
 using MDiceV2.Abstractions;
 using static MDiceV2.Models.Dice;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace MDiceV2.Models;
 
-/// <summary>
-/// 游戏阶段枚举
-/// </summary>
-public enum GamePhase
-{
-    /// <summary>
-    /// 没有游戏
-    /// </summary>
-    NoGame,
-    /// <summary>
-    /// 游戏进行中
-    /// </summary>
-    GameOngoing,
-    /// <summary>
-    /// 等待用户决策
-    /// </summary>
-    WaitingForDecision,
-    /// <summary>
-    /// 游戏已结束
-    /// </summary>
-    GameEnded
-}
-
 public partial class MessageProcessor : ObservableObject
 {
-    /// <summary>
-    /// 指令前缀列表（按长度从长到短排序，确保更长的前缀优先匹配）
-    /// </summary>
-    private readonly List<string> prefixes = new()
-    { "dismiss", "welcome", "rule", "help", "jrrp", "abot", "team", "duel", "deck", "draw", "bot", "diy", "name", "com", "log", "get", "ai",
-    "cc", "ra", "rc", "st", "sc", "ti", "gc", "as", "en", "cn", "ri", "ww", "r" };
-
     /// <summary>
     /// 指令处理器字典（.前缀命令）
     /// </summary>
     private ConcurrentDictionary<string, Action<string, Msg>>? commandHandlers;
+    private readonly object _commandHandlersSync = new();
 
     /// <summary>
     /// 权限指令处理器字典（#前缀命令）
     /// </summary>
     private ConcurrentDictionary<string, Action<string, Msg>>? authCommandHandlers;
-
-    /// <summary>
-    /// 内存中的游戏状态字典 string:userId -> GameState
-    /// 游戏状态在运行时保存在内存中，只在启动时加载，关闭时保存
-    /// </summary>
-    private ConcurrentDictionary<string, MDiceV2.Core.GameBattle.GameState> gameStates = new();
-
+    private readonly ConcurrentDictionary<long, string> _selectedModByUser = new();
 
 
     /// <summary>
@@ -89,6 +55,27 @@ public partial class MessageProcessor : ObservableObject
 
         // 预载权限信息，供后续指令使用
         EnsureMsgAuthInfo(msg);
+
+        // Host management commands are security-sensitive and must run before any
+        // third-party Mod gets a chance to intercept the message.
+        var earlyOriginal = NormalizeCommandText(msg.Content);
+        if (earlyOriginal.StartsWith(".mod", StringComparison.OrdinalIgnoreCase))
+        {
+            // Resolve the most specific registered header first so a Mod command
+            // such as `.module` is not mistaken for the host `.mod` command.
+            EnsureCommandHandlersInitialized();
+            var matchedPrefix = commandHandlers?.Keys
+                .Where(prefix => IsDotCommand(earlyOriginal, prefix))
+                .OrderByDescending(prefix => prefix.Length)
+                .ThenBy(prefix => prefix, StringComparer.Ordinal)
+                .FirstOrDefault();
+
+            if (string.Equals(matchedPrefix, "mod", StringComparison.OrdinalIgnoreCase))
+            {
+                HandleModCommand(earlyOriginal[4..].TrimStart(), msg);
+                return;
+            }
+        }
 
         try
         {
@@ -202,6 +189,7 @@ public partial class MessageProcessor : ObservableObject
             }
 
             string trimmedLowerText = (msg.ContentLower?.Trim() ?? string.Empty);
+            string trimmedOriginalText = NormalizeCommandText(msg.Content);
 
             // 记录日志（仅群聊且开启日志）
             if (msg.Source == MessageSource.group && IsLogEnabled(msg.GroupId) && _trpgLogManager != null)
@@ -300,11 +288,12 @@ public partial class MessageProcessor : ObservableObject
                 return;
             }
 
-            bool isBotCommand = trimmedLowerText.StartsWith(".bot", StringComparison.OrdinalIgnoreCase);
+            bool isBotCommand = IsDotCommand(trimmedLowerText, "bot");
+            bool isModCommand = IsDotCommand(trimmedLowerText, "mod");
             long botStateKey = msg.Source == MessageSource.group ? msg.GroupId : -msg.UserId;
 
             // 检查群状态：如果群被关闭，但被@了，则忽略群关闭状态，继续响应
-            if (!isBotCommand && !IsBotEnabled(botStateKey) && !msg.IsAted)
+            if (!isBotCommand && !isModCommand && !IsBotEnabled(botStateKey) && !msg.IsAted)
             {
                 string disabledIgnoreCommandMessage = SafeFormatString(GlobalFeedbackMessages.FeedbackTemplates["BotDisabledIgnoreCommand"], trimmedLowerText);
                 Log.Normal(disabledIgnoreCommandMessage);
@@ -345,19 +334,21 @@ public partial class MessageProcessor : ObservableObject
             perfMonitor?.MarkStage(5, "MessageFilter_Complete");
             perfMonitor?.MarkStage(6, "CommandMatch_Start");
 
-            foreach (var prefix in prefixes)
+            var activeCommandHandlers = commandHandlers;
+            if (activeCommandHandlers == null) return;
+            foreach (var prefix in activeCommandHandlers.Keys.OrderByDescending(x => x.Length).ThenBy(x => x, StringComparer.Ordinal))
             {
-                if (trimmedLowerText.StartsWith($".{prefix}", StringComparison.OrdinalIgnoreCase))
+                if (IsDotCommand(trimmedLowerText, prefix))
                 {
                     perfMonitor?.CheckpointInStage(6, $"Matched_{prefix}");
                     Log.Normal($"[命令匹配] ✓ 匹配到前缀: {prefix}");
 
-                    if (commandHandlers.TryGetValue(prefix, out var handler))
+                    if (activeCommandHandlers.TryGetValue(prefix, out var handler))
                     {
                         Log.Normal($"[命令匹配] ✓ 找到处理器: {prefix}");
                         perfMonitor?.MarkStage(7, "HandlerInvoke_Start");
                         AddTrustForNormalUse(msg.UserId);
-                        handler(trimmedLowerText[(prefix.Length + 1)..], msg);
+                        handler(trimmedOriginalText[(prefix.Length + 1)..], msg);
                         perfMonitor?.MarkStage(7, "HandlerInvoke_Complete");
                         perfMonitor?.Complete();
                         // 如果启用了调试模式且当前是启动者，自动关闭并返回结果
@@ -372,7 +363,7 @@ public partial class MessageProcessor : ObservableObject
                     }
                     else
                     {
-                        Log.Error($"[命令匹配] ✗ 前缀 '{prefix}' 匹配但处理器未注册！commandHandlers中已有的处理器: {string.Join(", ", commandHandlers?.Keys ?? [])}");
+                        Log.Error($"[命令匹配] ✗ 前缀 '{prefix}' 匹配但处理器未注册！commandHandlers中已有的处理器: {string.Join(", ", activeCommandHandlers.Keys)}");
                     }
                     return;
                 }
@@ -494,6 +485,148 @@ public partial class MessageProcessor : ObservableObject
         TriggerTestUpdateAsync(msg).Wait();
     }
 
+    private void HandleModCommand(string args, Msg msg)
+    {
+        if (!IsDiceAdministrator(msg.UserId))
+        {
+            Reply("权限不足：只有骰子管理员（系统账号、Master、授权等级 0/1）可以使用 .mod。", msg);
+            return;
+        }
+
+        var manager = RuntimeModInitializer.Current?.PortableModManager;
+        if (manager is null)
+        {
+            Reply("Mod 运行时尚未初始化。", msg);
+            return;
+        }
+
+        var input = args?.Trim() ?? string.Empty;
+        if (input.Length == 0)
+        {
+            Reply(GetModCommandHelp(), msg);
+            return;
+        }
+
+        var firstSpace = input.IndexOfAny([' ', '\t', '\r', '\n']);
+        var action = (firstSpace < 0 ? input : input[..firstSpace]).ToLowerInvariant();
+        var remainder = firstSpace < 0 ? string.Empty : input[(firstSpace + 1)..].Trim();
+
+        switch (action)
+        {
+            case "list":
+            {
+                var mods = manager.GetAllManagedMods();
+                if (mods.Count == 0) { Reply("当前没有已加载的 Mod。", msg); return; }
+                var lines = new List<string> { $"Mod 列表（{mods.Count}）：" };
+                lines.AddRange(mods.Select(mod =>
+                    $"- {mod.CommandName} | {mod.Name} v{mod.Version} | {(mod.IsPortable ? "便携" : "普通")} | {(mod.IsEnabled ? "ON" : "OFF")} | reload:{(mod.SupportsReload ? "yes" : "no")}" +
+                    (string.IsNullOrWhiteSpace(mod.Error) ? string.Empty : $" | ERROR: {mod.Error}")));
+                Reply(string.Join(Environment.NewLine, lines), msg);
+                return;
+            }
+            case "menu":
+            {
+                var selected = ResolveSelectedMod(manager, msg.UserId, remainder, updateSelection: true, out var error);
+                Reply(selected is null ? error : manager.GetMenu(selected), msg);
+                return;
+            }
+            case "on":
+            case "off":
+            {
+                var selected = ResolveSelectedMod(manager, msg.UserId, remainder, updateSelection: true, out var error);
+                if (selected is null) { Reply(error, msg); return; }
+                var result = manager.SetEnabledAsync(selected, action == "on").GetAwaiter().GetResult();
+                Reply(result.Message, msg);
+                return;
+            }
+            case "reload":
+            {
+                var selected = ResolveSelectedMod(manager, msg.UserId, remainder, updateSelection: true, out var error);
+                if (selected is null) { Reply(error, msg); return; }
+                var result = manager.ReloadAsync(selected).GetAwaiter().GetResult();
+                Reply(result.Message, msg);
+                return;
+            }
+            case "cmd":
+            {
+                if (!_selectedModByUser.TryGetValue(msg.UserId, out var selected))
+                {
+                    Reply("尚未选择当前 Mod。请先显式执行 .mod menu/on/off/reload <短名>。", msg);
+                    return;
+                }
+                if (remainder.Length == 0)
+                {
+                    Reply("格式：.mod cmd <子命令> [参数]", msg);
+                    return;
+                }
+                var commandSpace = remainder.IndexOfAny([' ', '\t', '\r', '\n']);
+                var subcommand = commandSpace < 0 ? remainder : remainder[..commandSpace];
+                var commandArgs = commandSpace < 0 ? string.Empty : remainder[(commandSpace + 1)..].TrimStart();
+                try
+                {
+                    var response = manager.ExecuteManagementCommand(selected, subcommand, commandArgs, msg);
+                    if (!string.IsNullOrEmpty(response)) Reply(response, msg);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"[Mod管理] {selected}/{subcommand} 执行失败: {ex}");
+                    Reply($"Mod 管理指令执行失败：{ex.Message}", msg);
+                }
+                return;
+            }
+            default:
+                Reply(GetModCommandHelp(), msg);
+                return;
+        }
+    }
+
+    private string? ResolveSelectedMod(
+        PortableModManager manager,
+        long userId,
+        string explicitName,
+        bool updateSelection,
+        out string error)
+    {
+        var name = explicitName.Trim();
+        if (name.Length == 0 && !_selectedModByUser.TryGetValue(userId, out name))
+        {
+            error = "尚未选择当前 Mod。请显式提供短名。";
+            return null;
+        }
+        var match = manager.FindByCommandName(name);
+        if (match is null)
+        {
+            error = $"未找到 Mod：{name}";
+            return null;
+        }
+        if (updateSelection && explicitName.Trim().Length > 0)
+            _selectedModByUser[userId] = match.CommandName;
+        error = string.Empty;
+        return match.CommandName;
+    }
+
+    private static string GetModCommandHelp() =>
+        "Mod 管理：\n" +
+        ".mod list\n" +
+        ".mod menu [短名]\n" +
+        ".mod on|off|reload [短名]\n" +
+        ".mod cmd <子命令> [参数]";
+
+    private static string NormalizeCommandText(string? content)
+    {
+        var text = content?.Trim() ?? string.Empty;
+        return text.StartsWith('。') ? "." + text[1..] : text;
+    }
+
+    private static bool IsDotCommand(string text, string command)
+    {
+        var prefix = "." + command;
+        // Command arguments may be attached directly to the header (for example,
+        // `.boton`, `.rd`, or `.teamnew`). Callers that dispatch handlers must
+        // check registered command names longest-first so `.rule` wins over `.r`.
+        return text.StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
+    }
+
     /// <summary>
     /// 确保指令处理器已初始化（从 OnHandleMessage 提取，供外部直接调用）
     /// </summary>
@@ -501,36 +634,42 @@ public partial class MessageProcessor : ObservableObject
     {
         Log.InfoFormat("[CommandInit] EnsureCommandHandlersInitialized START alreadyInitialized={0} bridgeId={1}", commandHandlers != null, GetObjectId(_modEventBridge));
         if (commandHandlers != null) return;
+        lock (_commandHandlersSync)
+        {
+        if (commandHandlers != null) return;
 
-        commandHandlers = new ConcurrentDictionary<string, Action<string, Msg>>();
-        commandHandlers.TryAdd("r", HandleRoll);
-        commandHandlers.TryAdd("bot", HandleBot);
-        commandHandlers.TryAdd("st", HandleSkillInsert);
-        commandHandlers.TryAdd("sc", HandleSanityCheck);
-        commandHandlers.TryAdd("cc", HandleCostomCheck);
-        commandHandlers.TryAdd("ra", HandleRaCommand);
-        commandHandlers.TryAdd("rc", HandleRcCommand);
-        commandHandlers.TryAdd("log", HandleLog);
-        commandHandlers.TryAdd("rule", HandleRule);
-        commandHandlers.TryAdd("dismiss", HandleDismiss);
-        commandHandlers.TryAdd("help", HandleHelp);
-        commandHandlers.TryAdd("name", HandleNameCommand);
-        commandHandlers.TryAdd("com", HandleComCommand);
-        commandHandlers.TryAdd("as", HandleAsCommand);
-        commandHandlers.TryAdd("duel", HandleDuelCommand);
-        commandHandlers.TryAdd("diy", HandleDiyCommand);
-        commandHandlers.TryAdd("ti", HandleTempInsanity);
-        commandHandlers.TryAdd("gc", HandleCharacterGen);
-        commandHandlers.TryAdd("team", HandleTeamCommand);
-        commandHandlers.TryAdd("en", HandleEnCommand);
-        commandHandlers.TryAdd("cn", HandleCardNameCommand);
-        commandHandlers.TryAdd("ri", HandleInitiativeCommand);
-        commandHandlers.TryAdd("draw", HandleDrawCommand);
-        commandHandlers.TryAdd("deck", HandleDeckCommand);
-        commandHandlers.TryAdd("jrrp", HandleJrrpCommand);
-        commandHandlers.TryAdd("ww", HandleWwRoll);
-        commandHandlers.TryAdd("welcome", HandleWelcomeCommand);
-        commandHandlers.TryAdd("get", HandleGetCommand);
+        var handlersSnapshot = new ConcurrentDictionary<string, Action<string, Msg>>();
+        handlersSnapshot.TryAdd("r", HandleRoll);
+        handlersSnapshot.TryAdd("bot", HandleBot);
+        handlersSnapshot.TryAdd("st", HandleSkillInsert);
+        handlersSnapshot.TryAdd("sc", HandleSanityCheck);
+        handlersSnapshot.TryAdd("cc", HandleCostomCheck);
+        handlersSnapshot.TryAdd("ra", HandleRaCommand);
+        handlersSnapshot.TryAdd("rc", HandleRcCommand);
+        handlersSnapshot.TryAdd("log", HandleLog);
+        handlersSnapshot.TryAdd("rule", HandleRule);
+        handlersSnapshot.TryAdd("dismiss", HandleDismiss);
+        handlersSnapshot.TryAdd("help", HandleHelp);
+        handlersSnapshot.TryAdd("name", HandleNameCommand);
+        handlersSnapshot.TryAdd("set", HandleSetCommand);
+        handlersSnapshot.TryAdd("cfg", HandleConfigCommand);
+        handlersSnapshot.TryAdd("td", HandleTdCommand);
+        handlersSnapshot.TryAdd("com", HandleComCommand);
+        handlersSnapshot.TryAdd("as", HandleAsCommand);
+        handlersSnapshot.TryAdd("diy", HandleDiyCommand);
+        handlersSnapshot.TryAdd("ti", HandleTempInsanity);
+        handlersSnapshot.TryAdd("gc", HandleCharacterGen);
+        handlersSnapshot.TryAdd("team", HandleTeamCommand);
+        handlersSnapshot.TryAdd("en", HandleEnCommand);
+        handlersSnapshot.TryAdd("cn", HandleCardNameCommand);
+        handlersSnapshot.TryAdd("ri", HandleInitiativeCommand);
+        handlersSnapshot.TryAdd("draw", HandleDrawCommand);
+        handlersSnapshot.TryAdd("deck", HandleDeckCommand);
+        handlersSnapshot.TryAdd("jrrp", HandleJrrpCommand);
+        handlersSnapshot.TryAdd("ww", HandleWwRoll);
+        handlersSnapshot.TryAdd("welcome", HandleWelcomeCommand);
+        handlersSnapshot.TryAdd("get", HandleGetCommand);
+        handlersSnapshot.TryAdd("mod", HandleModCommand);
 
         // 注册 Mod 提供的指令处理器（通用框架，与具体Mod解耦）
         if (_modEventBridge != null)
@@ -543,6 +682,12 @@ public partial class MessageProcessor : ObservableObject
 
                 foreach (var (cmdName, handler) in modCommands)
                 {
+                    var normalizedCommandName = cmdName.Trim().TrimStart('.').ToLowerInvariant();
+                    if (string.IsNullOrWhiteSpace(normalizedCommandName) || normalizedCommandName.Any(char.IsWhiteSpace))
+                    {
+                        Log.Warn($"[指令注册] Mod提供了无效指令名 '{cmdName}'，已忽略");
+                        continue;
+                    }
                     // 创建wrapper，将 Func<string, object, string?> 转换为 Action<string, Msg>
                     // 处理器返回的内容会由MessageProcessor负责发送（通过Reply）
                     Action<string, Msg> wrappedHandler = (args, msg) =>
@@ -581,13 +726,13 @@ public partial class MessageProcessor : ObservableObject
                         }
                     };
 
-                    if (!commandHandlers.TryAdd(cmdName, wrappedHandler))
+                    if (!handlersSnapshot.TryAdd(normalizedCommandName, wrappedHandler))
                     {
-                        Log.Warn($"[指令注册] Mod指令 '{cmdName}' 与已有指令重名，将被忽略");
+                        Log.Warn($"[指令注册] Mod指令 '{normalizedCommandName}' 与已有指令重名，将被忽略");
                     }
                     else
                     {
-                        Log.Normal($"[指令注册] ✓ 成功注册Mod指令: '{cmdName}'");
+                        Log.Normal($"[指令注册] ✓ 成功注册Mod指令: '{normalizedCommandName}'");
                     }
                 }
             }
@@ -601,7 +746,9 @@ public partial class MessageProcessor : ObservableObject
             Log.Warn("[指令注册] ModEventBridge为null，无法加载Mod指令");
         }
 
-        Log.InfoFormat("[CommandInit] final command keys: {0}", string.Join(",", commandHandlers.Keys));
+        commandHandlers = handlersSnapshot;
+        Log.InfoFormat("[CommandInit] final command keys: {0}", string.Join(",", handlersSnapshot.Keys));
+        }
     }
 
     /// <summary>
@@ -632,18 +779,21 @@ public partial class MessageProcessor : ObservableObject
             }
 
             string trimmedLowerText = msg.ContentLower?.Trim() ?? string.Empty;
+            string trimmedOriginalText = NormalizeCommandText(msg.Content);
 
             // 匹配前缀并调用处理器
-            foreach (var prefix in prefixes)
+            var activeCommandHandlers = commandHandlers;
+            if (activeCommandHandlers == null) return;
+            foreach (var prefix in activeCommandHandlers.Keys.OrderByDescending(x => x.Length).ThenBy(x => x, StringComparer.Ordinal))
             {
-                if (trimmedLowerText.StartsWith($".{prefix}", StringComparison.OrdinalIgnoreCase))
+                if (IsDotCommand(trimmedLowerText, prefix))
                 {
                     Log.Normal($"[ExecuteCommand] ✓ 匹配到前缀: {prefix}，UserId={msg.UserId}，GroupId={msg.GroupId}");
 
-                    if (commandHandlers != null && commandHandlers.TryGetValue(prefix, out var handler))
+                    if (activeCommandHandlers.TryGetValue(prefix, out var handler))
                     {
                         AddTrustForNormalUse(msg.UserId);
-                        handler(trimmedLowerText[(prefix.Length + 1)..], msg);
+                        handler(trimmedOriginalText[(prefix.Length + 1)..], msg);
                         Log.Normal($"[ExecuteCommand] ✓ 指令 '{prefix}' 已执行");
                     }
                     else
@@ -2089,7 +2239,7 @@ public partial class MessageProcessor : ObservableObject
 
             if (mode == "coc7")
             {
-                var (detail, exMsg) = ProcessCoC7MainPartSimple(fullText, effectiveSubCmds, skill, value, characterSkillsDict, ref lastSubCmds, ref lastSkillName, ref lastSkillValue);
+                var (detail, exMsg) = ProcessCoC7MainPartSimple(fullText, effectiveSubCmds, skill, value, characterSkillsDict, ref lastSubCmds, ref lastSkillName, ref lastSkillValue, ResolveCheckRule(userId, msg, "coc").Rule);
                 result = detail;
                 exmessage = exMsg;
             }
@@ -2352,14 +2502,14 @@ public partial class MessageProcessor : ObservableObject
         string callerResult, targetResult;
         if (mode == "coc7")
         {
-            var (callerDetail, _) = ProcessCoC7MainPartSimple(fullText, subCmds, skill, value, callerSkillsDict, ref lastSubCmds, ref lastSkillName, ref lastSkillValue);
+            var (callerDetail, _) = ProcessCoC7MainPartSimple(fullText, subCmds, skill, value, callerSkillsDict, ref lastSubCmds, ref lastSkillName, ref lastSkillValue, ResolveCheckRule(callerUserId, msg, "coc").Rule);
             callerResult = callerDetail;
             
             lastSubCmds = new();
             lastSkillName = "";
             lastSkillValue = 0;
             
-            var (targetDetail, _) = ProcessCoC7MainPartSimple(fullText, subCmds, skill, value, targetSkillsDict, ref lastSubCmds, ref lastSkillName, ref lastSkillValue);
+            var (targetDetail, _) = ProcessCoC7MainPartSimple(fullText, subCmds, skill, value, targetSkillsDict, ref lastSubCmds, ref lastSkillName, ref lastSkillValue, ResolveCheckRule(targetUserId, msg, "coc", callerUserId).Rule);
             targetResult = targetDetail;
         }
         else if (mode == "et")
@@ -2756,6 +2906,85 @@ public partial class MessageProcessor : ObservableObject
     }
 
     /// <summary>
+    /// .set &lt;1-9999&gt; - 设置省略骰面时使用的默认骰面。
+    /// </summary>
+    private void HandleSetCommand(string args, Msg msg)
+    {
+        string valueText = (args ?? string.Empty).Trim();
+        if (!Regex.IsMatch(valueText, @"^\d+$")
+            || !int.TryParse(valueText, out int sides)
+            || sides is <= 0 or >= 10000)
+        {
+            Reply("格式错误，请使用 .set <1-9999> 设置默认骰面。", msg);
+            return;
+        }
+
+        userDefaultDiceSides[msg.UserId] = sides;
+        SaveUserData(msg.UserId);
+        Reply($"默认骰面已设置为 D{sides}。", msg);
+    }
+
+    /// <summary>
+    /// .cfg - 查看当前用户的个人设置。
+    /// </summary>
+    private void HandleConfigCommand(string args, Msg msg)
+    {
+        if (Regex.IsMatch(args ?? "", @"^\s*rule(?:\s|$)", RegexOptions.IgnoreCase))
+        {
+            HandleUserRuleCommand(Regex.Replace(args ?? "", @"^\s*rule\s*", "", RegexOptions.IgnoreCase), msg);
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(args))
+        {
+            Reply("格式错误，请使用 .cfg 查看个人设置，或 .cfg rule coc1/coc2/coc3 设置村规。", msg);
+            return;
+        }
+
+        var characterNames = characterSkills.TryGetValue(msg.UserId, out var sheets)
+            ? sheets.Keys.OrderBy(name => name, StringComparer.Ordinal).ToList()
+            : new List<string>();
+        string characterText = characterNames.Count == 0
+            ? "无"
+            : string.Join("、", characterNames);
+        string callStatus = IsTeamCallPrivateEnabled(msg.UserId) ? "开启" : "关闭";
+
+        Reply(
+            $"【个人设置】\n默认骰面：D{GetUserDefaultDice(msg.UserId)}\n人物卡：{characterText}\n.td call 状态：{callStatus}\n{DescribeUserRules(msg)}",
+            msg);
+    }
+
+    /// <summary>
+    /// .td call [on|off] - 查询或设置队伍召集私聊开关。
+    /// </summary>
+    private void HandleTdCommand(string args, Msg msg)
+    {
+        string[] parts = (args ?? string.Empty)
+            .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length == 1 && parts[0].Equals("call", StringComparison.OrdinalIgnoreCase))
+        {
+            string status = IsTeamCallPrivateEnabled(msg.UserId) ? "开启" : "关闭";
+            Reply($".team call 私聊接收当前为：{status}。使用 .td call on|off 修改。", msg);
+            return;
+        }
+
+        if (parts.Length == 2 && parts[0].Equals("call", StringComparison.OrdinalIgnoreCase)
+            && (parts[1].Equals("on", StringComparison.OrdinalIgnoreCase)
+                || parts[1].Equals("off", StringComparison.OrdinalIgnoreCase)))
+        {
+            bool enabled = parts[1].Equals("on", StringComparison.OrdinalIgnoreCase);
+            teamCallPrivateEnabled[msg.UserId] = enabled;
+            SaveUserData(msg.UserId);
+            Reply(enabled
+                ? "已开启 .team call 私聊接收。"
+                : "已关闭 .team call 私聊接收。群内 @ 不受影响。", msg);
+            return;
+        }
+
+        Reply("格式错误，请使用 .td call、.td call on 或 .td call off。", msg);
+    }
+
+    /// <summary>
     /// 处理 name 指令：
     /// .name xxx    设置当前用户持久化名称（与账号绑定）
     /// .name        查询当前设置名称
@@ -2964,520 +3193,6 @@ public partial class MessageProcessor : ObservableObject
         return characterSkills.TryGetValue(userId, out var userCharacters)
             ? ResolveCardIdentifier(identifier, userCharacters)
             : null;
-    }
-
-    /// <summary>
-    /// 为 duel 指令创建转发消息节点
-    /// </summary>
-    private (string timestamp, long userId, string senderName, string content) CreateDuelForwardNode(string content)
-    {
-        var selfInfo = MessageDistribution?.GetSelfInfo();
-        var botId = selfInfo?.UserId ?? 1001;
-        var botName = selfInfo?.Nickname ?? "机器人";
-        var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-        return (timestamp, botId, botName, content);
-    }
-
-    /// <summary>
-    /// duel 指令转发消息回复（支持群组和私聊）
-    /// 群组使用 OneBot 11 转发格式；模拟模式显示合并气泡；私聊 fallback 到普通消息
-    /// </summary>
-    private void ReplyDuelForward(List<string> messageContents, Msg msg)
-    {
-        if (msg.IsSimulationMode)
-        {
-            // 模拟模式：直接调用ReplyForward以创建合并气泡（内部会生成ForwardMessage）
-            var forwardNodes = messageContents
-                .Select(content => CreateDuelForwardNode(content))
-                .ToList();
-            MessageDistribution?.ReplyForward(forwardNodes, msg);
-        }
-        else if (msg.Source == MessageSource.group && MessageDistribution?.WSconnection?.IsWsConnected == true)
-        {
-            // 群组且WS已连接：发送OneBot 11合并转发
-            var forwardNodes = messageContents
-                .Select(content => CreateDuelForwardNode(content))
-                .ToList();
-            MessageDistribution?.ReplyForward(forwardNodes, msg);
-        }
-        else
-        {
-            // 私聊或未连接：回退为普通消息（每条分别发送）
-            foreach (var content in messageContents)
-            {
-                Reply(content, msg);
-            }
-        }
-    }
-
-    /// <summary>
-    /// 处理 duel 指令（开始或推进对战游戏）：
-    /// 语法示例：
-    /// .duel
-    /// 无需任何参数，用于开始新游戏或推进当前游戏的回合
-    /// </summary>
-    private void HandleDuelCommand(string args, Msg msg)
-    {
-        Log.InfoFormat("[Duel] 处理 duel 指令，用户: {0}", msg.UserId);
-
-        string userIdStr = msg.UserId.ToString();
-        string normalizedArgs = (args ?? string.Empty).Replace(" ", string.Empty).ToLowerInvariant();
-        bool isRestart = normalizedArgs == "restart";
-
-        // 每日回合上限检查
-        if (IsDuelTurnLimited(msg.UserId))
-        {
-            var userTrustValue = userTrust.TryGetValue(msg.UserId, out var trust) ? trust : 0;
-            var noTurnsMessage = GlobalFeedbackMessages.FeedbackTemplates["DuelNoTurnsAvailable"];
-            var formattedMessage = SafeFormatString(noTurnsMessage, userTrustValue.ToString("F1"));
-            Reply(formattedMessage, msg);
-            return;
-        }
-
-        // 娱乐功能扣减好感度（仅在未被回合上限拦截时执行）
-        ApplyDuelPenalty(msg.UserId);
-
-        if (isRestart)
-        {
-            gameStates.TryRemove(userIdStr, out _);
-            MessageDistribution?.ClearUserFocus(userIdStr);
-        }
-
-        var gameState = LoadUserGameState(userIdStr);
-
-        // 每次用户通过 .duel 进入/继续游戏时，更新活跃时间戳
-        if (gameState != null)
-        {
-            gameState.LastActiveTime = DateTime.UtcNow;
-        }
-
-        // 获取当前游戏阶段
-        var currentPhase = GetCurrentGamePhase(userIdStr);
-
-        // 如果当前等待决策，提示已有状态
-        if (currentPhase == GamePhase.WaitingForDecision && gameState != null &&
-            (gameState.PendingCard != null || gameState.IsProcessingHandAction))
-        {
-            // 创建消息列表用于合并转发
-            var continuedGameMessages = new List<string>();
-
-            // 显示继续游戏的剩余回合数
-            var duelLimit = GetDuelDailyTurnLimit(msg.UserId);
-            var turnsRemaining = GetDuelTurnsRemaining(msg.UserId);
-            var detailedInfo = GetDuelLimitDetailedInfo(msg.UserId);
-            var runtime = GetDailyRuntimeState(msg.UserId);
-            var duelContinueMessage = GlobalFeedbackMessages.FeedbackTemplates["DuelContinue"];
-            var formattedDuelContinueMessage = SafeFormatString(duelContinueMessage, duelLimit.ToString(), runtime.DuelTurnsToday.ToString(), turnsRemaining.ToString(), detailedInfo);
-
-            // 添加前置消息
-            continuedGameMessages.Add(formattedDuelContinueMessage);
-
-            var statusMessage = MDiceV2.Core.GameBattle.GameStateUtils.GetGameStatus(gameState);
-            var combinedMessage = $"{statusMessage}";
-
-            if (gameState.IsProcessingHandAction && gameState.Player2.HandCards.Count > 0)
-            {
-                var handInfo = gameState.Player2.GetHandInfo();
-                combinedMessage += $"\n{handInfo}";
-                combinedMessage += "\n请选择要使用的手牌：";
-                combinedMessage += "\n格式：手牌编号.场地位置（如：1.1 = 使用第1张牌放到前场，2.y = 使用第2张特殊卡，3.n = 不使用第3张特殊卡）";
-                combinedMessage += "\n或者直接回复 0 跳过当前回合";
-
-                // 添加游戏状态消息
-                continuedGameMessages.Add(combinedMessage);
-
-                // 单一合并转发
-                ReplyDuelForward(continuedGameMessages, msg);
-                MessageDistribution?.SetUserFocus(userIdStr, "carddecision");
-                return;
-            }
-
-            if (gameState.PendingCard != null)
-            {
-                var pendingCard = gameState.PendingCard;
-                combinedMessage += $"\n你有一张等待处理的卡牌：{pendingCard.Name}";
-                if (pendingCard is MDiceV2.Core.GameBattle.CharacterCard)
-                {
-                    combinedMessage += "\n请回复 1（前场）、2（中场）或 3（后场）来选择放置位置。";
-                }
-                else if (pendingCard is MDiceV2.Core.GameBattle.SpecialCard)
-                {
-                    combinedMessage += "\n请回复 y（使用）或 n（不使用）来决定是否使用特殊卡。";
-                }
-
-                // 添加游戏状态消息
-                continuedGameMessages.Add(combinedMessage);
-
-                // 单一合并转发
-                ReplyDuelForward(continuedGameMessages, msg);
-                MessageDistribution?.SetUserFocus(userIdStr, "carddecision");
-                return;
-            }
-        }
-
-        // 执行到这里表示是新游戏，创建并开始
-        Log.InfoFormat("[Duel] 创建新游戏，用户: {0}", msg.UserId);
-        gameState = CreateNewGame(userIdStr);
-        gameState.LastActiveTime = DateTime.UtcNow;
-        gameStates[userIdStr] = gameState;
-
-        Log.InfoFormat("[Duel] 新游戏创建完成，CurrentTurn: {0}", gameState.CurrentTurn);
-
-        // 创建主消息列表用于合并新游戏初始化的所有消息
-        var consolidatedMessages = new List<string>();
-
-        // 显示新游戏的可用回合数
-        var duelLimitInit = GetDuelDailyTurnLimit(msg.UserId);
-        var turnsRemainingInit = GetDuelTurnsRemaining(msg.UserId);
-        var detailedInitInfo = GetDuelLimitDetailedInfo(msg.UserId);
-        var runtimeInit = GetDailyRuntimeState(msg.UserId);
-        var duelNewMessage = GlobalFeedbackMessages.FeedbackTemplates["DuelNew"];
-        var formattedDuelNewMessage = SafeFormatString(duelNewMessage, duelLimitInit.ToString(), runtimeInit.DuelTurnsToday.ToString(), turnsRemainingInit.ToString(), detailedInitInfo);
-
-        var rulesMessage = GetGameRules();
-        var newGameStatus = MDiceV2.Core.GameBattle.GameStateUtils.GetGameStatus(gameState);
-
-        // 将初始化消息合并成紧凑的节点
-        consolidatedMessages.Add(formattedDuelNewMessage);
-        // 将规则和游戏状态合并为一个节点
-        consolidatedMessages.Add(rulesMessage + "\n\n" + newGameStatus);
-
-        // 如果是新游戏或需要抽卡的情况，执行抽卡前检查回合限制
-        //Log.InfoFormat("[Duel] 检查是否需要执行回合：gameState.CurrentTurn={0}, PendingCard={1}, IsProcessingHandAction={2}", 
-        //    gameState.CurrentTurn, gameState.PendingCard != null, gameState.IsProcessingHandAction);
-        if (gameState.CurrentTurn == 1 || (gameState.PendingCard == null && !gameState.IsProcessingHandAction))
-        {
-            //Log.InfoFormat("[Duel] 进入回合处理分支");
-            // 检查是否还有剩余回合数（仅在游戏进行中检查，不计算初始创建）
-            if (gameState.CurrentTurn > 1 && IsDuelTurnLimited(msg.UserId))
-            {
-                var detailedInfo = GetDuelLimitDetailedInfo(msg.UserId);
-                Reply($"每日 duel 回合已用尽，无法继续游戏。\n{detailedInfo}", msg);
-                return;
-            }
-
-            var turnManager = new MDiceV2.Core.GameBattle.TurnManager(gameState);
-            var turnMessages = turnManager.StartTurn();
-
-            // 记录一次可操作回合
-            Log.InfoFormat("[Duel] HandleDuelCommand 调用 IncrementDuelTurn，用户: {0}, CurrentTurn: {1}", msg.UserId, gameState.CurrentTurn);
-            //IncrementDuelTurn(msg.UserId);
-
-            // 合并所有回合消息为一个紧凑的节点（用换行分隔，而不是多个独立节点）
-            if (turnMessages.Count > 0)
-            {
-                consolidatedMessages.Add(string.Join("\n", turnMessages));
-            }
-
-            // 单一合并转发：包含初始化信息和第一回合所有内容（2-3个紧凑节点）
-            ReplyDuelForward(consolidatedMessages, msg);
-
-            if (gameState.PendingCard != null || gameState.IsProcessingHandAction)
-            {
-                MessageDistribution?.SetUserFocus(userIdStr, "carddecision");
-            }
-        }
-        else if (gameState.PendingCard != null || gameState.IsProcessingHandAction)
-        {
-            Log.InfoFormat("[Duel] 进入待卡处理分支");
-            var combinedMessage = string.Empty;
-
-            if (gameState.IsProcessingHandAction && gameState.Player2.HandCards.Count > 0)
-            {
-                var handInfo = gameState.Player2.GetHandInfo();
-                combinedMessage = $"{handInfo}";
-                combinedMessage += "\n请选择要使用的手牌：";
-                combinedMessage += "\n格式：手牌编号.场地位置（如：1.1 = 使用第1张牌放到前场，2.y = 使用第2张特殊卡，3.n = 不使用第3张特殊卡）";
-                combinedMessage += "\n或者直接回复 0/end 跳过当前回合";
-            }
-            else if (gameState.PendingCard != null)
-            {
-                var pendingCard = gameState.PendingCard;
-                combinedMessage = $"你有一张等待处理的卡牌：{pendingCard.Name}";
-                if (pendingCard is MDiceV2.Core.GameBattle.CharacterCard)
-                {
-                    combinedMessage += "\n请回复 1（前场）、2（中场）或 3（后场）来选择放置位置。";
-                }
-                else if (pendingCard is MDiceV2.Core.GameBattle.SpecialCard)
-                {
-                    combinedMessage += "\n请回复 y（使用）或 n（不使用）来决定是否使用特殊卡。";
-                }
-            }
-
-            ReplyDuelForward(new List<string> { combinedMessage }, msg);
-            MessageDistribution?.SetUserFocus(userIdStr, "carddecision");
-        }
-        else
-        {
-            Log.InfoFormat("[Duel] 进入默认分支 - 无游戏或卡牌");
-            Reply("当前没有正在进行的游戏或等待处理的卡牌。请使用 .duel 开始新游戏。", msg);
-        }
-    }
-
-    /// <summary>
-    /// 获取游戏规则说明
-    /// </summary>
-    private string GetGameRules()
-    {
-        return @"######《对战游戏规则》######
-通过使用卡牌和人物卡增长三维属性，最终根据差距最大的属性决定胜负。
-
-当到达第20回合或者某一属性低于-10时，游戏结束并结算，详细基本规则可使用“.rule(duel)基础规则”查询。
-
-关于详细的人物卡和特殊卡效果，请使用”.rule(duel)[卡牌名称]“查询(如”.rule(duel)哥布林“)，或者直接在对局决策状态下使用”s[卡牌名称]“来快捷查询。";
-    }
-
-    /// <summary>
-    /// 加载用户游戏状态（从内存中获取）
-    /// </summary>
-    public MDiceV2.Core.GameBattle.GameState? LoadUserGameState(string userId)
-    {
-        return gameStates.TryGetValue(userId, out var gameState) ? gameState : null;
-    }
-
-    /// <summary>
-    /// 保存用户游戏状态（只保存到内存，gameState已经是引用所以不需要重新赋值）
-    /// </summary>
-
-
-    /// <summary>
-    /// 从 GameRuleData 二进制 JSON 文件加载所有游戏状态到内存（启动时调用）
-    /// 改进：遇到非全局致命性错误时优先保证加载顺利进行
-    /// </summary>
-    public void LoadAllGameStates()
-    {
-        try
-        {
-            Log.InfoFormat("[LoadAllGameStates] ========== 游戏状态加载开始 ==========");
-
-            // 第一步：尝试初始化 GameLoader
-            bool loaderInitialized = false;
-            try
-            {
-                loaderInitialized = MDiceV2.Core.GameBattle.GameLoader.Initialize();
-                if (loaderInitialized)
-                {
-                    Log.InfoFormat("[LoadAllGameStates] GameLoader 初始化成功");
-                }
-                else
-                {
-                    Log.Warn("[LoadAllGameStates] GameLoader 初始化失败，数据加载可能不完整，但将继续尝试恢复");
-                }
-            }
-            catch (Exception initEx)
-            {
-                Log.Warn($"[LoadAllGameStates] GameLoader 初始化异常: {initEx.Message}，将在降级模式下继续加载");
-                loaderInitialized = false;
-            }
-
-            // 第二步：加载游戏状态数据
-            var ruleData = GameRuleDataStore.Load();
-            if (ruleData == null || ruleData.UserGameStates == null || ruleData.UserGameStates.Count == 0)
-            {
-                Log.InfoFormat("[LoadAllGameStates] 没有保存的游戏状态数据");
-                gameStates = new System.Collections.Concurrent.ConcurrentDictionary<string, MDiceV2.Core.GameBattle.GameState>();
-                return;
-            }
-
-            // 第三步：逐用户加载游戏状态，隔离处理单个用户的失败
-            var restored = new Dictionary<string, MDiceV2.Core.GameBattle.GameState>();
-            int successCount = 0;
-            int failureCount = 0;
-            var failedUsers = new List<string>();
-
-            foreach (var kvp in ruleData.UserGameStates)
-            {
-                string userId = kvp.Key;
-                GameStateSnapshot snapshot = kvp.Value;
-
-                try
-                {
-                    // 数据格式验证
-                    if (snapshot == null)
-                    {
-                        Log.Warn($"[LoadAllGameStates] 用户 {userId} 的快照为null，跳过");
-                        failureCount++;
-                        failedUsers.Add(userId);
-                        continue;
-                    }
-
-                    // 尝试从快照恢复游戏状态
-                    var state = GameStateSnapshotMapper.FromSnapshot(snapshot);
-                    if (state != null)
-                    {
-                        restored[userId] = state;
-                        successCount++;
-                        Log.InfoFormat("[LoadAllGameStates] 用户 {0} 的游戏状态恢复成功 (回合: {1})", userId, state.CurrentTurn);
-                    }
-                    else
-                    {
-                        Log.Warn($"[LoadAllGameStates] 用户 {userId} 的快照转换失败（FromSnapshot返回null），跳过");
-                        failureCount++;
-                        failedUsers.Add(userId);
-                    }
-                }
-                catch (Exception userEx)
-                {
-                    Log.Warn($"[LoadAllGameStates] 用户 {userId} 的游戏状态加载失败: {userEx.Message}，跳过此用户");
-                    failureCount++;
-                    failedUsers.Add(userId);
-                    // 继续处理下一个用户，不中断整个加载流程
-                }
-            }
-
-            // 第四步：填充内存字典
-            gameStates = new System.Collections.Concurrent.ConcurrentDictionary<string, MDiceV2.Core.GameBattle.GameState>(restored);
-
-            // 第五步：输出详细的加载统计
-            var loadedKeys = string.Join(",", gameStates.Keys);
-            Log.InfoFormat("[LoadAllGameStates] ========== 游戏状态加载完成 ==========");
-            Log.InfoFormat("[LoadAllGameStates] 成功加载: {0} 个游戏状态（用户: {1}）", successCount, loadedKeys);
-
-            if (failureCount > 0)
-            {
-                var failedUsersStr = string.Join(",", failedUsers);
-                Log.Warn($"[LoadAllGameStates] 加载失败: {failureCount} 个用户的数据无法恢复（用户: {failedUsersStr}）");
-            }
-
-            if (!loaderInitialized && successCount > 0)
-            {
-                Log.Warn("[LoadAllGameStates] 已在 GameLoader 初始化失败的降级模式下成功加载 " + successCount + " 个游戏状态");
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Error($"[LoadAllGameStates] 游戏状态加载过程发生严重异常: {ex.Message}");
-            Log.Error($"[LoadAllGameStates] 堆栈跟踪: {ex.StackTrace}");
-            // 即使发生异常，也初始化空字典而不是让gameStates为null
-            gameStates = new System.Collections.Concurrent.ConcurrentDictionary<string, MDiceV2.Core.GameBattle.GameState>();
-        }
-        finally
-        {
-            // 保证gameStates不为null
-            if (gameStates == null)
-            {
-                gameStates = new System.Collections.Concurrent.ConcurrentDictionary<string, MDiceV2.Core.GameBattle.GameState>();
-                Log.Warn("[LoadAllGameStates] gameStates被重新初始化为空字典");
-            }
-        }
-    }
-
-    /// <summary>
-    /// 将所有游戏状态保存到 GameRuleData 二进制 JSON 文件（关闭时调用）
-    /// </summary>
-    public void SaveAllGameStates()
-    {
-        try
-        {
-            // 根据最近活跃时间过滤需要保存的游戏状态
-            var now = DateTime.UtcNow;
-            var cutoff = now.AddDays(-gameStateRetentionDays);
-
-            var snapshotDict = new Dictionary<string, GameStateSnapshot>();
-            foreach (var kvp in gameStates)
-            {
-                var state = kvp.Value;
-                if (state == null)
-                {
-                    continue;
-                }
-
-                if (state.LastActiveTime == default)
-                {
-                    state.LastActiveTime = now;
-                }
-
-                if (state.LastActiveTime >= cutoff)
-                {
-                    var snap = GameStateSnapshotMapper.ToSnapshot(state);
-                    if (snap != null)
-                    {
-                        snapshotDict[kvp.Key] = snap;
-                    }
-                }
-            }
-
-            var ruleData = new GameRuleData
-            {
-                UserGameStates = snapshotDict
-            };
-
-            GameRuleDataStore.Save(ruleData);
-            var savedKeys = string.Join(",", snapshotDict.Keys);
-            Log.InfoFormat("[SaveAllGameStates] 已通过 GameRuleData 保存 {0} 个游戏状态快照（保留期: {1} 天），用户: {2}", snapshotDict.Count, gameStateRetentionDays, savedKeys);
-        }
-        catch (Exception ex)
-        {
-            Log.Error($"[SaveAllGameStates] 保存所有游戏状态到 GameRuleData 失败: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// 获取用户当前游戏阶段
-    /// </summary>
-    public GamePhase GetCurrentGamePhase(string userId)
-    {
-        var gameState = LoadUserGameState(userId);
-        if (gameState == null)
-        {
-            return GamePhase.NoGame;
-        }
-
-        if (gameState.IsGameOver)
-        {
-            return GamePhase.GameEnded;
-        }
-
-        // 检查是否处于手牌操作阶段或等待卡牌决策
-        if (gameState.IsProcessingHandAction || gameState.PendingCard != null)
-        {
-            return GamePhase.WaitingForDecision;
-        }
-
-        return GamePhase.GameOngoing;
-    }
-
-    /// <summary>
-    /// 创建新游戏
-    /// </summary>
-    private MDiceV2.Core.GameBattle.GameState CreateNewGame(string userId)
-    {
-        // 初始化GameLoader
-        if (!MDiceV2.Core.GameBattle.GameLoader.Initialize())
-        {
-            throw new InvalidOperationException("游戏数据加载失败，无法开始游戏。请检查游戏文件是否完整。");
-        }
-
-        // 检查是否有足够的卡牌
-        var humanCharacters = MDiceV2.Core.GameBattle.GameLoader.GetCharactersByFaction(MDiceV2.Core.GameBattle.Faction.Human);
-        var demonCharacters = MDiceV2.Core.GameBattle.GameLoader.GetCharactersByFaction(MDiceV2.Core.GameBattle.Faction.Demon);
-        var humanSpecialCards = MDiceV2.Core.GameBattle.GameLoader.GetSpecialCardsByFaction(MDiceV2.Core.GameBattle.Faction.Human);
-        var demonSpecialCards = MDiceV2.Core.GameBattle.GameLoader.GetSpecialCardsByFaction(MDiceV2.Core.GameBattle.Faction.Demon);
-
-        if (humanCharacters.Count == 0 && demonCharacters.Count == 0)
-        {
-            throw new InvalidOperationException("没有找到角色卡数据，无法开始游戏。");
-        }
-
-        if (humanSpecialCards.Count == 0 && demonSpecialCards.Count == 0)
-        {
-            throw new InvalidOperationException("没有找到特殊卡数据，无法开始游戏。");
-        }
-
-        var gameState = new MDiceV2.Core.GameBattle.GameState
-        {
-            Player1 = new MDiceV2.Core.GameBattle.Player("魔王军", 10, 10, 10), // AI
-            Player2 = new MDiceV2.Core.GameBattle.Player("人类玩家", 10, 10, 10), // 玩家
-            Player2Id = userId,
-            CurrentTurn = 1,
-            CurrentWeather = "Clear"
-        };
-
-        // 初始化卡牌牌堆
-        var turnManager = new MDiceV2.Core.GameBattle.TurnManager(gameState);
-        turnManager.InitializeGame();
-
-        return gameState;
     }
 
     /// <summary>
@@ -4103,7 +3818,7 @@ public partial class MessageProcessor : ObservableObject
 
     /// <summary>
     /// 处理 .team 指令（队伍管理系统）
-    /// 子命令：new, add, era, join, del, call, sort, list, set
+    /// 子命令：new, add, era, join, del, call, sort, list, set, rule
     /// 统一格式：.team 子命令 参数（子命令与参数间空格可省略，如 .teamnew队伍名）
     /// </summary>
     private void HandleTeamCommand(string args, Msg msg)
@@ -4120,7 +3835,7 @@ public partial class MessageProcessor : ObservableObject
             if (string.IsNullOrEmpty(trimmedArgs))
             {
                 Reply("队伍管理指令格式：.team 子命令 参数\n" +
-                      "子命令：new 队伍名, add @或QQ, era @或QQ, join 队伍名, del 队伍名, call 队伍名, sort 技能名, list, set", msg);
+                      "子命令：new 队伍名, add @或QQ, era @或QQ, join 队伍名, del 队伍名, call 队伍名, sort 技能名, list, set, rule", msg);
                 return;
             }
 
@@ -4128,7 +3843,7 @@ public partial class MessageProcessor : ObservableObject
             var match = Regex.Match(trimmedArgs, @"^([a-zA-Z]+)\s*(.*)$");
             if (!match.Success)
             {
-                Reply("队伍管理指令格式无效。子命令：new, add, era, join, del, call, sort, list, set", msg);
+                Reply("队伍管理指令格式无效。子命令：new, add, era, join, del, call, sort, list, set, rule", msg);
                 return;
             }
             string command = match.Groups[1].Value.ToLower();
@@ -4136,6 +3851,9 @@ public partial class MessageProcessor : ObservableObject
 
             switch (command)
             {
+                case "rule":
+                    HandleTeamRuleCommand(param, msg);
+                    break;
                 case "new":
                     HandleTeamNew(param, msg);
                     break;
@@ -4181,7 +3899,7 @@ public partial class MessageProcessor : ObservableObject
                         }
                     }
                     Reply($"未知的队伍管理子命令：{command}\n" +
-                          "有效子命令：new, add, era, join, del, call, sort, list, set", msg);
+                          "有效子命令：new, add, era, join, del, call, sort, list, set, rule", msg);
                     break;
             }
         }
@@ -4616,6 +4334,104 @@ public partial class MessageProcessor : ObservableObject
         var callMessage = SafeFormatString(GlobalFeedbackMessages.FeedbackTemplates["TeamCallMessage"], teamName, mentionList);
 
         Reply(callMessage, msg);
+
+        var privateRecipients = GetTeamCallPrivateRecipients(team.Members);
+        if (privateRecipients.Count > 0)
+        {
+            string initiatorName = GetReasonableSenderName(msg.UserId, msg.IsSimulationMode);
+            string privateMessage = BuildTeamCallPrivateMessage(teamName, initiatorName);
+            QueueTeamCallPrivateMessages(privateRecipients, privateMessage);
+        }
+    }
+
+    private List<long> GetTeamCallPrivateRecipients(IEnumerable<long> members)
+    {
+        return members.Where(IsTeamCallPrivateEnabled).ToList();
+    }
+
+    private static string BuildTeamCallPrivateMessage(string teamName, string initiatorName)
+    {
+        return $"队伍：{teamName}，{initiatorName} 正在召集你，集合咯。";
+    }
+
+    private void QueueTeamCallPrivateMessages(IReadOnlyList<long> recipients, string message)
+    {
+        if (recipients.Count == 0 || _teamCallPrivateCancellation.IsCancellationRequested)
+            return;
+
+        var recipientSnapshot = recipients.ToArray();
+        _ = Task.Run(
+            () => SendTeamCallPrivateMessagesAsync(
+                recipientSnapshot,
+                message,
+                _teamCallPrivateCancellation.Token));
+    }
+
+    private async Task SendTeamCallPrivateMessagesAsync(
+        IReadOnlyList<long> recipients,
+        string message,
+        CancellationToken cancellationToken)
+    {
+        bool gateAcquired = false;
+        try
+        {
+            await TeamCallPrivateSendGate.WaitAsync(cancellationToken);
+            gateAcquired = true;
+
+            for (int index = 0; index < recipients.Count; index++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (index > 0 || _hasSentTeamCallPrivateMessage)
+                {
+                    int delaySeconds = Math.Clamp(_teamCallDelaySecondsProvider(), 1, 3);
+                    await _teamCallDelayAsync(TimeSpan.FromSeconds(delaySeconds), cancellationToken);
+                }
+
+                long recipientId = recipients[index];
+                try
+                {
+                    bool sent = false;
+                    if (TeamCallPrivateSenderOverride != null)
+                    {
+                        TeamCallPrivateSenderOverride(recipientId, message);
+                        sent = true;
+                    }
+                    else if (MessageDistribution?.WSconnection != null)
+                    {
+                        MessageDistribution.WSconnection.SendPrivateMessage(recipientId, message);
+                        sent = true;
+                    }
+                    else
+                    {
+                        Log.Warn($"[TeamCall] 无可用私聊连接，跳过用户 {recipientId}。");
+                    }
+
+                    if (sent)
+                    {
+                        _hasSentTeamCallPrivateMessage = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"[TeamCall] 向用户 {recipientId} 发送私聊失败: {ex.Message}");
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Log.InfoFormat("[TeamCall] 私聊召集任务已取消。");
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"[TeamCall] 私聊召集任务异常: {ex.Message}");
+        }
+        finally
+        {
+            if (gateAcquired)
+            {
+                TeamCallPrivateSendGate.Release();
+            }
+        }
     }
 
     /// <summary>
@@ -5186,61 +5002,203 @@ public partial class MessageProcessor : ObservableObject
         msg.Content = originalContent;
     }
 
+    private const string CocCardNameTemplate = "SAN:{理智} HP:{生命}/[({体质}+{体型})/10] DEX:{敏捷}";
+
     /// <summary>
-    /// 替换 cardname 模板中的 {技能名} 占位符为实际技能值
-    /// 直接搜索闭合大括号对，无需正则表达式
+    /// Resolve skill placeholders and arithmetic expressions in a card-name template.
+    /// Formula expressions use [ ... ] with {skill} operands.
     /// </summary>
     private string ReplaceCardNamePlaceholders(string template, long userId)
     {
         if (string.IsNullOrEmpty(template))
             return template;
 
-        StringBuilder result = new StringBuilder();
-        int pos = 0;
+        CharacterSheet? currentCard = null;
+        string? currentCharacterName = TryGetCurrentCharacterName(userId);
+        if (!string.IsNullOrEmpty(currentCharacterName))
+            currentCard = TryGetCharacterSheet(userId, currentCharacterName);
 
+        var result = new StringBuilder(template.Length);
+        int pos = 0;
         while (pos < template.Length)
         {
-            int openBrace = template.IndexOf('{', pos);
-            if (openBrace == -1)
+            if (template[pos] == '[')
             {
-                // 没有更多的大括号，追加剩余文本
-                result.Append(template.Substring(pos));
-                break;
-            }
-
-            // 追加开括号前的文本
-            result.Append(template.Substring(pos, openBrace - pos));
-
-            // 查找闭合大括号
-            int closeBrace = template.IndexOf('}', openBrace);
-            if (closeBrace == -1)
-            {
-                // 没有闭合大括号，把开括号原样输出并继续
-                result.Append('{');
-                pos = openBrace + 1;
-                continue;
-            }
-
-            // 提取技能名
-            string skillName = template.Substring(openBrace + 1, closeBrace - openBrace - 1).Trim();
-
-            // 查找用户当前角色卡并替换技能值
-            string skillValue = "N/A";
-            if (characterSkills.TryGetValue(userId, out var userCards) && userCards.Count > 0)
-            {
-                // 获取当前选中的角色卡（假设使用 userDefaultCharacterNames 或遍历第一张卡）
-                var currentCard = userCards.Values.FirstOrDefault();
-                if (currentCard?.Skills != null && currentCard.Skills.TryGetValue(skillName, out var skill))
+                int closeBracket = template.IndexOf(']', pos + 1);
+                if (closeBracket >= 0)
                 {
-                    skillValue = skill.ToString();
+                    string expression = template.Substring(pos + 1, closeBracket - pos - 1);
+                    result.Append(TryEvaluateCardNameFormula(expression, currentCard, out int value)
+                        ? value.ToString(CultureInfo.InvariantCulture)
+                        : "NA");
+                    pos = closeBracket + 1;
+                    continue;
                 }
             }
 
-            result.Append(skillValue);
-            pos = closeBrace + 1;
+            if (template[pos] == '{')
+            {
+                int closeBrace = template.IndexOf('}', pos + 1);
+                if (closeBrace >= 0)
+                {
+                    string skillName = template.Substring(pos + 1, closeBrace - pos - 1).Trim();
+                    string skillValue = currentCard?.Skills != null
+                        && currentCard.Skills.TryGetValue(skillName, out int skill)
+                            ? skill.ToString(CultureInfo.InvariantCulture)
+                            : "N/A";
+                    result.Append(skillValue);
+                    pos = closeBrace + 1;
+                    continue;
+                }
+            }
+
+            result.Append(template[pos]);
+            pos++;
         }
 
         return result.ToString();
+    }
+
+    private static bool TryEvaluateCardNameFormula(string expression, CharacterSheet? character, out int result)
+    {
+        result = 0;
+        try
+        {
+            var parser = new CardNameFormulaParser(expression, skillName =>
+                character?.Skills != null && character.Skills.TryGetValue(skillName, out int value) ? value : 0);
+            decimal evaluated = decimal.Floor(parser.Parse());
+            if (evaluated < int.MinValue || evaluated > int.MaxValue)
+                return false;
+
+            result = decimal.ToInt32(evaluated);
+            return true;
+        }
+        catch (Exception ex) when (ex is FormatException or OverflowException or DivideByZeroException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Minimal arithmetic parser for card-name formulas. Uses decimal intermediate
+    /// values so division is not truncated until the complete expression is floored.
+    /// </summary>
+    private sealed class CardNameFormulaParser
+    {
+        private readonly string _text;
+        private readonly Func<string, int> _skillResolver;
+        private int _position;
+
+        public CardNameFormulaParser(string text, Func<string, int> skillResolver)
+        {
+            _text = text;
+            _skillResolver = skillResolver;
+        }
+
+        public decimal Parse()
+        {
+            decimal value = ParseExpression();
+            SkipWhitespace();
+            if (_position != _text.Length)
+                throw new FormatException("Unexpected characters in card-name formula.");
+            return value;
+        }
+
+        private decimal ParseExpression()
+        {
+            decimal value = ParseTerm();
+            while (true)
+            {
+                SkipWhitespace();
+                if (Match('+')) value += ParseTerm();
+                else if (Match('-')) value -= ParseTerm();
+                else return value;
+            }
+        }
+
+        private decimal ParseTerm()
+        {
+            decimal value = ParseUnary();
+            while (true)
+            {
+                SkipWhitespace();
+                if (Match('*'))
+                {
+                    value *= ParseUnary();
+                }
+                else if (Match('/'))
+                {
+                    decimal divisor = ParseUnary();
+                    if (divisor == 0)
+                        throw new DivideByZeroException();
+                    value /= divisor;
+                }
+                else
+                {
+                    return value;
+                }
+            }
+        }
+
+        private decimal ParseUnary()
+        {
+            SkipWhitespace();
+            if (Match('+')) return ParseUnary();
+            if (Match('-')) return -ParseUnary();
+            return ParsePrimary();
+        }
+
+        private decimal ParsePrimary()
+        {
+            SkipWhitespace();
+            if (Match('('))
+            {
+                decimal value = ParseExpression();
+                SkipWhitespace();
+                if (!Match(')'))
+                    throw new FormatException("Missing closing parenthesis in card-name formula.");
+                return value;
+            }
+
+            if (Match('{'))
+            {
+                int nameStart = _position;
+                while (_position < _text.Length && _text[_position] != '}')
+                    _position++;
+                if (_position >= _text.Length)
+                    throw new FormatException("Missing closing brace in card-name formula.");
+
+                string skillName = _text.Substring(nameStart, _position - nameStart).Trim();
+                _position++;
+                if (skillName.Length == 0)
+                    throw new FormatException("Empty skill reference in card-name formula.");
+                return _skillResolver(skillName);
+            }
+
+            int numberStart = _position;
+            while (_position < _text.Length && char.IsAsciiDigit(_text[_position]))
+                _position++;
+            if (numberStart == _position
+                || !decimal.TryParse(_text.AsSpan(numberStart, _position - numberStart), NumberStyles.None,
+                    CultureInfo.InvariantCulture, out decimal number))
+                throw new FormatException("Expected an integer in card-name formula.");
+
+            return number;
+        }
+
+        private bool Match(char expected)
+        {
+            if (_position >= _text.Length || _text[_position] != expected)
+                return false;
+            _position++;
+            return true;
+        }
+
+        private void SkipWhitespace()
+        {
+            while (_position < _text.Length && char.IsWhiteSpace(_text[_position]))
+                _position++;
+        }
     }
 
     /// <summary>
@@ -5248,6 +5206,7 @@ public partial class MessageProcessor : ObservableObject
     /// 子命令：
     /// .cn - 查询当前模板
     /// .cn set [文本] - 设置模板
+    /// .cn set coc - 设置 CoC 模板
     /// .cn on - 启用自动同步（需要机器人有群管理员权限）
     /// .cn off - 禁用自动同步
     /// </summary>
@@ -5276,7 +5235,9 @@ public partial class MessageProcessor : ObservableObject
             // 子命令：set [文本]
             if (trimmedArgs.StartsWith("set ", StringComparison.OrdinalIgnoreCase))
             {
-                string templateText = trimmedArgs.Substring(4).Trim();
+                string templateArgument = trimmedArgs.Substring(4).Trim();
+                bool useCocPreset = templateArgument.Equals("coc", StringComparison.OrdinalIgnoreCase);
+                string templateText = useCocPreset ? CocCardNameTemplate : templateArgument;
 
                 if (string.IsNullOrWhiteSpace(templateText))
                 {
@@ -5288,6 +5249,20 @@ public partial class MessageProcessor : ObservableObject
                 {
                     Reply("模板过长，请限制在 256 个字符以内。", msg);
                     return;
+                }
+
+                if (useCocPreset)
+                {
+                    string? characterName = TryGetCurrentCharacterName(msg.UserId);
+                    CharacterSheet? currentCard = string.IsNullOrEmpty(characterName)
+                        ? null
+                        : TryGetCharacterSheet(msg.UserId, characterName);
+                    if (currentCard?.Skills != null
+                        && !currentCard.Skills.ContainsKey("生命")
+                        && TryEvaluateCardNameFormula("({体质}+{体型})/10", currentCard, out int hpMax))
+                    {
+                        currentCard.Skills["生命"] = hpMax;
+                    }
                 }
 
                 cardNameTemplates[msg.UserId] = templateText;
@@ -5333,7 +5308,7 @@ public partial class MessageProcessor : ObservableObject
             }
 
             // 未识别的子命令
-            Reply("未识别的子命令。用法：.cn | .cn set [文本] | .cn on | .cn off", msg);
+            Reply("未识别的子命令。用法：.cn | .cn set [文本] | .cn set coc | .cn on | .cn off", msg);
         }
         catch (Exception ex)
         {

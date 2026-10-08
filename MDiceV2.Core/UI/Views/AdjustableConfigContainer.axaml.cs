@@ -1,7 +1,6 @@
 using System;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Templates;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using MDiceV2.Core.UI.ViewModels;
@@ -19,8 +18,6 @@ namespace MDiceV2.Core.UI.Views;
 /// </summary>
 public partial class AdjustableConfigContainer : ConfigContainer
 {
-    private ListBox? _configListBox;
-
     /// <summary>
     /// 构造函数
     /// 初始化组件并设置数据上下文变化监听
@@ -28,81 +25,6 @@ public partial class AdjustableConfigContainer : ConfigContainer
     public AdjustableConfigContainer()
     {
         InitializeComponent();
-        DataContextChanged += OnDataContextChanged;
-    }
-
-    /// <summary>
-    /// 数据上下文变化事件处理
-    /// 当 ViewModel 改变时，重新连接 ListBox 的事件
-    /// </summary>
-    private void OnDataContextChanged(object? sender, EventArgs e)
-    {
-        // 父类已在其 OnDataContextChanged 中更新了 _viewModel
-        // 这里我们需要找到 ListBox 并连接编辑模式逻辑
-        _configListBox = this.FindControl<ListBox>("ConfigListBox");
-        if (_configListBox != null)
-        {
-            // 注册 SelectionChanged 事件以启用编辑模式
-            _configListBox.SelectionChanged += OnConfigListBoxSelectionChanged;
-        }
-    }
-
-    /// <summary>
-    /// ListBox 选择变化事件处理
-    /// 当用户选中配置项时，启用编辑模式（禁用虚拟化）
-    /// 当没有选中任何项时，禁用编辑模式（启用虚拟化）
-    /// </summary>
-    private void OnConfigListBoxSelectionChanged(object? sender, SelectionChangedEventArgs e)
-    {
-        if (_viewModel == null || _configListBox == null)
-            return;
-
-        // 如果选中了任何项，启用编辑模式
-        if (_configListBox.SelectedItem != null)
-        {
-            EnableEditMode();
-        }
-        else
-        {
-            // 如果没有选中任何项，禁用编辑模式
-            DisableEditMode();
-        }
-    }
-
-    /// <summary>
-    /// 启用编辑模式
-    /// 切换 ListBox 使用非虚拟化面板以获得流畅的动画
-    /// </summary>
-    private void EnableEditMode()
-    {
-        if (_viewModel == null)
-            return;
-
-        _viewModel.IsEditMode = true;
-
-        // 将 ListBox 的 ItemsPanel 切换为非虚拟化面板
-        if (_configListBox != null && this.Resources["NonVirtualizingPanelTemplate"] is object nonVirtualizingTemplate)
-        {
-            _configListBox.ItemsPanel = (ITemplate<Panel?>)nonVirtualizingTemplate;
-        }
-    }
-
-    /// <summary>
-    /// 禁用编辑模式
-    /// 切换 ListBox 使用虚拟化面板以节约内存
-    /// </summary>
-    private void DisableEditMode()
-    {
-        if (_viewModel == null)
-            return;
-
-        _viewModel.IsEditMode = false;
-
-        // 将 ListBox 的 ItemsPanel 切换为虚拟化面板
-        if (_configListBox != null && this.Resources["VirtualizingPanelTemplate"] is object virtualizingTemplate)
-        {
-            _configListBox.ItemsPanel = (ITemplate<Panel?>)virtualizingTemplate;
-        }
     }
 
     /// <summary>

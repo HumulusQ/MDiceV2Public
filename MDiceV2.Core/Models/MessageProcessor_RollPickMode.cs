@@ -77,7 +77,7 @@ public partial class MessageProcessor
             return;
         }
 
-        const int userDefaultDice = 100;
+        int userDefaultDice = GetUserDefaultDice(msg.UserId);
         string rollResultText = string.Empty;
         for (int i = 0; i < Math.Clamp(repeatCount, 1, 9); i++)
         {

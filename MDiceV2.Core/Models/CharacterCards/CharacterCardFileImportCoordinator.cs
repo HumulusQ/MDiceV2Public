@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace MDiceV2.Models.CharacterCards;
 
@@ -8,6 +9,9 @@ public sealed class CharacterCardFileImportCoordinator : IDisposable
 {
     public const string FocusPrefix = "character_card_import:";
     private static readonly TimeSpan ConfirmationLifetime = TimeSpan.FromMinutes(10);
+    private static readonly Regex MdiceHtmlFileNamePattern = new(
+        @"\.mdice(?: \(\d+\))?\.html$",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
     private readonly MessageDistribution _messageDistribution;
     private readonly MessageProcessor _messageProcessor;
     private readonly OneBotFileContentResolver _fileResolver;
@@ -124,7 +128,7 @@ public sealed class CharacterCardFileImportCoordinator : IDisposable
     public static bool IsCandidateFile(OneBotFileInfo file)
     {
         var fileName = file.FileName?.Trim() ?? string.Empty;
-        return fileName.EndsWith(".mdice.html", StringComparison.OrdinalIgnoreCase)
+        return MdiceHtmlFileNamePattern.IsMatch(fileName)
             || fileName.EndsWith(".mdice", StringComparison.OrdinalIgnoreCase)
             // v216 initially exported library bundles with a plain .html suffix.
             // Keep those already-created packages recognizable without treating

@@ -33,7 +33,6 @@
     <PackageReference Include="Semi.Avalonia" Version="11.1.0" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
     <PackageReference Include="System.Data.SQLite" Version="1.0.119" />
-    <PackageReference Include="MoonSharp" Version="2.0.0" />
     <!-- Polly: shared dependency for AIMod (HTTP retry). Must be in host bundle for slim plugin packages. -->
     <PackageReference Include="Polly" Version="8.5.0" />
     <!-- DI Container -->
@@ -53,11 +52,6 @@
     <!-- Also include top-level repository Assets/Font so Playfair and other fonts
          are embedded into the Core assembly and available via avares:// MDiceV2.Core URIs -->
     <AvaloniaResource Include="..\Assets\Font\**\*.*" />
-  </ItemGroup>
-  <!-- Embedded Lua scripts -->
-  <ItemGroup>
-    <EmbeddedResource Include="GameBattle\Scripts\*.lua" />
-    <EmbeddedResource Include="GameBattle\Data\*.json" />
   </ItemGroup>
   <!-- Models are in the Core project's folder; rely on SDK implicit include for .cs files -->
   <!-- If explicit control is needed set EnableDefaultCompileItems to false and add explicit includes -->

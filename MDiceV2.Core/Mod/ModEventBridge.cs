@@ -19,6 +19,7 @@ namespace MDiceV2.Core.Mod;
 /// </summary>
 public class ModEventBridge
 {
+    private readonly object _sync = new();
     public event Action? CommandProvidersChanged;
 
     /// <summary>
@@ -56,14 +57,17 @@ public class ModEventBridge
     /// </summary>
     public void RegisterMod(IModPlugin plugin, IModMetadata metadata, bool isEnabled = true)
     {
-        if (_mods.ContainsKey(metadata.Id))
+        lock (_sync)
         {
-            _modContext.Log(LogLevel.Warn, $"Mod already registered: {metadata.Id}");
-            return;
-        }
+            if (_mods.ContainsKey(metadata.Id))
+            {
+                _modContext.Log(LogLevel.Warn, $"Mod already registered: {metadata.Id}");
+                return;
+            }
 
-        _mods[metadata.Id] = (plugin, metadata, isEnabled);
-        InvalidateCache();
+            _mods[metadata.Id] = (plugin, metadata, isEnabled);
+            InvalidateCache();
+        }
         SynchronizeNavigationPanel(plugin, isEnabled);
 
         _modContext.Log(LogLevel.Debug,
@@ -115,10 +119,14 @@ public class ModEventBridge
     /// </summary>
     public bool EnableMod(string modId)
     {
-        if (!_mods.TryGetValue(modId, out var modEntry))
+        (IModPlugin Plugin, IModMetadata Metadata, bool IsEnabled) modEntry;
+        lock (_sync)
         {
-            _modContext.Log(LogLevel.Warn, $"Mod not found: {modId}");
-            return false;
+            if (!_mods.TryGetValue(modId, out modEntry))
+            {
+                _modContext.Log(LogLevel.Warn, $"Mod not found: {modId}");
+                return false;
+            }
         }
 
         var (plugin, metadata, isEnabled) = modEntry;
@@ -132,8 +140,13 @@ public class ModEventBridge
         try
         {
             plugin.OnEnable();
-            _mods[modId] = (plugin, metadata, true);
-            InvalidateCache();
+            lock (_sync)
+            {
+                if (!_mods.TryGetValue(modId, out var current) || !ReferenceEquals(current.Plugin, plugin))
+                    return false;
+                _mods[modId] = (plugin, metadata, true);
+                InvalidateCache();
+            }
             SynchronizeNavigationPanel(plugin, isEnabled: true);
 
             _modContext.Log(LogLevel.Info, $"Mod enabled: {metadata.Name}");
@@ -155,10 +168,14 @@ public class ModEventBridge
     /// </summary>
     public bool DisableMod(string modId)
     {
-        if (!_mods.TryGetValue(modId, out var modEntry))
+        (IModPlugin Plugin, IModMetadata Metadata, bool IsEnabled) modEntry;
+        lock (_sync)
         {
-            _modContext.Log(LogLevel.Warn, $"Mod not found: {modId}");
-            return false;
+            if (!_mods.TryGetValue(modId, out modEntry))
+            {
+                _modContext.Log(LogLevel.Warn, $"Mod not found: {modId}");
+                return false;
+            }
         }
 
         var (plugin, metadata, isEnabled) = modEntry;
@@ -172,8 +189,13 @@ public class ModEventBridge
         try
         {
             plugin.OnDisable();
-            _mods[modId] = (plugin, metadata, false);
-            InvalidateCache();
+            lock (_sync)
+            {
+                if (!_mods.TryGetValue(modId, out var current) || !ReferenceEquals(current.Plugin, plugin))
+                    return false;
+                _mods[modId] = (plugin, metadata, false);
+                InvalidateCache();
+            }
             SynchronizeNavigationPanel(plugin, isEnabled: false);
 
             _modContext.Log(LogLevel.Info, $"Mod disabled: {metadata.Name}");
@@ -186,6 +208,45 @@ public class ModEventBridge
                 $"Error disabling mod '{metadata.Name}': {ex.Message}");
             return false;
         }
+    }
+
+    /// <summary>从宿主路由中移除一个 Mod，可选执行其停用和卸载生命周期。</summary>
+    public bool UnregisterMod(string modId, bool invokeLifecycle = true)
+    {
+        (IModPlugin Plugin, IModMetadata Metadata, bool IsEnabled) entry;
+        lock (_sync)
+        {
+            if (!_mods.TryGetValue(modId, out entry))
+                return false;
+            _mods.Remove(modId);
+            InvalidateCache();
+        }
+
+        // 先从路由移除，再调用第三方代码，确保卸载期间不会收到新消息。
+        CommandProvidersChanged?.Invoke();
+        SynchronizeNavigationPanel(entry.Plugin, isEnabled: false);
+        if (!invokeLifecycle)
+            return true;
+
+        try
+        {
+            if (entry.IsEnabled)
+                entry.Plugin.OnDisable();
+        }
+        catch (Exception ex)
+        {
+            _modContext.Log(LogLevel.Warn, $"Error disabling mod '{entry.Metadata.Name}' while unregistering: {ex.Message}");
+        }
+
+        try
+        {
+            entry.Plugin.OnUnload();
+        }
+        catch (Exception ex)
+        {
+            _modContext.Log(LogLevel.Warn, $"Error unloading mod '{entry.Metadata.Name}': {ex.Message}");
+        }
+        return true;
     }
 
     private static void SynchronizeNavigationPanel(IModPlugin plugin, bool isEnabled)
@@ -317,10 +378,20 @@ public class ModEventBridge
         _modContext.Log(LogLevel.Info, "[ModEventBridge] ========== UnloadAllMods START ==========");
         _modContext.Log(LogLevel.Info, $"[ModEventBridge] Unloading {_mods.Count} mods...");
 
-        foreach (var (modId, (plugin, metadata, _)) in _mods)
+        var snapshot = GetAllMods();
+        foreach (var (modId, (plugin, metadata, isEnabled)) in snapshot)
         {
             try
             {
+                if (isEnabled && string.Equals(metadata.PackageType, "portable", StringComparison.OrdinalIgnoreCase))
+                {
+                    try { plugin.OnDisable(); }
+                    catch (Exception disableException)
+                    {
+                        _modContext.Log(LogLevel.Warn,
+                            $"[ModEventBridge] Error disabling portable mod '{metadata.Name}' during shutdown: {disableException.Message}");
+                    }
+                }
                 _modContext.Log(LogLevel.Info, $"[ModEventBridge] Calling OnUnload() for mod: {metadata.Name}");
                 plugin.OnUnload();
                 _modContext.Log(LogLevel.Info, $"[ModEventBridge] ✓ OnUnload() completed for: {metadata.Name}");
@@ -333,8 +404,11 @@ public class ModEventBridge
             }
         }
 
-        _mods.Clear();
-        InvalidateCache();
+        lock (_sync)
+        {
+            _mods.Clear();
+            InvalidateCache();
+        }
         CommandProvidersChanged?.Invoke();
         _modContext.Log(LogLevel.Info, "[ModEventBridge] ✓ All mods unloaded successfully");
         _modContext.Log(LogLevel.Info, "[ModEventBridge] ========== UnloadAllMods END ==========");
@@ -345,7 +419,8 @@ public class ModEventBridge
     /// </summary>
     public Dictionary<string, (IModPlugin Plugin, IModMetadata Metadata, bool IsEnabled)> GetAllMods()
     {
-        return new Dictionary<string, (IModPlugin, IModMetadata, bool)>(_mods);
+        lock (_sync)
+            return new Dictionary<string, (IModPlugin, IModMetadata, bool)>(_mods);
     }
 
     /// <summary>
@@ -353,9 +428,10 @@ public class ModEventBridge
     /// </summary>
     public (IModPlugin? Plugin, IModMetadata? Metadata, bool IsEnabled)? GetModStatus(string modId)
     {
-        if (_mods.TryGetValue(modId, out var entry))
+        lock (_sync)
         {
-            return (entry.Plugin, entry.Metadata, entry.IsEnabled);
+            if (_mods.TryGetValue(modId, out var entry))
+                return (entry.Plugin, entry.Metadata, entry.IsEnabled);
         }
         return null;
     }
@@ -365,7 +441,7 @@ public class ModEventBridge
     /// </summary>
     public int GetEnabledModCount()
     {
-        return _mods.Values.Count(x => x.IsEnabled);
+        lock (_sync) return _mods.Values.Count(x => x.IsEnabled);
     }
 
     /// <summary>
@@ -373,7 +449,7 @@ public class ModEventBridge
     /// </summary>
     public int GetTotalModCount()
     {
-        return _mods.Count;
+        lock (_sync) return _mods.Count;
     }
 
     /// <summary>
@@ -391,7 +467,7 @@ public class ModEventBridge
     {
         var allHandlers = new Dictionary<string, Func<string, object, string?>>();
         
-        foreach (var (modId, (plugin, metadata, isEnabled)) in _mods)
+        foreach (var (modId, (plugin, metadata, isEnabled)) in GetAllMods())
         {
             // 只收集来自已启用的 Mod 的指令处理器
             if (!isEnabled)
@@ -442,7 +518,7 @@ public class ModEventBridge
     {
         var providers = new List<ISubcommandProvider>();
         
-        foreach (var (modId, (plugin, metadata, isEnabled)) in _mods)
+        foreach (var (modId, (plugin, metadata, isEnabled)) in GetAllMods())
         {
             if (!isEnabled) continue;
 
@@ -462,16 +538,18 @@ public class ModEventBridge
     /// </summary>
     private void RefreshEnabledModsCache()
     {
-        if (_cacheValid)
-            return;
+        lock (_sync)
+        {
+            if (_cacheValid)
+                return;
 
-        _enabledModsCache = _mods
-            .Where(x => x.Value.IsEnabled)
-            .OrderByDescending(x => x.Value.Metadata.Priority)
-            .Select(x => (x.Value.Plugin, x.Value.Metadata))
-            .ToList();
-
-        _cacheValid = true;
+            _enabledModsCache = _mods
+                .Where(x => x.Value.IsEnabled)
+                .OrderByDescending(x => x.Value.Metadata.Priority)
+                .Select(x => (x.Value.Plugin, x.Value.Metadata))
+                .ToList();
+            _cacheValid = true;
+        }
     }
 
     /// <summary>
@@ -496,10 +574,14 @@ public class ModEventBridge
     /// <returns>若成功触发调用（不代表更新一定成功）返回 true，否则返回 false。</returns>
     public async Task<bool> RequestModUpdateAsync(string modId)
     {
-        if (!_mods.TryGetValue(modId, out var entry))
+        (IModPlugin Plugin, IModMetadata Metadata, bool IsEnabled) entry;
+        lock (_sync)
         {
-            _modContext.Log(LogLevel.Warn, $"[ModEventBridge] RequestModUpdateAsync: Mod not found: {modId}");
-            return false;
+            if (!_mods.TryGetValue(modId, out entry))
+            {
+                _modContext.Log(LogLevel.Warn, $"[ModEventBridge] RequestModUpdateAsync: Mod not found: {modId}");
+                return false;
+            }
         }
 
         var plugin = entry.Plugin;

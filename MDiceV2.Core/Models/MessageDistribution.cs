@@ -6,7 +6,6 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using MDiceV2.Models;
-using MDiceV2.Core.GameBattle;
 using MDiceV2.Abstractions;
 
 namespace MDiceV2.Models;
@@ -393,13 +392,17 @@ public partial class MessageDistribution : ObservableObject
             }
 
             var messageElement = json.TryGetProperty("message", out var msgElement) ? msgElement : default;
-            DispatchFileMessagesFromMessageElement(messageElement, "group_message", userId, groupId);
+            var containsFile = DispatchFileMessagesFromMessageElement(messageElement, "group_message", userId, groupId);
             var message = ParseMessageContent(messageElement);
             var selfInfo = GetSelfInfo();
             var (cleanedMessage, isAted, shouldIgnore) = CleanAndCheckLeadingMentions(message, selfInfo.UserId.ToString(), selfInfo.Nickname);
 
             Log.Error($"[群消息] 群:{groupId} 用户:{userId} 原始:{message} 清理后:{cleanedMessage} IsAted:{isAted} ShouldIgnore:{shouldIgnore}");
-            OnGroupMessage?.Invoke(groupId, userId, cleanedMessage, isAted, shouldIgnore);
+            // A file segment is an upload event, not a textual reply. In particular,
+            // it must not immediately consume a confirmation focus that the file
+            // handler has just created (file-only messages parse as an empty string).
+            if (!containsFile)
+                OnGroupMessage?.Invoke(groupId, userId, cleanedMessage, isAted, shouldIgnore);
         }
         else if (messageType == "private")
         {
@@ -411,12 +414,13 @@ public partial class MessageDistribution : ObservableObject
             }
 
             var messageElement = json.TryGetProperty("message", out var msgElement) ? msgElement : default;
-            DispatchFileMessagesFromMessageElement(messageElement, "private_message", userId, 0);
+            var containsFile = DispatchFileMessagesFromMessageElement(messageElement, "private_message", userId, 0);
             var message = ParseMessageContent(messageElement);
 
             Log.InfoFormat($"[好友消息] 用户:{userId} 内容:{message}");
 
-            OnPrivateMessage?.Invoke(userId, message);
+            if (!containsFile)
+                OnPrivateMessage?.Invoke(userId, message);
         }
     }
 
@@ -483,12 +487,14 @@ public partial class MessageDistribution : ObservableObject
         }
     }
 
-    private void DispatchFileMessagesFromMessageElement(JsonElement messageElement, string sourceKind, long userId, long groupId)
+    private bool DispatchFileMessagesFromMessageElement(JsonElement messageElement, string sourceKind, long userId, long groupId)
     {
+        var containsFile = false;
         try
         {
             foreach (var fileInfo in OneBotFileInfo.ExtractFromMessageSegments(messageElement, sourceKind, userId, groupId))
             {
+                containsFile = true;
                 DispatchOneBotFileInfo(fileInfo);
             }
         }
@@ -496,6 +502,8 @@ public partial class MessageDistribution : ObservableObject
         {
             Log.Warn($"[OneBot文件] 提取 message 文件段失败: {ex.Message}");
         }
+
+        return containsFile;
     }
 
     /// <summary>
@@ -973,10 +981,23 @@ public partial class MessageDistribution : ObservableObject
     /// </summary>
     public void ReplyForward(List<(string timestamp, long userId, string senderName, string content)> entries, Msg msg)
     {
-        Log.InfoFormat($"ReplyForward called with {entries.Count} entries, IsSimulationMode={msg.IsSimulationMode}");
-
         if (entries is null || entries.Count == 0)
             return;
+
+        // OneBot rejects a forward message when any node has no sendable
+        // segment.  Empty log entries are common in imported transcripts, so
+        // omit them instead of letting one blank node reject the whole review.
+        entries = entries
+            .Where(entry => !string.IsNullOrWhiteSpace(entry.content))
+            .ToList();
+
+        if (entries.Count == 0)
+        {
+            Log.Warn("ReplyForward: all entries were empty; no forward message was sent.");
+            return;
+        }
+
+        Log.InfoFormat($"ReplyForward called with {entries.Count} sendable entries, IsSimulationMode={msg.IsSimulationMode}");
 
         if (msg.IsSimulationMode)
         {
@@ -1450,18 +1471,8 @@ public partial class MessageDistribution : ObservableObject
             return;
         }
 
-        switch (focusType)
-        {
-            case "carddecision":
-                Log.Warn($"[HandleFocusedMessage] 处理卡牌决策焦点 for user {userId}");
-                HandleCardDecisionFocus(userId, msg, message, isSimulationMode);
-                break;
-            default:
-                Log.Warn($"未知的焦点类型: {focusType}");
-                // 清除未知焦点状态
-                ClearUserFocus(userId);
-                break;
-        }
+        Log.Warn($"未知的焦点类型: {focusType}");
+        ClearUserFocus(userId);
     }
 
     /// <summary>
@@ -1500,188 +1511,6 @@ public partial class MessageDistribution : ObservableObject
 
         // 清除焦点状态
         ClearUserFocus(userId);
-    }
-
-    /// <summary>
-    /// 为 duel 命令创建转发消息节点
-    /// </summary>
-    private (string timestamp, long userId, string senderName, string content) CreateDuelForwardNode(string content)
-    {
-        var selfInfo = GetSelfInfo();
-        var botId = selfInfo?.UserId ?? 1001;
-        var botName = selfInfo?.Nickname ?? "机器人";
-        var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-        return (timestamp, botId, botName, content);
-    }
-
-    /// <summary>
-    /// duel 指令转发消息回复（支持群组和私聊）
-    /// 群组使用 OneBot 11 转发格式，私聊 fallback 到普通消息
-    /// </summary>
-    private void ReplyDuelForward(List<string> messageContents, Msg msg)
-    {
-        if (msg.Source == MessageSource.group && WSconnection?.IsWsConnected == true)
-        {
-            // 群组：转换为转发节点列表
-            var forwardNodes = messageContents
-                .Select(content => CreateDuelForwardNode(content))
-                .ToList();
-            ReplyForward(forwardNodes, msg);
-        }
-        else
-        {
-            // 私聊或未连接：回退为普通消息（每条分别发送）
-            foreach (var content in messageContents)
-            {
-                Reply(content, msg);
-            }
-        }
-    }
-
-    /// <summary>
-    /// 处理卡牌决策焦点状态
-    /// </summary>
-    private void HandleCardDecisionFocus(string userId, Msg msg, string message, bool isSimulationMode = false)
-    {
-        // 获取用户的游戏状态
-        var gameState = LoadUserGameState(userId);
-        if (gameState == null)
-        {
-            Log.Warn($"[HandleCardDecisionFocus] 无法加载游戏状态 for user {userId}");
-            Reply("无法找到你的游戏数据，请使用 .duel 指令重新开始游戏。", msg);
-            ClearUserFocus(userId);
-            return;
-        }
-
-        if (gameState.IsGameOver)
-        {
-            Log.Warn($"[HandleCardDecisionFocus] 游戏已标记为结束 for user {userId}");
-            Reply("你的游戏已经结束，请使用 .duel 指令重新开始游戏。", msg);
-            ClearUserFocus(userId);
-            return;
-        }
-
-        // 创建TurnManager处理决策
-        var turnManager = new MDiceV2.Core.GameBattle.TurnManager(gameState);
-
-        // 【关键】记录初始回合数，用于检测回合是否切换
-        int initialTurn = gameState.CurrentTurn;
-
-        // 解析用户输入
-        var trimmedMessage = message.Trim().ToLower();
-        bool isValidInput = false;
-        List<string> messages = new List<string>();
-        Log.InfoFormat($"[HandleCardDecisionFocus]： {gameState.IsProcessingHandAction} ");
-        
-        // 检查是否为搜索命令：s+关键词（空格可选或多个）
-        if (trimmedMessage.StartsWith("s", StringComparison.OrdinalIgnoreCase))
-        {
-            string keyword = trimmedMessage.Substring(1).Trim();
-            
-            if (string.IsNullOrEmpty(keyword))
-            {
-                // 关键词为空，提示用法
-                Reply("请输入搜索关键词，格式：s 关键词或s关键词", msg);
-                return;
-            }
-
-            // 从RuleDataIO的"duel"规则表中查询
-            string? searchResult = MessageProcessor?.RuleDataIO?.ReadData("duel", keyword);
-            if (!string.IsNullOrEmpty(searchResult))
-            {
-                Reply($"{keyword}: {searchResult}", msg);
-            }
-            else
-            {
-                Reply($"未找到 duel 中的 {keyword}", msg);
-            }
-            return;
-        }
-        
-        // 检查是否处于手牌操作阶段
-        if (gameState.IsProcessingHandAction)
-        {
-            // 手牌操作模式：支持 1.1, 2.y, 3.n, 0, end 等格式
-            if (trimmedMessage == "0" || trimmedMessage == "end")
-            {
-                // 跳过回合
-                messages = turnManager.SkipTurnWithHand();
-                isValidInput = true;
-            }
-            else
-            {
-                // 手牌使用命令
-                messages = turnManager.UseCardFromHand(trimmedMessage);
-                
-                // 【关键】检查是否返回了格式错误标记
-                bool hasFormatError = messages.Any(m => m == "[CARD_FORMAT_ERROR]");
-                if (hasFormatError)
-                {
-                    // 格式错误，直接清除焦点，不显示详细错误信息
-                    Reply("手牌操作失误，请重新输入 .duel 来进入游戏。", msg);
-                    ClearUserFocus(userId);
-                    return;
-                }
-                
-                // 不是格式错误才认为是有效输入
-                isValidInput = true;
-            }
-
-            if (isValidInput)
-            {
-                // 【改进】检查是否发生了回合切换，仅在回合切换时记录
-                // 回合切换说明已经执行了完整的 EndTurn → StartTurn 流程
-                if (gameState.CurrentTurn > initialTurn)
-                {
-                    Log.InfoFormat($"[HandleCardDecisionFocus] 回合切换检测：{initialTurn} → {gameState.CurrentTurn}");
-                    MessageProcessor?.RecordDuelTurn(long.Parse(userId));
-                    
-                    // 【关键检查】检查游戏是否因回合限制被强制结束
-                    // 注意：此时IsGameOver可能刚被设置为true（在RecordDuelTurn中）
-                    if (gameState.IsGameOver)
-                    {
-                        messages.Add("#累了啦，今天就到这里了~~！");
-                        var finalMessage = string.Join("\n", messages);
-                        ReplyDuelForward(new List<string> { finalMessage }, msg);
-                        ClearUserFocus(userId);
-                        return;
-                    }
-                }
-                
-                // 检查是否还有手牌需要处理，如果有手牌则保持焦点状态
-                bool hasMoreHandCards = gameState.Player2.HandCards.Count > 0 && gameState.IsProcessingHandAction;
-                if (!hasMoreHandCards)
-                {
-                    // 没有更多手牌，清除焦点状态
-                    ClearUserFocus(userId);
-                }
-                // 如果还有手牌，焦点状态会继续保留，等待用户输入下一个手牌指令
-            }
-            else
-            {
-                // 手牌操作失误，清除焦点状态并提示重新开始游戏
-                Reply("手牌操作失误，请重新输入 .duel 来进入游戏。", msg);
-                ClearUserFocus(userId);
-                return;
-            }
-
-            // 将所有消息合并为一条消息发送，中间用换行分隔
-            var combinedMessage = string.Join("\n", messages);
-            ReplyDuelForward(new List<string> { combinedMessage }, msg);
-            return;
-        }
-
-        // 没有在手牌操作阶段，游戏应该已结束或状态不正常
-        Reply("游戏状态异常，请重新开始游戏。", msg);
-        ClearUserFocus(userId);
-    }
-
-    /// <summary>
-    /// 加载用户游戏状态（从内存中获取）
-    /// </summary>
-    private GameState? LoadUserGameState(string userId)
-    {
-        return MessageProcessor?.LoadUserGameState(userId) ?? null;
     }
 
     /// <summary>

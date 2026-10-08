@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <OutputType>Library</OutputType>
+    <AssemblyName>MeguminDuel</AssemblyName>
+    <PortableVersionFile>$(MSBuildProjectDirectory)\mod-version.txt</PortableVersionFile>
+    <GeneratedPortableVersionFile>$(MSBuildProjectDirectory)\obj\$(Configuration)\$(TargetFramework)\GeneratedPortableVersion.g.cs</GeneratedPortableVersionFile>
+    <Version>0.3.1</Version>
+    <AssemblyVersion>0.3.1</AssemblyVersion>
+    <FileVersion>0.3.1</FileVersion>
+    <InformationalVersion>beta</InformationalVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\MDiceV2.Interfaces\MDiceV2.Interfaces.csproj" Private="false" />
+    <None Update="default-texts.json" CopyToOutputDirectory="PreserveNewest" />
+    <Compile Include="$(GeneratedPortableVersionFile)" />
+  </ItemGroup>
+  <Target Name="GeneratePortableModVersion" BeforeTargets="CoreCompile">
+    <PropertyGroup>
+      <PortableVersionIncrementArgument Condition="'$(Configuration)' == 'Release' and '$(SkipPortableVersionIncrement)' != 'true'">-Increment</PortableVersionIncrementArgument>
+    </PropertyGroup>
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\generate-version.ps1&quot; -VersionFile &quot;$(PortableVersionFile)&quot; -ManifestFile &quot;$(MSBuildProjectDirectory)\mod.json&quot; -GeneratedCodeFile &quot;$(GeneratedPortableVersionFile)&quot; $(PortableVersionIncrementArgument)" ConsoleToMSBuild="true" StandardOutputImportance="Low">
+      <Output TaskParameter="ConsoleOutput" PropertyName="PortableModVersion" />
+    </Exec>
+  </Target>
+  <Target Name="BuildPortablePackage" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
+    <PropertyGroup>
+      <PackageStage>$(IntermediateOutputPath)mmod\</PackageStage>
+      <PackageFileName>MeguminDuel-$(PortableModVersion).mmod</PackageFileName>
+      <ReleasePackageOutput>$(TargetDir)$(PackageFileName)</ReleasePackageOutput>
+      <ArtifactPackageOutput>$(MSBuildProjectDirectory)\..\..\artifacts\mods\$(PackageFileName)</ArtifactPackageOutput>
+    </PropertyGroup>
+    <ItemGroup>
+      <OldReleasePackages Include="$(TargetDir)MeguminDuel-*.mmod" />
+    </ItemGroup>
+    <Delete Files="@(OldReleasePackages)" />
+    <RemoveDir Directories="$(PackageStage)" />
+    <MakeDir Directories="$(PackageStage);$([System.IO.Path]::GetDirectoryName('$(ArtifactPackageOutput)'))" />
+    <Copy SourceFiles="$(TargetPath);$(MSBuildProjectDirectory)\mod.json;$(MSBuildProjectDirectory)\default-texts.json" DestinationFolder="$(PackageStage)" />
+    <ZipDirectory SourceDirectory="$(PackageStage)" DestinationFile="$(ReleasePackageOutput)" Overwrite="true" />
+    <Copy SourceFiles="$(ReleasePackageOutput)" DestinationFiles="$(ArtifactPackageOutput)" />
+  </Target>
+</Project>

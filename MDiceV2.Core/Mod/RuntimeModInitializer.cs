@@ -38,6 +38,13 @@ public static class RuntimeModInitializer
                 return _current;
             }
 
+            if (forceReload && _current != null)
+            {
+                _current.ModEventBridge.UnloadAllMods();
+                _current.PortableModManager.Dispose();
+                _current = null;
+            }
+
             Log.Normal($"[RuntimeMode] mode={runtimeMode}");
             Log.Normal($"[ModLoad] LoadAllMods START modsPath={modsPath}");
             Console.WriteLine($"[ModLoad] LoadAllMods START modsPath={modsPath}");
@@ -91,10 +98,17 @@ public static class RuntimeModInitializer
                 records.Add(record);
             }
 
-            var result = new RuntimeModInitializationResult(runtimeMode, modsPath, bridge, records);
+            AttachBridgeToProcessor(bridge, messageProcessor);
+            var processor = messageProcessor ?? MessageProcessor.GetInstance();
+            var portableModManager = new PortableModManager(modsPath, bridge, modContext, messageDistribution, processor);
+            foreach (var failed in loader.GetFailedMods())
+                portableModManager.AddStartupFailure(Path.GetFileName(failed.ModPath), failed.ErrorMessage);
+            foreach (var failed in records.Where(record => !string.IsNullOrWhiteSpace(record.Error)))
+                portableModManager.AddStartupFailure(failed.Name, failed.Error!);
+            portableModManager.LoadInstalledPackages();
+            var result = new RuntimeModInitializationResult(runtimeMode, modsPath, bridge, portableModManager, records);
             _current = result;
 
-            AttachBridgeToProcessor(bridge, messageProcessor);
             EnsureCharacterCardImporter(messageDistribution, messageProcessor, forceReload);
 
             var enabledIds = bridge.GetAllMods()
@@ -127,6 +141,7 @@ public static class RuntimeModInitializer
                 return;
 
             _current.ModEventBridge.UnloadAllMods();
+            _current.PortableModManager.Dispose();
             _characterCardImporter?.Dispose();
             _characterCardImporter = null;
             _current = null;
@@ -137,6 +152,8 @@ public static class RuntimeModInitializer
     {
         lock (SyncRoot)
         {
+            _current?.ModEventBridge.UnloadAllMods();
+            _current?.PortableModManager.Dispose();
             _characterCardImporter?.Dispose();
             _characterCardImporter = null;
             _current = null;
@@ -189,17 +206,20 @@ public sealed class RuntimeModInitializationResult
         string runtimeMode,
         string modsPath,
         ModEventBridge modEventBridge,
+        PortableModManager portableModManager,
         IReadOnlyList<RuntimeModRecord> mods)
     {
         RuntimeMode = runtimeMode;
         ModsPath = modsPath;
         ModEventBridge = modEventBridge;
+        PortableModManager = portableModManager;
         Mods = mods;
     }
 
     public string RuntimeMode { get; }
     public string ModsPath { get; }
     public ModEventBridge ModEventBridge { get; }
+    public PortableModManager PortableModManager { get; }
     public IReadOnlyList<RuntimeModRecord> Mods { get; }
 }
 

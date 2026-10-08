@@ -33,6 +33,13 @@
     <!-- Launcher loads Avalonia dynamically via reflection to avoid dependency duplication -->
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
   </ItemGroup>
+  <!-- Optional runtime metadata/docs only; third-party binaries are downloaded by the end user at runtime. -->
+  <ItemGroup>
+    <None Include="..\BotFrameworks\README.md;..\BotFrameworks\sources.json"
+          Link="BotFrameworks\%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest"
+          CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
   <!-- Ensure Launcher.dll is included in publish output -->
   <!-- This target explicitly copies Launcher.dll to prevent accidental exclusion due to ProjectReference -->
   <!-- Only run for non-single-file builds (PublishSingleFile=false) -->

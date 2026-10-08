@@ -100,4 +100,44 @@ public sealed class MessageDistributionSenderRoleTests
         Assert.False(administratorEventRaised);
     }
 
+    [Fact]
+    public void GroupMessage_WithFileSegment_IsDispatchedOnlyAsFile_NotAsConfirmationText()
+    {
+        const long groupId = 77889931;
+        const long userId = 77880001;
+        var distribution = new MessageDistribution
+        {
+            OnGroupMessage = null
+        };
+        OneBotFileInfo? observedFile = null;
+        var normalMessageRaised = false;
+        distribution.OnFileMessage = file => observedFile = file;
+        distribution.OnGroupMessage = (_, _, _, _, _) => normalMessageRaised = true;
+
+        using var document = JsonDocument.Parse(
+            $$"""
+            {
+              "message_type": "group",
+              "group_id": {{groupId}},
+              "user_id": {{userId}},
+              "message": [
+                {
+                  "type": "file",
+                  "data": {
+                    "file_id": "card-file-id",
+                    "file_name": "CoC7_舍空_2026-09-25.mdice (1).html",
+                    "file_size": 12345
+                  }
+                }
+              ]
+            }
+            """);
+
+        HandleMessageEventMethod.Invoke(distribution, new object[] { document.RootElement });
+
+        Assert.NotNull(observedFile);
+        Assert.Equal("CoC7_舍空_2026-09-25.mdice (1).html", observedFile!.FileName);
+        Assert.False(normalMessageRaised);
+    }
+
 }

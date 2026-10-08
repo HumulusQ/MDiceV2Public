@@ -227,6 +227,8 @@ public class ModPluginLoader
             foreach (var modDir in modDirectories)
             {
                 var modFolderName = Path.GetFileName(modDir);
+                if (string.Equals(modFolderName, ".portable", StringComparison.OrdinalIgnoreCase))
+                    continue;
                 try
                 {
                     Console.WriteLine($"[ModPluginLoader] >>> Loading mod from: {modFolderName}");
@@ -360,6 +362,8 @@ public class ModPluginLoader
             return new ModMetadata
             {
                 Id = GetJsonString(root, "id") ?? throw new InvalidOperationException("Missing 'id' field"),
+                CommandName = GetJsonString(root, "commandName") ?? GetJsonString(root, "id") ?? string.Empty,
+                PackageType = GetJsonString(root, "packageType") ?? "standard",
                 Name = GetJsonString(root, "name") ?? throw new InvalidOperationException("Missing 'name' field"),
                 Version = GetJsonString(root, "version") ?? "1.0.0",
                 Author = GetJsonString(root, "author") ?? "Unknown",

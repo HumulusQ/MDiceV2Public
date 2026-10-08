@@ -185,6 +185,8 @@ public partial class ModManagerViewModel : ObservableObject
             // 加载目录形式的mod
             foreach (var modDir in modDirs)
             {
+                if (string.Equals(Path.GetFileName(modDir), ".portable", StringComparison.OrdinalIgnoreCase))
+                    continue;
                 try
                 {
                     var modName = Path.GetFileName(modDir);
@@ -436,7 +438,47 @@ public partial class ModManagerViewModel : ObservableObject
                 return;
             }
 
+            // Portable Mods are versioned under the reserved .portable directory;
+            // display the runtime records rather than their internal storage folders.
+            var portableManager = RuntimeModInitializer.Current?.PortableModManager;
+            if (portableManager != null)
+            {
+                foreach (var portable in portableManager.GetAllManagedMods().Where(item => item.IsPortable))
+                {
+                    if (ModItems.Any(item => string.Equals(item.ModId, portable.Id, StringComparison.OrdinalIgnoreCase)))
+                        continue;
+                    ModItems.Add(new ModItem
+                    {
+                        Name = portable.Name,
+                        ModId = portable.Id,
+                        ModPath = Path.Combine(_modRootPath, ".portable", portable.CommandName),
+                        Version = portable.Version,
+                        Author = "Portable Mod",
+                        IsEnabled = portable.IsEnabled,
+                        IsRuntimeManaged = true,
+                        ContainType = "Portable Archive (.mmod)"
+                    });
+                }
+            }
+
             var enable = !status.Value.IsEnabled;
+            var lifecycleManager = RuntimeModInitializer.Current?.PortableModManager;
+            if (lifecycleManager != null)
+            {
+                var commandName = string.IsNullOrWhiteSpace(status.Value.Metadata.CommandName)
+                    ? status.Value.Metadata.Id
+                    : status.Value.Metadata.CommandName;
+                var result = await lifecycleManager.SetEnabledAsync(commandName, enable);
+                if (!result.Success)
+                {
+                    Log.Error(result.Message);
+                    return;
+                }
+                modItem.IsEnabled = enable;
+                Log.InfoFormat(result.Message);
+                return;
+            }
+
             var markerPreviouslyExisted = File.Exists(GetDisabledMarkerPath(modItem));
             try
             {

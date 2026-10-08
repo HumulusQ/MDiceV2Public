@@ -134,4 +134,10 @@ logs/
 /GIT_CLEANUP_REPORT.md
 /IMPLEMENTATION_SUMMARY.md
 /TRPG_TASK_MANAGEMENT_PLAN.md
+
+# Reviewed obsolete battle module: absent from the current project and no longer referenced.
+# Explicit exclusions allow update-source.ps1 to retire the remote legacy snapshot.
+/MDiceV2.Core/GameBattle/
+/MDiceV2.Core/Models/GameRuleData.cs
+/MDiceV2.Core/Resources/hardcoded_rules.json
 /白棘之塔的渊鬼.html

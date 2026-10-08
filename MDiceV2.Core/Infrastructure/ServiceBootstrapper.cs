@@ -115,8 +115,9 @@ public static class ServiceBootstrapper
         }
 
         // 共用的核心服务
-        services.AddSingleton<DataIO>();
-        services.AddSingleton<RuleDataIO>();
+        // MessageProcessor owns the application database connections. Registering additional
+        // DataIO/RuleDataIO singletons here created a second long-lived connection to the same
+        // files, which prevented SQLite from performing its final WAL cleanup.
         // GlobalFeedbackMessages is a static class, no factory needed
 
         // MessageProcessor依赖注入（替代单例）
@@ -188,7 +189,6 @@ public static class ServiceBootstrapper
             {
                 Log.InfoFormat("[ServiceBootstrapper] Console模式由Program直接管理WSconnection，跳过IMessageChannel验证");
             }
-            _ = serviceProvider.GetRequiredService<DataIO>();
             _ = serviceProvider.GetRequiredService<MessageProcessor>();
 
             Log.InfoFormat("[ServiceBootstrapper] 所有必需的服务已成功注册 (模式: {0})", mode);

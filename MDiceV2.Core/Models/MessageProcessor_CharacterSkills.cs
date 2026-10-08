@@ -196,7 +196,7 @@ public partial class MessageProcessor : ObservableObject
             int size = Skills.GetValueOrDefault("体型", 0);
             int cons = Skills.GetValueOrDefault("体质", 0);
             int sum = cons + size;
-            return (int)Math.Ceiling(sum / 10.0);
+            return sum / 10;
         }
 
         public void COCDBBuilder()

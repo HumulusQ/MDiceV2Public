@@ -10,7 +10,7 @@
 
     <UserControl.Resources>
         <!-- Config converters and splitter template are inherited from ConfigContainer. -->
-        <ItemsPanelTemplate x:Key="VirtualizingPanelTemplate"><VirtualizingStackPanel Orientation="Vertical"/></ItemsPanelTemplate>
+        <ItemsPanelTemplate x:Key="AdjustableConfigItemsPanelTemplate"><StackPanel Orientation="Vertical"/></ItemsPanelTemplate>
     </UserControl.Resources>
 
     <Grid RowDefinitions="Auto,*">
@@ -86,7 +86,8 @@
         </Border>
 
         <ListBox x:Name="ConfigListBox" Grid.Row="3" ItemsSource="{Binding FilteredItems}" Background="Transparent" BorderThickness="0"
-                 ItemsPanel="{StaticResource VirtualizingPanelTemplate}">
+                 ItemsPanel="{StaticResource AdjustableConfigItemsPanelTemplate}"
+                 ScrollViewer.BringIntoViewOnFocusChange="False">
             <ListBox.Styles>
                 <Style Selector="ListBoxItem"><Setter Property="Margin" Value="0"/><Setter Property="Padding" Value="0"/><Setter Property="Background" Value="Transparent"/></Style>
                 <Style Selector="ListBoxItem:selected /template/ ContentPresenter"><Setter Property="Background" Value="Transparent"/></Style>
@@ -111,7 +112,7 @@
                                 <TextBox Text="{Binding Value, Mode=TwoWay}" Height="34" MinHeight="34" AcceptsReturn="True" TextWrapping="Wrap"
                                          IsVisible="{Binding Type, Converter={StaticResource ConfigTypeToBoolConverter}, ConverterParameter=LineEdit}"
                                          GotFocus="OnItemTextBoxGotFocus" LostFocus="OnItemTextBoxLostFocus">
-                                    <TextBox.Transitions><Transitions><DoubleTransition Property="Height" Duration="0:0:0.22"/></Transitions></TextBox.Transitions>
+                                    <TextBox.Transitions><Transitions><DoubleTransition Property="Height" Duration="0:0:0.22" Easing="CubicEaseOut"/></Transitions></TextBox.Transitions>
                                 </TextBox>
                                 <CheckBox IsChecked="{Binding ValueAsBool, Mode=TwoWay}" VerticalAlignment="Center"
                                           IsVisible="{Binding Type, Converter={StaticResource ConfigTypeToBoolConverter}, ConverterParameter=CheckBox}"/>

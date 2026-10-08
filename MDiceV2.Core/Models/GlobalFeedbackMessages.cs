@@ -180,11 +180,6 @@ public static class GlobalFeedbackMessages
         {"FriendRequestApproved", "已同意用户 {0} 的好友请求。申请留言：{1}" },
         {"FriendRequestApprovedReport", "[好友申请已自动同意]\n用户ID: {0}\n申请留言: {1}" },
 
-        // Duel 指令反馈
-        {"DuelNoTurnsAvailable", "您今日可用的duel次数已达上限（当前好感度{0}，今日可用次数为0）。请明日再来！"},
-        {"DuelNew", "吼，想要挑战我吗，一般来说在你把街上的其他冒险者全部打倒之前我可是不会接受的，但是今天心情不错~\n{3}"},
-        {"DuelContinue", "你走进屋子，桌上的棋局收拾的干干净净，昨天的对局丝毫未动，对方等你很久了。\n{3}"},
-
         // Help指令反馈
         {"HelpDefaultMessage", "请在输入.help[关键词]以查询内容，请注意help反馈中提及的所有方括号格式均为方便理解的格式符号，使用时需去除，其他诸如花括号和普通括号的格式必须在指令中保留\n查询指令示例： .help roll" }, // 占位符，避免空字典
         // 人物卡输出格式
@@ -192,7 +187,7 @@ public static class GlobalFeedbackMessages
         // 角色属性生成默认消息
         {"GCDefaultMessage", "【CoC 角色属性生成 - 共 {0} 行】\n{1}" }
         // Team消息
-        ,{"TeamCallMessage", "队伍: {0} ，集合咯：\n{1}" }
+        ,{"TeamCallMessage", "队伍: {0} 开团了：\n{1}" }
 
         // 先攻列表指令反馈
         ,{ "InitiativeFormatError", "先攻指令格式错误。使用方式：\n.ri+d20+修正 人物名   (投掷d20加修正)\n.ri+修正 人物名       (投掷d20加修正，无表达式)\n.rid20 人物名         (直接投掷d20)\n.ri表达式 人物名      (直接投掷表达式，无d20)\n.ri#1-9+表达式 人物名 (投掷多次)\n.ri.b                (奖励骰：投掷 d20 2次取高)\n.ri.p                (惩罚骰：投掷 d20 2次取低)\n.ri.b3 20            (奖励骰：投掷 d20 3次取高)\n.ri.p3 20            (惩罚骰：投掷 d20 3次取低)\n.ri.b +2             (奖励骰：投掷 d20+2 2次取高)\n.ri.p3+2             (惩罚骰：投掷 d20+2 3次取低)\n.ri.b3 d20+5 张三    (奖励骰：投掷 d20+5 3次取高，添加为张三)" }
@@ -275,7 +270,21 @@ public static class GlobalFeedbackMessages
         { "default", "指令总览（除.help）：统一以\".\"+前缀触发，由核心路由匹配前缀并调用对应处理函数。当前支持：.r 掷骰表达式；.st 创建/更新人物卡与技能；.sc 理智检定并自动扣减SAN；.cc 在CoC7/ET等模式下做通用检定与循环检定；.log 管理跑团日志文件；.name 绑定用户显示名；.com 查看当前人物卡与模式；.as 以指定成员身份执行指令；()与{}为语义参数，需按示例保留。示例：.r 1d100；.st(惠惠)侦查70 聆听60；.sc(惠惠)1/1d6 60；.cc{coc7}(惠惠)侦查80-l；.log on 惠惠本；.name 惠惠；.com coc。" },
 
         // .r 掷骰
-        { "roll", "【.r 掷骰】：以 .r 开头，后接标准掷骰表达式或算式（如 1d100、3d6+2、1d100<=50 等），由核心掷骰与表达式解析模块计算并返回详解结果，用于基础检定、伤害或判定。支持暗骰模式：.rh 或 .r h，结果通过私聊发送。示例：.r 1d100；.r 2d6+3；.r 1d100<=50；.rh 1d100；.r h 1d100。" },
+        { "roll", "【.r 掷骰】：以 .r 开头，后接标准掷骰表达式或算式（如 1d100、3d6+2、1d100<=50 等），由核心掷骰与表达式解析模块计算并返回详解结果。省略骰面（.rd、.r d 或空 .r）时使用 .set 保存的个人默认骰面。支持暗骰模式：.rh 或 .r h，结果通过私聊发送。示例：.rd；.r 2d6+3；.rh 1d100。" },
+
+        // .set 默认骰面
+        { "set", "【.set 默认骰面】：使用 .set <1-9999> 保存个人默认骰面；之后 .rd、.r d 或空 .r 会使用该骰面。显式写出的骰面不受影响。示例：.set 20；.rd。" },
+
+        // .cfg 个人设置
+        { "cfg", "【.cfg 个人设置】：显示默认骰面、人物卡、召集私聊状态及个人/当前生效村规。.cfg rule 查询村规；.cfg rule coc1/coc2/coc3 持久化个人选择；.cfg rule reset coc 清除个人 CoC 选择。按体系分别保存，例如 .cfg rule dnd1 不覆盖 coc。规则详情见 .help cfg rule；队伍强制设置优先于个人设置。" },
+        { "cfg rule", "【.cfg rule 村规】：.cfg rule 查询个人选择及当前生效规则来源；.cfg rule coc1/coc2/coc3 保存选择；.cfg rule reset coc 清除 CoC 选择。coc1（默认/旧规则）：大成功骰点≤5且≤技能值/5，大失败96～100。coc2：技能<50时1大成功、96～100大失败；技能≥50时1～5大成功、100大失败。coc3：固定1～5大成功、96～100大失败。其余成功等级按技能值的1/5、1/2和全值判断（整数除法）；技能值采用本次检定修饰后的值。不同体系独立保存，例如 .cfg rule dnd1 不覆盖 coc；保存选择不会切换 .cc 模式，也不会新增 DND 检定实现。目前 .cc 支持 CoC7/ET。优先级：当前队伍强制规则 > 个人选择 > 系统默认 coc1；私聊采用个人选择。设置后照常 .cc 侦查50，无需增加检定参数。" },
+
+        // .td 用户通知设置
+        { "td", "【.td 通知设置】：使用 .td call 查询队伍召集私聊状态；.td call on 开启接收，.td call off 关闭接收。群内 @ 不受此设置影响。" },
+
+        // .team 队伍管理
+        { "team", "【.team 队伍管理】：支持 new、add、era、join、del、call、sort、list、set、rule 子命令。.team call 在群内 @ 成员并依序私聊未关闭 .td call 的成员。.team rule 查询当前默认队伍强制村规；.team rule coc1/coc2/coc3 设置；.team rule reset coc 取消覆盖。详情见 .help team rule。" },
+        { "team rule", "【.team rule 团内村规】：仅群聊可用，操作你在当前群的默认队伍；用 .team join <队伍名> 或 .team set <队伍名> 选择队伍。.team rule 查询强制设置；.team rule coc1/coc2/coc3 持久化强制 CoC 规则（定义见 .help cfg rule）；.team rule reset coc 取消该体系覆盖并恢复采用成员个人选择。不同体系独立保存，例如 .team rule dnd1 不覆盖 coc。修改限队伍创建者、群主/管理员或 Master。强制规则优先于个人选择，取消覆盖不删除个人选择；普通、循环、暗骰和对抗均适用，对抗双方使用发起者当前队伍的强制规则。未设置强制规则时各自采用个人规则；私聊不应用队伍覆盖。" },
 
         // .st 人物卡与技能
         { "st", "【.st 人物卡与技能】：识别 .st(可选人物名) 起始，先解析紧随的 {type:xxx}{cocformat:xxx} 等配置块，再从左到右读取“技能名+数值/骰式”对。技能名不得含数字，数值可为整数或XdY并支持前缀+/-作为相对变动；若写掷骰表达式则自动掷骰取结果后入库。内部通过用户ID与人物名定位或创建人物卡，并更新 Skills 字典。示例：.st(惠惠){type:coc7}侦查70 聆听60 信用80；.st侦查+5 聆听1d10。" },
@@ -477,6 +486,18 @@ public static class GlobalFeedbackMessages
     /// <summary>
     /// 从数据库加载帮助模板
     /// </summary>
+    // 仅替换原样保存的旧默认说明，保留管理员自定义的帮助文本。
+    private static string UpgradeLegacyRuleHelp(string key, string savedValue)
+    {
+        bool isLegacyDefault = key switch
+        {
+            "cfg" => savedValue == "【.cfg 个人设置】：显示当前默认骰面、全部人物卡名称以及 .td call 私聊接收状态。示例：.cfg。",
+            "team" => savedValue == "【.team 队伍管理】：支持 new、add、era、join、del、call、sort、list、set 子命令。.team call 会立即在群内 @ 队伍成员，并依序私聊未关闭 .td call 的成员。",
+            _ => false
+        };
+        return isLegacyDefault ? defaultHelpTemplates[key] : savedValue;
+    }
+
     private static void LoadHelpTemplates()
     {
         if (_dataIO == null)
@@ -509,7 +530,7 @@ public static class GlobalFeedbackMessages
                         {
                             if (savedHelpTemplates.TryGetValue(kvp.Key, out var savedValue) && !string.IsNullOrEmpty(savedValue))
                             {
-                                mergedHelpTemplates[kvp.Key] = savedValue;
+                                mergedHelpTemplates[kvp.Key] = UpgradeLegacyRuleHelp(kvp.Key, savedValue);
                                 Log.InfoFormat($"[GlobalFeedbackMessages] Using saved help template for key: {kvp.Key} = '{savedValue}'");
                                 loadedCount++;
                             }

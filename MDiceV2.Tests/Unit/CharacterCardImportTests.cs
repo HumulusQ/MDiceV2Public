@@ -168,9 +168,12 @@ public class CharacterCardImportTests
     [Theory]
     [InlineData("card.mdice", true)]
     [InlineData("card.mdice.html", true)]
+    [InlineData("CoC7_舍空_2026-09-25.mdice (1).html", true)]
+    [InlineData("CoC7_舍空_2026-09-25.MDICE (12).HTML", true)]
     [InlineData("CoC7_全部调查员_2026-07-18.html", true)]
     [InlineData("CoC7_全部调查员_2026-07-18.mdice.html", true)]
     [InlineData("card.html", false)]
+    [InlineData("card.mdice backup.html", false)]
     [InlineData("card.htm", false)]
     [InlineData("notes.txt", false)]
     public void Candidate_filter_only_accepts_supported_extensions(string name, bool expected)

@@ -484,46 +484,55 @@ public static class Dice
     }
 
     /// <summary>
-    /// CoC7 规则辅助判定函数
-    /// 判定优先级：
-    /// 1. 大成功：roll ≤ 5 且 roll ≤ skillValue/5
-    /// 2. 大失败：roll ≥ 96
-    /// 3. 极限成功：roll ≤ skillValue/5 且 roll > 5
-    /// 4. 困难成功：roll ≤ skillValue/2 且 roll > skillValue/5
-    /// 5. 成功：roll ≤ skillValue 且 roll > skillValue/2
-    /// 6. 失败：roll > skillValue
+    /// CoC7 旧规则兼容入口，默认使用 coc1。
     /// </summary>
     /// <param name="roll">掷骰结果</param>
     /// <param name="skillValue">技能值</param>
     /// <returns>判定结果</returns>
-    public static string CoC7_Check(int roll, int skillValue)
+    public static string CoC7_Check(int roll, int skillValue) => CoC7_Check(roll, skillValue, "coc1");
+
+    /// <summary>
+    /// 先按村规判断大成功/大失败，再按技能的1/5、1/2和全值判断成功等级。
+    /// coc1：原规则；coc2：技能50分界；coc3：固定1～5/96～100。
+    /// </summary>
+    public static string CoC7_Check(int roll, int skillValue, string rule)
     {
-        // 大成功：roll ≤ 5 且 roll ≤ skillValue/5
-        if (roll <= 5 && roll <= skillValue / 5)
+        if (rule is not ("coc1" or "coc2" or "coc3"))
+            throw new ArgumentException("未知 CoC 村规", nameof(rule));
+
+        bool criticalSuccess = rule switch
+        {
+            "coc2" => roll <= (skillValue < 50 ? 1 : 5),
+            "coc3" => roll <= 5,
+            _ => roll <= 5 && roll <= skillValue / 5
+        };
+        if (criticalSuccess)
         {
             return "大成功";
         }
         
-        // 大失败：roll ≥ 96
-        if (roll >= 96)
+        bool criticalFailure = rule == "coc2"
+            ? roll == 100 || (skillValue < 50 && roll >= 96)
+            : roll >= 96;
+        if (criticalFailure)
         {
             return "大失败";
         }
         
-        // 极限成功：roll ≤ skillValue/5 且 roll > 5
-        if (roll <= skillValue / 5 && roll > 5)
+        // 先排除重大结果，再由高到低判断成功等级。
+        if (roll <= skillValue / 5)
         {
             return "极限成功";
         }
         
         // 困难成功：roll ≤ skillValue/2 且 roll > skillValue/5
-        if (roll <= skillValue / 2 && roll > skillValue / 5)
+        if (roll <= skillValue / 2)
         {
             return "困难成功";
         }
         
         // 成功：roll ≤ skillValue 且 roll > skillValue/2
-        if (roll <= skillValue && roll > skillValue / 2)
+        if (roll <= skillValue)
         {
             return "成功";
         }

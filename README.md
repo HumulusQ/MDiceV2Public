@@ -1,258 +1,163 @@
+<div align="center">
+
+<img src="Assets/Sprite/LOGO10.29.svg" alt="MDiceV2 Logo" width="180">
+
 # MDiceV2
 
-> 面向 QQ / OneBot 生态的可扩展 TRPG 骰娘与跑团辅助工具。
+一款面向中文 TRPG 社群的模块化骰娘与跑团辅助工具。
 
-MDiceV2 是一个以 **C# / .NET 10 / Avalonia** 为主要技术栈开发的 TRPG 骰娘项目。它通过 OneBot WebSocket 与 QQ 机器人端连接，在基础掷骰之外提供人物卡、CoC/ET 检定、SAN、先攻、跑团日志、牌堆、团队管理、人物卡文件导入，以及可扩展的 Mod 系统。
+[![Version](https://img.shields.io/badge/version-0.3.1--beta-7c5cff)](Version.props)
+[![Platform](https://img.shields.io/badge/platform-Windows-0078d6)](#运行环境)
+[![.NET](https://img.shields.io/badge/.NET-10.0-512bd4)](https://dotnet.microsoft.com/)
+[![OneBot](https://img.shields.io/badge/protocol-OneBot_11-4b9)](#连接与使用)
 
-当前主程序版本线为 **0.3.1 beta**，项目主要面向 **Windows x64**。
+[下载最新版本](https://github.com/HumulusQ/MDiceV2Public/releases/latest) · [用户手册](MDiceV2手册/MDiceV2用户手册.docx) · [Mod 开发文档](Mods/MOD_DEVELOPMENT_GUIDE.md)
 
-- 仓库：<https://github.com/HumulusQ/MDiceV2Public>
-- Releases：<https://github.com/HumulusQ/MDiceV2Public/releases>
+[源码上传](Docs/SOURCE_UPLOAD.md) · [发布与历史 Release 清理](Docs/RELEASE_PUBLISH.md)
 
-## 功能概览
+</div>
 
-### 🎲 骰点与检定
+## 项目简介
 
-- 标准骰式与算式，例如 `1d100`、`2d6+3`、带括号的表达式等。
-- 通用 `.r` 掷骰，支持暗骰以及奖励骰 / 惩罚骰模式。
-- CoC7 / ET 人物检定与人物卡技能读取。
-- CoC SAN 检定并自动更新人物卡中的理智值。
-- 先攻投掷、排序、增删与持久化。
-- CoC / DND / ET 等模式的角色属性生成入口。
+MDiceV2 通过 OneBot 11 WebSocket 接入聊天平台，为群聊与私聊提供掷骰、规则检定、人物卡、跑团日志和团务管理等能力。项目带有 Avalonia 桌面管理界面，同时提供无头运行方式，并通过 Mod 系统扩展 AI 跑团、自定义回复与脚本化战斗等功能。
 
-### 🧑‍💼 人物卡
+> 当前项目仍处于 Beta 阶段，功能与配置格式可能随版本更新调整。实际指令请以当前版本的 `.help` 回复和用户手册为准。
 
-- 使用 `.st` 创建或更新人物卡技能。
-- 多人物卡管理与当前人物卡查看。
-- 支持 `.mdice.html`、`.mdice` 等人物卡文件的群文件导入流程。
-- 导入前会要求上传者确认；单个自动导入文件上限为 5 MiB。
-- 内置便携式 CoC7 调查员人物卡页面，并包含对应的更新支持。
+## 基本功能
 
-### 📜 跑团辅助
+### 骰子与规则检定
 
-- 群跑团日志记录、列表、回顾与导出。
-- 先攻列表管理。
-- 牌堆与抽牌指令。
-- 团队 / 角色相关管理功能。
-- 名称绑定、群名片同步、代执行等辅助能力。
-- GUI 内置模拟消息模式，方便在不实际发送 QQ 消息的情况下测试指令。
+- 通用骰子表达式与四则运算，如 `.r 2d6+3 伤害`
+- CoC 7th、ET 等规则检定，以及奖励骰、惩罚骰和连续检定
+- CoC 理智检定、技能成长、临时疯狂与随机人物生成
+- 先攻列表、无限流 d10 成功度等跑团工具
 
-### 🔌 OneBot 连接
+### 人物卡与团务管理
 
-MDiceV2 内置 OneBot WebSocket 客户端，通过 WebSocket 接收事件并调用 OneBot API 发送群消息、私聊消息、群文件等。
+- 创建、更新、切换和删除人物卡
+- 记录技能、理智等数据，并在检定后按规则持久化
+- 群组队伍创建、成员管理、召集与技能排序
+- 自定义显示名称、群名片模板、入群欢迎语和个人快捷指令
 
-默认 WebSocket 地址为：
+### 日志、规则书与牌堆
 
-```text
-ws://localhost:8080
-```
+- 开启、停止、回顾并导出 HTML 跑团日志
+- 从已加载的规则书数据库中查找条目
+- 创建群组临时牌堆，支持放回抽取与不放回抽取
+- 内置今日运势等实用牌堆
 
-实际地址可以在程序配置中修改并持久化保存。
+### 管理与运行
 
-### 🧩 Mod 系统
+- 图形化配置、连接状态、运行日志与 Mod 管理界面
+- OneBot 11 WebSocket 消息收发
+- GUI 与无头（Console）两种启动模式
+- 主程序、规则数据、人物卡资源与 Mod 更新支持
+- 群组/个人权限等级、机器人开关及黑白名单相关管理
 
-MDiceV2 提供独立的 `MDiceV2.Interfaces` 插件 API。DLL Mod 通过 `mod.json` 描述自身，并实现 `IModPlugin` 接口。
+### Mod 扩展
 
-Mod 生命周期包括：
+MDiceV2 提供独立 DLL Mod 的加载、生命周期、优先级和消息拦截机制。仓库中包含以下扩展示例或实现：
 
-```text
-发现 Mod → OnLoad → OnEnable → 消息处理 → OnDisable → OnUnload
-```
-
-Mod 可以：
-
-- 处理或拦截群聊 / 私聊消息；
-- 发送群消息与私聊消息；
-- 调用主程序已有指令；
-- 注册自己的命令；
-- 在主界面注册自定义导航面板；
-- 访问宿主提供的权限、配置与持久化能力。
-
-程序运行时可通过 Mod Manager 查看、启用或禁用已经加载的 Mod。
-
-## 仓库中的主要 Mod
-
-| Mod | 状态 / 用途 |
+| Mod | 功能 |
 | --- | --- |
-| `CustomizedReply` | 自定义回复系统，支持精确、正则和模糊匹配，并带独立管理界面。 |
-| `AIMod` | AI/TRPG 扩展，可连接 Google Gemini、ZhipuAI、SiliconFlow、DeepSeek 等模型服务，并包含面向跑团场景的上下文、记忆与状态管理代码。 |
-| `ABot` | Battle Orchestration Toolkit 脚本解释器，包括 Lexer、Parser、字节码与 VM。部分执行能力依赖 C++/CLI 层；依赖缺失时会降级而不是直接使宿主崩溃。 |
-| `ETBattleRelay` | ET Battle Engine 的房间发现、WebRTC 信令、心跳、身份恢复及 WebSocket 转发模块。默认不对公网监听，需要单独配置反向代理后使用。 |
+| `AIMod` | AI 角色、长期记忆、世界状态与 AI 跑团辅助 |
+| `CustomizedReply` | 精确、模糊、正则与 Lua 脚本驱动的自定义回复 |
+| `ABot` | ABOL 战斗脚本解释与回合状态管理 |
 
-> `AIMod`、`ABot`、`ETBattleRelay` 等属于可选扩展；运行 MDiceV2 的基础骰娘功能并不要求启用所有这些模块。
+开发自己的扩展前，可先阅读 [Mod 系统架构指南](Mods/MOD_DEVELOPMENT_GUIDE.md) 与 [自定义回复示例](Mods/CustomizedReply/README.md)。
 
 ## 常用指令
 
-MDiceV2 的普通指令以 `.` 开头。可以在程序中使用 `.help` 查看内置帮助。
+所有一般指令以半角句点 `.` 开头，系统与管理员指令以 `#` 开头；指令名称不区分大小写。
 
 | 指令 | 说明 | 示例 |
 | --- | --- | --- |
-| `.r` | 通用掷骰 | `.r 2d6+3` |
-| `.rh` / `.r h` | 暗骰 | `.rh 1d100` |
-| `.st` | 创建 / 更新人物卡技能 | `.st(调查员)侦查70 聆听60` |
-| `.sc` | SAN 检定并自动更新理智 | `.sc 1/1d6` |
-| `.cc` | CoC7 / ET 等模式的通用检定 | `.cc{coc7}(调查员)侦查70` |
-| `.com` | 查看当前人物卡 | `.com` |
-| `.gc` | 生成角色属性 | `.gc coc 3` |
-| `.ri` | 投掷并管理先攻 | `.ri+d20+2 调查员` |
-| `.log` | 跑团日志管理 | `.log on 模组名` |
-| `.draw` / `.deck` | 抽牌与牌堆管理 | `.draw` |
-| `.jrrp` | 今日人品 | `.jrrp` |
-| `.bot` | 查看、开启或关闭当前会话中的机器人响应 | `.bot` |
+| `.r` | 通用掷骰 | `.r 1d100 侦查` |
+| `.st` | 创建或更新人物卡技能；`out` 可导出整张卡的技能 | `.st(阿泽) 侦查70 聆听55`；`.st out 阿泽` |
+| `.com` | 列出、切换或删除人物卡 | `.com list` |
+| `.cc` | CoC7 / ET 通用检定 | `.cc{coc7}(阿泽) 侦查` |
+| `.sc` | CoC 理智检定 | `.sc 0/1d6` |
+| `.ri` | 先攻与先攻列表 | `.ri+2 阿泽` |
+| `.log` | 跑团日志管理 | `.log on 周末团` |
+| `.rule` | 规则书查找 | `.rule(coc7) 闪避` |
+| `.team` | 群组队伍管理 | `.team new 调查团` |
+| `.deck` / `.draw` | 牌堆管理与抽牌 | `.draw 线索` |
+| `.help` | 查看内置帮助 | `.help list` |
+| `.bot` | 查看状态或开关响应 | `.bot on` |
 
-此外，核心中还包含 `.ra`、`.rc`、`.ww`、`.team`、`.name`、`.cn`、`.as`、`.diy`、`.welcome` 等功能入口。
+更完整的参数、副指令、权限和注意事项请查看 [MDiceV2 用户手册](MDiceV2手册/MDiceV2用户手册.docx)。AIMod 与 ABot 指令只有在相应 Mod 已安装并成功加载后才可使用。
 
 ## 快速开始
 
-### 方式一：使用 Release 包
+1. 前往 [Releases](https://github.com/HumulusQ/MDiceV2Public/releases/latest) 下载最新版本并完整解压。
+2. 准备兼容 OneBot 11 的聊天平台实现，并启用 WebSocket 服务。
+3. 运行 `MDiceV2.Launcher.exe`，在管理界面填写连接地址、Master 帐号等基本配置。
+4. 确认界面显示 WebSocket 已连接后，在聊天中发送 `.bot` 或 `.help` 验证运行状态。
 
-对于普通使用者，推荐直接从 [Releases](https://github.com/HumulusQ/MDiceV2Public/releases) 下载最新的完整发布包，例如：
+请勿直接在压缩包内运行程序。更新、日志、数据库与 Mod 都需要程序目录具有写入权限。
 
-```text
-MDiceV2.PublishV*.zip
-```
+## 连接与使用
 
-解压后：
+MDiceV2 负责处理 OneBot 事件与 API 调用，本身不包含聊天平台登录实现。使用时需要配合兼容 OneBot 11 的实现，并让两端的 WebSocket 地址与端口保持一致。
 
-1. 启动 MDiceV2；
-2. 确保你的 OneBot 实现已经运行；
-3. 在 MDiceV2 中填写对应的 WebSocket 地址；
-4. 建立连接；
-5. 在 QQ 中发送 `.help` 或 `.bot` 确认工作状态。
+- 桌面模式：直接运行 `MDiceV2.Launcher.exe`
+- 无头模式：使用 `MDiceV2.Launcher.exe --headless`
+- 指令帮助：在聊天中发送 `.help` 或 `.help list`
+- 管理指令：仅 Master 或具备相应权限的帐号可用
 
-如 OneBot 使用默认本机端口，可先尝试：
+## 运行环境
 
-```text
-ws://localhost:8080
-```
+- Windows x64
+- 发布包通常自带运行所需组件；从源码运行需要 .NET 10 SDK
+- 编译完整解决方案中的 ABot 原生组件时，需要 Visual Studio 2022 C++ 工具链
 
-### 方式二：从源码构建
-
-主要宿主项目面向 `net10.0-windows` / `win-x64`。
-
-建议准备：
-
-- Windows x64；
-- .NET 10 SDK；
-- Git；
-- Visual Studio / Rider / VS Code 等支持 .NET 的开发环境。
-
-克隆仓库：
+## 从源码构建
 
 ```powershell
 git clone https://github.com/HumulusQ/MDiceV2Public.git
 cd MDiceV2Public
+dotnet restore MDiceV2.sln
+dotnet build MDiceV2.sln -c Release
 ```
 
-构建核心：
+仅构建桌面核心程序：
 
 ```powershell
-dotnet restore .\MDiceV2.Core\MDiceV2.Core.csproj
-dotnet build .\MDiceV2.Core\MDiceV2.Core.csproj -c Release
-```
-
-构建 Launcher：
-
-```powershell
-dotnet build .\MDiceV2.Launcher\MDiceV2.Launcher.csproj -c Release
+dotnet build MDiceV2.Core/MDiceV2.Core.csproj -c Release
 ```
 
 运行测试：
 
 ```powershell
-dotnet test .\MDiceV2.Tests\MDiceV2.Tests.csproj -c Release
+dotnet test MDiceV2.Tests/MDiceV2.Tests.csproj -c Release
 ```
-
-> Release 包拥有自己的最终目录布局；普通 `dotnet build` 的输出不一定等同于可直接分发的完整发布包。
-
-### ABot 开发补充
-
-`ABot/` 中还包含 C++ / C++/CLI 组件。如果你需要编译完整的 ABot 原生层，需要额外准备 Visual Studio 的 C++ 编译工具链。只开发 MDiceV2 主程序或其他纯 C# Mod 时并不需要先编译这部分。
 
 ## 项目结构
 
 ```text
-MDiceV2Public/
-├─ MDiceV2.Core/          # 主程序、UI、消息处理、骰点、人物卡、日志、Mod 宿主
-├─ MDiceV2.Launcher/      # Windows 启动器
-├─ MDiceV2.Console/       # Headless / 控制台启动入口
-├─ MDiceV2.Interfaces/    # Mod 公共接口
-├─ MDiceV2.Abstractions/  # 跨组件抽象与配置同步协议
-├─ MDiceV2.Tests/         # 单元、集成与性能测试
-├─ Mods/
-│  ├─ CustomizedReply/    # 自定义回复 Mod
-│  ├─ AIMod/              # AI / TRPG Mod
-│  ├─ ABot/               # ABOT 解释器 Mod
-│  └─ ETBattleRelay/      # ET Battle 网络 Relay
-├─ ABot/                  # ABOT C++ / C++/CLI 实现
-├─ Resources/             # 规则等资源
-├─ data/                  # 运行数据 / SQLite 数据库
-└─ MDiceV2手册/           # 用户手册及相关文档
+MDiceV2.Core/          核心消息处理、数据模型与 Avalonia 管理界面
+MDiceV2.Launcher/      GUI / 无头模式启动器
+MDiceV2.Console/       控制台启动与测试入口
+MDiceV2.Abstractions/  跨进程与公共抽象
+MDiceV2.Interfaces/    Mod API 与导航扩展接口
+MDiceV2.Tests/         单元测试与集成测试
+Mods/                  AIMod、CustomizedReply、ABot 与开发文档
+Resources/             规则书、牌堆等资源
+MDiceV2手册/           用户手册与使用注意事项
 ```
 
-## Mod 开发
+## 相关文档
 
-一个典型 DLL Mod 目录至少包含：
+- [用户手册](MDiceV2手册/MDiceV2用户手册.docx)
+- [Mod 系统架构指南](Mods/MOD_DEVELOPMENT_GUIDE.md)
+- [Mod 打包格式](Mods/MOD_PACKAGING_FORMAT.md)
+- [Mod 快速参考](Mods/QUICK_REFERENCE.md)
+- [CustomizedReply 使用与开发说明](Mods/CustomizedReply/README.md)
 
-```text
-MyMod/
-├─ MyMod.dll
-└─ mod.json
-```
+---
 
-`mod.json` 示例：
+## 支持项目
 
-```json
-{
-  "id": "com.example.mymod",
-  "name": "My Mod",
-  "version": "1.0.0",
-  "author": "Your Name",
-  "description": "Example MDiceV2 Mod",
-  "dllFileName": "MyMod.dll",
-  "pluginClassName": "MyMod.MyModPlugin",
-  "priority": 100,
-  "modType": "dll",
-  "supportHotReload": false,
-  "apiVersion": "1.0"
-}
-```
+MDiceV2 已入驻爱发电。如果这个项目对你的跑团或开发工作有所帮助，欢迎关注与支持：
 
-插件类需要实现：
-
-```csharp
-MDiceV2.Interfaces.Mod.IModPlugin
-```
-
-推荐同时参考：
-
-- `MDiceV2.Interfaces/Mod/IModPlugin.cs`
-- `MDiceV2.Interfaces/Mod/IModContext.cs`
-- `Mods/CustomizedReply/`
-
-`CustomizedReply` 是一个较完整的 UI + 配置 + 消息处理 Mod 示例。
-
-## 数据与配置
-
-MDiceV2 使用 SQLite 保存多类本地数据，包括基础设置、人物卡、先攻与其他运行状态。
-
-部分扩展（尤其 `AIMod`）可能需要第三方服务 API Key。请不要把自己的 API Key、访问凭证或私人跑团数据提交到公共仓库。
-
-## 当前开发状态
-
-MDiceV2 目前仍处于 **Beta** 阶段。仓库中同时存在主线功能、测试工程、实验模块以及部分历史/构建产物，因此源码目录并不等同于最终发行包的目录结构。
-
-如果只是想使用骰娘，优先选择 Release 中的完整发布包；如果希望开发 Mod、研究骰点逻辑或参与项目开发，再从源码开始会更合适。
-
-## 反馈与贡献
-
-发现 Bug、兼容性问题或有新的功能建议时，可以通过 GitHub Issues 反馈；如需提交代码变更，可以通过 Pull Request 提交。
-
-- Issues：<https://github.com/HumulusQ/MDiceV2Public/issues>
-- Pull Requests：<https://github.com/HumulusQ/MDiceV2Public/pulls>
-
-## License
-
-本仓库当前未在顶层提供明确的开源许可证文件。
-
-在许可证正式补充之前，请不要默认将“代码公开可见”理解为已经获得复制、修改或再分发代码的授权。如需复用项目代码，请先与项目作者确认许可范围。
+### [前往爱发电支持 MDiceV2](https://ifdian.net/a/MDiceV2)

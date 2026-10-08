@@ -1,5 +1,6 @@
 {
   "id": "com.abot.interpreter",
+  "commandName": "abot",
   "name": "ABOT Interpreter",
   "version": "0.1.0",
   "author": "ABOT Development Team",

@@ -19,6 +19,8 @@ namespace MDiceV2.Core
         private static ManualResetEvent? ShutdownSignal { get; set; }
 
         internal static int? ParentConsoleProcessId => ParentConsolePid;
+        internal static bool IsHeadlessMode { get; private set; }
+        internal static bool HasCommandLineWebSocketUrl { get; private set; }
 
         [STAThread]
         public static void Main(string[] args)
@@ -63,6 +65,7 @@ namespace MDiceV2.Core
                 
                 // 检查 --headless 参数（检查任何参数，不仅仅是args[0]）
                 bool isHeadlessMode = args.Any(arg => arg.Contains("--headless"));
+                IsHeadlessMode = isHeadlessMode;
                 
                 if (isHeadlessMode)
                 {
@@ -103,6 +106,7 @@ namespace MDiceV2.Core
                     if (!string.IsNullOrEmpty(url))
                     {
                         WSconnection.wsUrl = url;
+                        HasCommandLineWebSocketUrl = true;
                         Console.WriteLine($"[Core.Program] Custom WebSocket URL set: {url}");
                     }
                 }
@@ -292,12 +296,16 @@ namespace MDiceV2.Core
             try
             {
                 Console.WriteLine("[Core.Headless] Initializing WebSocket connection...");
-                wsConnection = new WSconnection();
+                // ServiceBootstrapper creates the connection used by
+                // MessageDistribution.  A separate connection can receive
+                // events, but replies (including .log review) are sent through
+                // the singleton, so headless mode must use that instance.
+                wsConnection = MessageDistribution.GetInstance().WSconnection;
                 Console.Out.Flush();
                 
                 // 启动 WebSocket 连接
                 Console.WriteLine("[Core.Headless] Starting WebSocket connection task...");
-                /*var connectTask = wsConnection.StartConnection();
+                var connectTask = wsConnection.StartConnection();
                 
                 // 等待连接建立
                 if (!connectTask.Wait(TimeSpan.FromSeconds(15)))
@@ -313,7 +321,7 @@ namespace MDiceV2.Core
                     Console.WriteLine("[Core.Headless] ✗ CRITICAL: WebSocket connection status is NOT CONNECTED");
                     Console.Out.Flush();
                     throw new InvalidOperationException("WebSocket connection task completed but connection is not active");
-                }*/
+                }
                 
                 Console.WriteLine("[Core.Headless] ✓ WebSocket connection established successfully");
                 Console.WriteLine("[Core.Headless] ✓ Message processing chain is now active");
@@ -393,7 +401,20 @@ namespace MDiceV2.Core
                 }
                 Console.Out.Flush();
             }
-            
+
+            // Headless mode does not have Avalonia's Exit event. Dispose explicitly before
+            // Environment.Exit so SaveAllData runs and DataIO can checkpoint/truncate the WAL.
+            try
+            {
+                MessageProcessor.Instance?.Dispose();
+                (serviceProvider as IDisposable)?.Dispose();
+                Console.WriteLine("[Core.Headless] Database and service resources closed");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Core.Headless] Error during final resource cleanup: {ex.Message}");
+            }
+
             Console.WriteLine("[Core.Headless] Application shutdown complete");
             Console.Out.Flush();
             Environment.Exit(0);

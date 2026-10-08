@@ -17,8 +17,8 @@
                 <Border Width="2" Background="#3D4761" HorizontalAlignment="Center"/>
             </Border>
         </ControlTemplate>
-        <ItemsPanelTemplate x:Key="ConfigVirtualizingPanelTemplate">
-            <VirtualizingStackPanel Orientation="Vertical"/>
+        <ItemsPanelTemplate x:Key="ConfigItemsPanelTemplate">
+            <StackPanel Orientation="Vertical"/>
         </ItemsPanelTemplate>
     </UserControl.Resources>
 
@@ -100,7 +100,8 @@
 
         <!-- Configuration cards -->
         <ListBox Grid.Row="2" ItemsSource="{Binding FilteredItems}" Background="Transparent" BorderThickness="0"
-                 ItemsPanel="{StaticResource ConfigVirtualizingPanelTemplate}" VerticalAlignment="Stretch">
+                 ItemsPanel="{StaticResource ConfigItemsPanelTemplate}" VerticalAlignment="Stretch"
+                 ScrollViewer.BringIntoViewOnFocusChange="False">
             <ListBox.Styles>
                 <Style Selector="ListBoxItem"><Setter Property="Margin" Value="0"/><Setter Property="Padding" Value="0"/><Setter Property="Background" Value="Transparent"/></Style>
                 <Style Selector="ListBoxItem:selected /template/ ContentPresenter"><Setter Property="Background" Value="Transparent"/></Style>

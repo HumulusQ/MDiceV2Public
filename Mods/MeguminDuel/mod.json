@@ -1,0 +1,15 @@
+{
+    "id":  "com.mdicev2.megumin-duel",
+    "commandName":  "duel",
+    "name":  "惠惠骰子对决",
+    "version":  "1.1.56",
+    "author":  "MDiceV2 Team",
+    "description":  "与惠惠进行每日骰子对决，包含道具、爆裂、商店、经济与财富排行榜。",
+    "dllFileName":  "MeguminDuel.dll",
+    "pluginClassName":  "MeguminDuel.MeguminDuelMod",
+    "priority":  220,
+    "modType":  "dll",
+    "supportHotReload":  true,
+    "apiVersion":  "1.0",
+    "packageType":  "portable"
+}

@@ -120,5 +120,6 @@ namespace MDiceV2.Launcher
 
             Environment.Exit(0);
         }
+
     }
 }

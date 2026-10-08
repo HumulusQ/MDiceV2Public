@@ -23,8 +23,14 @@ public sealed class OneBotFileDownloadService
     private readonly Action<string> _logger;
     private readonly HttpClient _httpClient;
     private readonly string _downloadDir;
+    private readonly long? _maxFileSizeBytes;
+    private readonly Func<Dictionary<string, object>, int, Task<JsonElement?>>? _requestSender;
 
-    public OneBotFileDownloadService(Func<WSconnection?> getConnection, Action<string>? logger = null)
+    public OneBotFileDownloadService(
+        Func<WSconnection?> getConnection,
+        Action<string>? logger = null,
+        long? maxFileSizeBytes = null,
+        Func<Dictionary<string, object>, int, Task<JsonElement?>>? requestSender = null)
     {
         _getConnection = getConnection;
         _logger = logger ?? Log.Normal;
@@ -32,6 +38,8 @@ public sealed class OneBotFileDownloadService
         {
             Timeout = TimeSpan.FromMinutes(20)
         };
+        _maxFileSizeBytes = maxFileSizeBytes;
+        _requestSender = requestSender;
 
         _downloadDir = Path.Combine(GetApplicationRootDirectory(), "temp", "update_qq");
     }
@@ -43,79 +51,94 @@ public sealed class OneBotFileDownloadService
             return Fail("文件信息为空");
         }
 
-        if (string.IsNullOrWhiteSpace(fileInfo.FileId))
-        {
-            return Fail("OneBot 文件缺少 file_id，无法调用 get_file");
-        }
-
         try
         {
             Directory.CreateDirectory(_downloadDir);
-            _logger($"[QQ更新包] 调用 get_file: user={fileInfo.UserId}, group={fileInfo.GroupId}, file={fileInfo.FileName}, size={fileInfo.FileSize}");
+
+            var directName = PickFileName(string.Empty, fileInfo.FileName, fileInfo.Path, fileInfo.FileId);
+            if (!string.IsNullOrWhiteSpace(fileInfo.Path))
+            {
+                var directCopy = await TryCopyLocalFileAsync(fileInfo.Path, directName);
+                if (directCopy.Success) return directCopy;
+            }
+            if (!string.IsNullOrWhiteSpace(fileInfo.Url))
+            {
+                var directDownload = await DownloadFromUrlAsync(fileInfo.Url, directName);
+                if (directDownload.Success) return directDownload;
+            }
+
+            if (string.IsNullOrWhiteSpace(fileInfo.FileId))
+                return Fail("OneBot 文件未提供可用的 url/path/file_id");
 
             var connection = _getConnection();
-            if (connection == null || !connection.IsWsConnected)
+            if (_requestSender is null && (connection == null || !connection.IsWsConnected))
             {
-                return Fail("WebSocket 未连接，无法调用 OneBot get_file");
+                return Fail("WebSocket 未连接，无法请求 OneBot 文件地址");
             }
 
-            var request = new Dictionary<string, object>
+            var attempts = new List<(string Action, Dictionary<string, object> Parameters)>();
+            if (fileInfo.GroupId > 0)
             {
-                ["action"] = "get_file",
-                ["params"] = new Dictionary<string, object>
+                attempts.Add(("get_group_file_url", new Dictionary<string, object>
                 {
+                    ["group_id"] = fileInfo.GroupId,
+                    ["file_id"] = fileInfo.FileId,
+                    ["busid"] = fileInfo.BusId
+                }));
+            }
+            else if (fileInfo.IsPrivateMessage)
+            {
+                attempts.Add(("get_private_file_url", new Dictionary<string, object>
+                {
+                    ["user_id"] = fileInfo.UserId,
                     ["file_id"] = fileInfo.FileId
-                }
-            };
-
-            var response = await connection.SendRequestAndAwaitResponseAsync(request, GetFileTimeoutMs);
-            if (response == null)
-            {
-                return Fail("OneBot get_file 超时或无响应（已使用 15 分钟超时）");
+                }));
             }
+            // Compatibility fallback for adapters that implement the generic extension.
+            attempts.Add(("get_file", new Dictionary<string, object> { ["file_id"] = fileInfo.FileId }));
 
-            if (response.Value.TryGetProperty("status", out var statusElement) &&
-                string.Equals(statusElement.GetString(), "failed", StringComparison.OrdinalIgnoreCase))
+            var failures = new List<string>();
+            foreach (var (action, parameters) in attempts)
             {
-                var wording = TryGetString(response.Value, "wording");
-                return Fail(string.IsNullOrWhiteSpace(wording)
-                    ? "OneBot get_file 返回 failed"
-                    : $"OneBot get_file 返回 failed: {wording}");
-            }
+                _logger($"[OneBot文件] 调用 {action}: user={fileInfo.UserId}, group={fileInfo.GroupId}, file={fileInfo.FileName}, size={fileInfo.FileSize}");
+                var request = new Dictionary<string, object> { ["action"] = action, ["params"] = parameters };
+                var response = _requestSender is not null
+                    ? await _requestSender(request, GetFileTimeoutMs)
+                    : await connection!.SendRequestAndAwaitResponseAsync(request, GetFileTimeoutMs);
+                if (response is null) { failures.Add($"{action} 超时或无响应"); continue; }
 
-            if (!response.Value.TryGetProperty("data", out var data) ||
-                data.ValueKind != JsonValueKind.Object)
-            {
-                return Fail("OneBot get_file 响应缺少 data 对象");
-            }
-
-            var responsePath = FirstString(data, "path", "file");
-            var responseUrl = FirstString(data, "url");
-            var responseName = FirstString(data, "name", "file_name");
-            var fileName = PickFileName(responseName, fileInfo.FileName, responsePath, fileInfo.FileId);
-
-            if (!string.IsNullOrWhiteSpace(responsePath))
-            {
-                var localCopy = await TryCopyLocalFileAsync(responsePath, fileName);
-                if (localCopy.Success)
+                if (response.Value.TryGetProperty("status", out var statusElement) &&
+                    string.Equals(statusElement.GetString(), "failed", StringComparison.OrdinalIgnoreCase))
                 {
-                    return localCopy;
+                    var wording = FirstString(response.Value, "wording", "message", "msg");
+                    failures.Add(string.IsNullOrWhiteSpace(wording) ? $"{action} 返回 failed" : $"{action} 返回 failed: {wording}");
+                    continue;
                 }
 
-                if (string.IsNullOrWhiteSpace(responseUrl))
+                var data = response.Value.TryGetProperty("data", out var responseData) && responseData.ValueKind == JsonValueKind.Object
+                    ? responseData : response.Value;
+                var responsePath = FirstString(data, "path", "file");
+                var responseUrl = FirstString(data, "url");
+                var responseName = FirstString(data, "name", "file_name");
+                var fileName = PickFileName(responseName, fileInfo.FileName, responsePath, fileInfo.FileId);
+
+                if (!string.IsNullOrWhiteSpace(responsePath))
                 {
-                    return localCopy;
+                    var localCopy = await TryCopyLocalFileAsync(responsePath, fileName);
+                    if (localCopy.Success) return localCopy;
+                    failures.Add($"{action}: {localCopy.ErrorMessage}");
                 }
-
-                _logger($"[QQ更新包] get_file 返回路径不可访问，将尝试 URL 下载: {localCopy.ErrorMessage}");
+                if (!string.IsNullOrWhiteSpace(responseUrl))
+                {
+                    var downloaded = await DownloadFromUrlAsync(responseUrl, fileName);
+                    if (downloaded.Success) return downloaded;
+                    failures.Add($"{action}: {downloaded.ErrorMessage}");
+                }
+                if (string.IsNullOrWhiteSpace(responsePath) && string.IsNullOrWhiteSpace(responseUrl))
+                    failures.Add($"{action} 未返回 url/path/file");
             }
 
-            if (!string.IsNullOrWhiteSpace(responseUrl))
-            {
-                return await DownloadFromUrlAsync(responseUrl, fileName);
-            }
-
-            return Fail("OneBot get_file 未返回可访问 path/file，也未返回 url");
+            return Fail("OneBot 文件下载失败：" + string.Join("；", failures));
         }
         catch (Exception ex)
         {
@@ -126,6 +149,7 @@ public sealed class OneBotFileDownloadService
 
     private async Task<OneBotFileDownloadResult> TryCopyLocalFileAsync(string sourcePath, string fileName)
     {
+        string? targetPath = null;
         try
         {
             if (!File.Exists(sourcePath))
@@ -133,7 +157,7 @@ public sealed class OneBotFileDownloadService
                 return Fail("LLOneBot 返回了本机路径，但 MDiceV2 无法访问。可能是 LLOneBot 与 MDiceV2 不在同一机器/容器，或文件尚未被 LLOneBot 下载。");
             }
 
-            var targetPath = CreateUniqueTargetPath(fileName);
+            targetPath = CreateUniqueTargetPath(fileName);
             _logger($"[QQ更新包] 开始从本机路径流式复制: {sourcePath}");
 
             await using var source = new FileStream(
@@ -151,7 +175,7 @@ public sealed class OneBotFileDownloadService
                 bufferSize: 1024 * 1024,
                 useAsync: true);
 
-            await source.CopyToAsync(target);
+            await CopyWithLimitAsync(source, target);
             await target.FlushAsync();
 
             var length = new FileInfo(targetPath).Length;
@@ -160,15 +184,17 @@ public sealed class OneBotFileDownloadService
         }
         catch (Exception ex)
         {
+            TryDeletePartial(targetPath);
             return Fail($"复制 LLOneBot 本机文件失败: {ex.Message}");
         }
     }
 
     private async Task<OneBotFileDownloadResult> DownloadFromUrlAsync(string url, string fileName)
     {
+        string? targetPath = null;
         try
         {
-            var targetPath = CreateUniqueTargetPath(fileName);
+            targetPath = CreateUniqueTargetPath(fileName);
             _logger($"[QQ更新包] 开始通过 URL 流式下载: {url}");
 
             using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
@@ -176,6 +202,8 @@ public sealed class OneBotFileDownloadService
             {
                 return Fail($"URL 下载失败: {response.StatusCode}");
             }
+            if (_maxFileSizeBytes.HasValue && response.Content.Headers.ContentLength > _maxFileSizeBytes.Value)
+                return Fail($"URL 文件超过允许的 {_maxFileSizeBytes.Value} 字节");
 
             await using var source = await response.Content.ReadAsStreamAsync();
             await using var target = new FileStream(
@@ -186,7 +214,7 @@ public sealed class OneBotFileDownloadService
                 bufferSize: 1024 * 1024,
                 useAsync: true);
 
-            await source.CopyToAsync(target);
+            await CopyWithLimitAsync(source, target);
             await target.FlushAsync();
 
             var length = new FileInfo(targetPath).Length;
@@ -195,8 +223,15 @@ public sealed class OneBotFileDownloadService
         }
         catch (Exception ex)
         {
+            TryDeletePartial(targetPath);
             return Fail($"URL 下载失败: {ex.Message}");
         }
+    }
+
+    private static void TryDeletePartial(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return;
+        try { if (File.Exists(path)) File.Delete(path); } catch { }
     }
 
     private string CreateUniqueTargetPath(string fileName)
@@ -205,6 +240,21 @@ public sealed class OneBotFileDownloadService
         var safeName = MakeSafeFileName(fileName);
         var target = Path.Combine(_downloadDir, $"{DateTime.UtcNow:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}_{safeName}");
         return target;
+    }
+
+    private async Task CopyWithLimitAsync(Stream source, Stream target)
+    {
+        var buffer = new byte[1024 * 1024];
+        long total = 0;
+        while (true)
+        {
+            var read = await source.ReadAsync(buffer);
+            if (read == 0) break;
+            total += read;
+            if (_maxFileSizeBytes.HasValue && total > _maxFileSizeBytes.Value)
+                throw new InvalidDataException($"文件超过允许的 {_maxFileSizeBytes.Value} 字节");
+            await target.WriteAsync(buffer.AsMemory(0, read));
+        }
     }
 
     private static string PickFileName(string responseName, string originalName, string responsePath, string fileId)

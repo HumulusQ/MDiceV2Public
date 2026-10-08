@@ -101,6 +101,33 @@ namespace MDiceV2.Core.UI.ViewModels
         private string wsConnectionLogs = "Initializing WebSocket connection...\n";
 
         /// <summary>
+        /// 主面板中可选 QQ 框架的下载、登录与连接状态。
+        /// </summary>
+        [ObservableProperty]
+        private string botFrameworkStatus = "未选择托管框架";
+
+        [ObservableProperty]
+        private bool isBotFrameworkBusy;
+
+        [ObservableProperty]
+        private double botFrameworkDownloadProgress;
+
+        [ObservableProperty]
+        private bool isSnowLumaInstalled;
+
+        [ObservableProperty]
+        private bool isNapCatInstalled;
+
+        [ObservableProperty]
+        private string snowLumaStatus = "未安装";
+
+        [ObservableProperty]
+        private string napCatStatus = "未安装";
+
+        [ObservableProperty]
+        private bool isBotFrameworkAutoConnect = true;
+
+        /// <summary>
         /// 属性变更回调
         /// </summary>
         partial void OnWsUrlChanged(string value)

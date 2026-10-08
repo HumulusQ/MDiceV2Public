@@ -33,6 +33,7 @@
     <ProjectReference Include="..\MDiceV2.Abstractions\MDiceV2.Abstractions.csproj" />
     <ProjectReference Include="..\Mods\AIMod\AIMod.csproj" />
     <ProjectReference Include="..\Mods\CustomizedReply\CustomizedReply.csproj" />
+    <ProjectReference Include="..\Mods\MeguminDuel\MeguminDuel.csproj" />
   </ItemGroup>
 
 </Project>

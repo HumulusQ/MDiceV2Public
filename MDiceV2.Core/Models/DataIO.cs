@@ -12,10 +12,16 @@ namespace MDiceV2.Models;
 /// 数据输入输出管理器
 /// 负责SQLite数据库的读写操作
 /// </summary>
-public partial class DataIO : ObservableObject
+public partial class DataIO : ObservableObject, IDisposable
 {
+    private const int WalAutoCheckpointPages = 256;
+    private const long WalRetainedSizeLimitBytes = 16L * 1024L * 1024L;
+
     private SQLiteConnection? _connection;
     private readonly string _dbPath;
+    private readonly object _databaseLock = new();
+    private readonly HashSet<string> _initializedTextTables = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _initializedBlobTables = new(StringComparer.Ordinal);
 
     /// <summary>
     /// 默认构造函数 - 使用MDiceV2默认数据库
@@ -34,11 +40,26 @@ public partial class DataIO : ObservableObject
         // 确定数据库路径
         if (string.IsNullOrWhiteSpace(dbPath))
         {
-            // 使用默认路径：项目目录/data/MDiceV2.db
-            string projectPath = Directory.GetCurrentDirectory();
-            string dataFolder = Path.Combine(projectPath, "data");
+            // Published builds keep Core in an application-root/Core directory. Resolve the
+            // shared data directory from that stable location and also tolerate callers whose
+            // working directory is already "data" (which previously produced data/data).
+            string dataFolder = ResolveDefaultDataFolder();
             Directory.CreateDirectory(dataFolder); // 确保目录存在
-            _dbPath = Path.Combine(dataFolder, "MDiceV2.db");
+            var canonicalPath = Path.Combine(dataFolder, "MDiceV2.db");
+            var legacyNestedPath = Path.Combine(dataFolder, "data", "MDiceV2.db");
+
+            // Never abandon an existing user database just because it was created under the
+            // historical data/data path. Fresh installations use the canonical path; an old
+            // nested database remains readable and receives the startup WAL recovery.
+            if (!File.Exists(canonicalPath) && File.Exists(legacyNestedPath))
+            {
+                _dbPath = legacyNestedPath;
+                Log.Warn($"[DataIO] 检测到旧版嵌套数据路径，将继续使用以避免数据丢失: {_dbPath}");
+            }
+            else
+            {
+                _dbPath = canonicalPath;
+            }
         }
         else
         {
@@ -53,6 +74,25 @@ public partial class DataIO : ObservableObject
 
         Log.InfoFormat($"Database path: {_dbPath}");
         EnsureDatabaseFileExists();
+    }
+
+    private static string ResolveDefaultDataFolder()
+    {
+        var currentDirectory = Path.GetFullPath(Directory.GetCurrentDirectory())
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        if (string.Equals(Path.GetFileName(currentDirectory), "data", StringComparison.OrdinalIgnoreCase))
+            return currentDirectory;
+
+        var baseDirectory = Path.GetFullPath(AppContext.BaseDirectory)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        if (string.Equals(Path.GetFileName(baseDirectory), "Core", StringComparison.OrdinalIgnoreCase))
+        {
+            var applicationRoot = Directory.GetParent(baseDirectory)?.FullName;
+            if (!string.IsNullOrWhiteSpace(applicationRoot))
+                return Path.Combine(applicationRoot, "data");
+        }
+
+        return Path.Combine(currentDirectory, "data");
     }
 
     /// <summary>
@@ -77,7 +117,9 @@ public partial class DataIO : ObservableObject
             // 【UTF-8 编码】确保 SQLite 连接使用 UTF-8 编码
             // UseUTF16Encoding=False 明确禁用 UTF-16，强制使用 UTF-8
             // BinaryGUID=False 防止 GUID 的编码问题
-            string connectionString = $"Data Source={_dbPath};Version=3;UseUTF16Encoding=False;BinaryGUID=False;";
+            // A pooled native connection can keep the WAL alive after the managed wrapper is
+            // closed. This database has one application owner, so pooling provides no benefit.
+            string connectionString = $"Data Source={_dbPath};Version=3;UseUTF16Encoding=False;BinaryGUID=False;Pooling=False;";
             _connection = new SQLiteConnection(connectionString);
             _connection.Open();
 
@@ -89,6 +131,10 @@ public partial class DataIO : ObservableObject
                 // 创建基础表结构
                 CreateInitialTables();
             }
+
+            // Recover and physically truncate a WAL left by an interrupted previous run.
+            // No application reader has been exposed through this instance at this point.
+            CheckpointWal("startup");
 
             Log.InfoFormat("SQLite database connection established successfully.");
         }
@@ -158,6 +204,23 @@ public partial class DataIO : ObservableObject
                 cmd.ExecuteNonQuery();
                 Log.InfoFormat("[DataIO] 缓存大小已设置为10000页");
             }
+
+            using (var cmd = new SQLiteCommand($"PRAGMA wal_autocheckpoint = {WalAutoCheckpointPages};", _connection))
+            {
+                cmd.ExecuteNonQuery();
+                Log.InfoFormat($"[DataIO] WAL自动检查点已设置为{WalAutoCheckpointPages}页");
+            }
+
+            using (var cmd = new SQLiteCommand($"PRAGMA journal_size_limit = {WalRetainedSizeLimitBytes};", _connection))
+            {
+                cmd.ExecuteNonQuery();
+                Log.InfoFormat($"[DataIO] WAL保留尺寸上限已设置为{WalRetainedSizeLimitBytes}字节");
+            }
+
+            using (var cmd = new SQLiteCommand("PRAGMA busy_timeout = 5000;", _connection))
+            {
+                cmd.ExecuteNonQuery();
+            }
         }
         catch (Exception ex)
         {
@@ -165,7 +228,7 @@ public partial class DataIO : ObservableObject
         }
     }
 
-    private void EnsureBlobTable(string tableName)
+    private void EnsureBlobTable(string tableName, SQLiteTransaction? transaction = null)
     {
         string sanitizedTableName = SanitizeTableName(tableName);
         if (_connection == null || _connection.State != System.Data.ConnectionState.Open)
@@ -173,11 +236,14 @@ public partial class DataIO : ObservableObject
             Log.Error("[DataIO] 数据库连接未打开，无法创建/确认表");
             throw new InvalidOperationException("SQLite connection is not open");
         }
+        if (_initializedBlobTables.Contains(sanitizedTableName))
+            return;
 
         using var createTableCommand = new SQLiteCommand(
             $"CREATE TABLE IF NOT EXISTS {sanitizedTableName} (key TEXT PRIMARY KEY, blob BLOB, updated_at INTEGER DEFAULT 0)",
-            _connection);
+            _connection, transaction);
         createTableCommand.ExecuteNonQuery();
+        _initializedBlobTables.Add(sanitizedTableName);
     }
 
     /// <summary>
@@ -209,136 +275,59 @@ public partial class DataIO : ObservableObject
     public void SaveData(string tableName, string key, string value, SQLiteTransaction? transaction = null)
     {
         string sanitizedTableName = SanitizeTableName(tableName);
-        Log.InfoFormat($"[DataIO] 开始保存数据到表 '{sanitizedTableName}'");
-
-        if (_connection == null || _connection.State != System.Data.ConnectionState.Open)
+        lock (_databaseLock)
         {
-            Log.Error($"[DataIO] 数据库连接未打开或为空，无法保存数据。Connection state: {_connection?.State.ToString() ?? "null"}");
-            return;
-        }
-
-        try
-        {
-            // 确保表存在（包含updated_at字段用于冲突解决）
-            Log.InfoFormat($"[DataIO] 确保表 '{sanitizedTableName}' 存在");
-            using var createTableCommand = new SQLiteCommand(
-                $"CREATE TABLE IF NOT EXISTS {sanitizedTableName} (key TEXT PRIMARY KEY, value TEXT, updated_at INTEGER DEFAULT 0)",
-                _connection);
-            if (transaction != null)
-                createTableCommand.Transaction = transaction;
-            createTableCommand.ExecuteNonQuery();
-
-            // 数据库迁移：为现有表添加updated_at列（如果不存在）
-            try
+            if (_connection == null || _connection.State != System.Data.ConnectionState.Open)
             {
-                using var alterCommand = new SQLiteCommand(
-                    $"ALTER TABLE {sanitizedTableName} ADD COLUMN updated_at INTEGER DEFAULT 0",
-                    _connection);
-                if (transaction != null)
-                    alterCommand.Transaction = transaction;
-                alterCommand.ExecuteNonQuery();
-                Log.InfoFormat($"[DataIO] 为表 '{sanitizedTableName}' 添加 updated_at 列");
-            }
-            catch (SQLiteException ex) when (ex.Message.Contains("duplicate column") || ex.Message.Contains("already exists"))
-            {
-                // 列已存在，忽略错误
-                Log.InfoFormat($"[DataIO] 表 '{sanitizedTableName}' 的 updated_at 列已存在");
-            }
-
-            // 获取当前时间戳（UTC Ticks，用于冲突解决）
-            long currentTimestamp = DateTime.UtcNow.Ticks;
-
-            // 使用事务保证原子性
-            bool ownTransaction = transaction == null;
-            if (ownTransaction)
-            {
-                transaction = _connection.BeginTransaction(System.Data.IsolationLevel.Serializable);
+                Log.Error($"[DataIO] 数据库连接未打开或为空，无法保存数据。Connection state: {_connection?.State.ToString() ?? "null"}");
+                return;
             }
 
             try
             {
-                // 检查现有数据的时间戳（冲突解决）
-                using var checkCommand = new SQLiteCommand(
-                    $"SELECT value, updated_at FROM {sanitizedTableName} WHERE key = @key",
-                    _connection, transaction);
-                checkCommand.Parameters.AddWithValue("@key", key);
-                using var reader = checkCommand.ExecuteReader();
-                
-                if (reader.Read())
-                {
-                    if (long.TryParse(reader["updated_at"].ToString(), out var existingTimestamp))
-                    {
-                        // 在远程同步场景中，只有新时间戳更新时才覆盖
-                        if (currentTimestamp < existingTimestamp)
-                        {
-                            Log.InfoFormat($"[DataIO] 数据'{key}'的本地时间戳较旧，跳过覆盖（保留远程更新）");
-                            return;
-                        }
-                    }
-                }
+                EnsureTextTable(sanitizedTableName, transaction);
+                var currentTimestamp = DateTime.UtcNow.Ticks;
+                var ownTransaction = transaction == null;
+                if (ownTransaction)
+                    transaction = _connection.BeginTransaction(System.Data.IsolationLevel.Serializable);
 
-                // 插入或替换数据
-                string sql = $"INSERT OR REPLACE INTO {sanitizedTableName} (key, value, updated_at) VALUES (@key, @value, @updatedAt)";
-                using var command = new SQLiteCommand(sql, _connection, transaction);
-                command.Parameters.AddWithValue("@key", key);
-                
-                // 【UTF-8 验证】确保值正确编码为 UTF-8
-                // 将字符串转换为 UTF-8 字节，再转回，以确保编码完整性
-                if (!string.IsNullOrEmpty(value))
+                try
                 {
-                    try
-                    {
-                        byte[] utf8Bytes = System.Text.Encoding.UTF8.GetBytes(value);
-                        string utf8String = System.Text.Encoding.UTF8.GetString(utf8Bytes);
-                        command.Parameters.AddWithValue("@value", utf8String);
-                        
-                        // 日志：记录包含非 ASCII 字符的数据（用于调试中文编码问题）
-                        if (value.Any(c => c > 127))
-                        {
-                            Log.InfoFormat($"[DataIO] ✅ UTF-8 encoding verified for key '{key}' with non-ASCII characters (length: {utf8Bytes.Length} bytes)");
-                        }
-                    }
-                    catch (Exception encEx)
-                    {
-                        Log.Error($"[DataIO] ⚠️ UTF-8 encoding error for key '{key}': {encEx.Message}, using value as-is");
-                        command.Parameters.AddWithValue("@value", value);
-                    }
-                }
-                else
-                {
+                    // Avoid a live SELECT reader at COMMIT. Unchanged values are deliberately
+                    // skipped so repeated shutdown snapshots do not create WAL traffic.
+                    using var command = new SQLiteCommand($"""
+                        INSERT INTO {sanitizedTableName} (key, value, updated_at)
+                        VALUES (@key, @value, @updatedAt)
+                        ON CONFLICT(key) DO UPDATE SET
+                            value = excluded.value,
+                            updated_at = excluded.updated_at
+                        WHERE excluded.updated_at >= {sanitizedTableName}.updated_at
+                          AND {sanitizedTableName}.value IS NOT excluded.value;
+                        """, _connection, transaction);
+                    command.Parameters.AddWithValue("@key", key);
                     command.Parameters.AddWithValue("@value", value);
-                }
-                
-                command.Parameters.AddWithValue("@updatedAt", currentTimestamp);
-                command.ExecuteNonQuery();
+                    command.Parameters.AddWithValue("@updatedAt", currentTimestamp);
+                    command.ExecuteNonQuery();
 
-                // 提交事务
-                if (ownTransaction)
-                {
-                    transaction.Commit();
+                    if (ownTransaction)
+                        transaction!.Commit();
                 }
-
-                Log.InfoFormat($"[DataIO] 成功保存数据到表 '{sanitizedTableName}'，时间戳: {currentTimestamp}");
+                catch
+                {
+                    if (ownTransaction)
+                        transaction?.Rollback();
+                    throw;
+                }
+                finally
+                {
+                    if (ownTransaction)
+                        transaction?.Dispose();
+                }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                if (ownTransaction)
-                {
-                    transaction?.Rollback();
-                }
-                throw;
+                Log.Warn($"Failed to save data to table '{sanitizedTableName}': {ex.Message}");
             }
-            finally
-            {
-                if (ownTransaction)
-                {
-                    transaction?.Dispose();
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Warn($"Failed to save data to table '{sanitizedTableName}': {ex.Message}");
         }
     }
 
@@ -350,55 +339,50 @@ public partial class DataIO : ObservableObject
     public void SaveDataBatch(string tableName, IEnumerable<(string Key, string Value)> dataItems)
     {
         string sanitizedTableName = SanitizeTableName(tableName);
-        
-        if (_connection == null || _connection.State != System.Data.ConnectionState.Open)
-        {
-            Log.Error($"[DataIO] 数据库连接未打开，无法批量保存数据");
-            return;
-        }
+        var items = dataItems.ToList();
 
-        using var transaction = _connection.BeginTransaction(System.Data.IsolationLevel.Serializable);
-        try
+        lock (_databaseLock)
         {
-            // 确保表存在
-            using var createTableCommand = new SQLiteCommand(
-                $"CREATE TABLE IF NOT EXISTS {sanitizedTableName} (key TEXT PRIMARY KEY, value TEXT, updated_at INTEGER DEFAULT 0)",
-                _connection, transaction);
-            createTableCommand.ExecuteNonQuery();
+            if (_connection == null || _connection.State != System.Data.ConnectionState.Open)
+            {
+                Log.Error("[DataIO] 数据库连接未打开，无法批量保存数据");
+                return;
+            }
+            if (items.Count == 0)
+                return;
 
-            // 数据库迁移：为现有表添加updated_at列（如果不存在）
+            EnsureTextTable(sanitizedTableName);
+            using var transaction = _connection.BeginTransaction(System.Data.IsolationLevel.Serializable);
             try
             {
-                using var alterCommand = new SQLiteCommand(
-                    $"ALTER TABLE {sanitizedTableName} ADD COLUMN updated_at INTEGER DEFAULT 0",
-                    _connection, transaction);
-                alterCommand.ExecuteNonQuery();
-            }
-            catch (SQLiteException ex) when (ex.Message.Contains("duplicate column") || ex.Message.Contains("already exists"))
-            {
-                // 列已存在，忽略错误
-            }
-
-            long currentTimestamp = DateTime.UtcNow.Ticks;
-
-            // 批量插入
-            foreach (var (key, value) in dataItems)
-            {
-                string sql = $"INSERT OR REPLACE INTO {sanitizedTableName} (key, value, updated_at) VALUES (@key, @value, @updatedAt)";
-                using var command = new SQLiteCommand(sql, _connection, transaction);
-                command.Parameters.AddWithValue("@key", key);
-                command.Parameters.AddWithValue("@value", value);
+                var currentTimestamp = DateTime.UtcNow.Ticks;
+                using var command = new SQLiteCommand($"""
+                    INSERT INTO {sanitizedTableName} (key, value, updated_at)
+                    VALUES (@key, @value, @updatedAt)
+                    ON CONFLICT(key) DO UPDATE SET
+                        value = excluded.value,
+                        updated_at = excluded.updated_at
+                    WHERE {sanitizedTableName}.value IS NOT excluded.value;
+                    """, _connection, transaction);
+                var keyParameter = command.Parameters.Add("@key", System.Data.DbType.String);
+                var valueParameter = command.Parameters.Add("@value", System.Data.DbType.String);
                 command.Parameters.AddWithValue("@updatedAt", currentTimestamp);
-                command.ExecuteNonQuery();
-            }
 
-            transaction.Commit();
-            Log.InfoFormat($"[DataIO] 批量保存 {dataItems.Count()} 条数据到表 '{sanitizedTableName}'");
-        }
-        catch (Exception ex)
-        {
-            transaction.Rollback();
-            Log.Error($"[DataIO] 批量保存失败: {ex.Message}");
+                foreach (var (key, value) in items)
+                {
+                    keyParameter.Value = key;
+                    valueParameter.Value = value;
+                    command.ExecuteNonQuery();
+                }
+
+                transaction.Commit();
+                Log.InfoFormat($"[DataIO] 批量检查并保存 {items.Count} 条数据到表 '{sanitizedTableName}'");
+            }
+            catch (Exception ex)
+            {
+                transaction.Rollback();
+                Log.Error($"[DataIO] 批量保存失败: {ex.Message}");
+            }
         }
     }
 
@@ -415,52 +399,113 @@ public partial class DataIO : ObservableObject
             .Select(group => group.Last())
             .ToList();
 
-        if (_connection == null || _connection.State != System.Data.ConnectionState.Open)
-            throw new InvalidOperationException("SQLite connection is not open");
         if (items.Count == 0)
             return 0;
 
-        using var transaction = _connection.BeginTransaction(System.Data.IsolationLevel.Serializable);
-        try
+        lock (_databaseLock)
         {
-            using (var createTableCommand = new SQLiteCommand(
-                $"CREATE TABLE IF NOT EXISTS {sanitizedTableName} (key TEXT PRIMARY KEY, value TEXT, updated_at INTEGER DEFAULT 0)",
-                _connection, transaction))
-                createTableCommand.ExecuteNonQuery();
+            if (_connection == null || _connection.State != System.Data.ConnectionState.Open)
+                throw new InvalidOperationException("SQLite connection is not open");
 
-            var changed = 0;
-            var timestamp = DateTime.UtcNow.Ticks;
-            foreach (var (key, value) in items)
+            EnsureTextTable(sanitizedTableName);
+            using var transaction = _connection.BeginTransaction(System.Data.IsolationLevel.Serializable);
+            try
             {
-                string? existingValue;
-                using (var readCommand = new SQLiteCommand(
-                    $"SELECT value FROM {sanitizedTableName} WHERE key = @key", _connection, transaction))
+                var changed = 0;
+                var timestamp = DateTime.UtcNow.Ticks;
+                using var command = new SQLiteCommand($"""
+                    INSERT INTO {sanitizedTableName} (key, value, updated_at)
+                    VALUES (@key, @value, @updatedAt)
+                    ON CONFLICT(key) DO UPDATE SET
+                        value = excluded.value,
+                        updated_at = excluded.updated_at
+                    WHERE {sanitizedTableName}.value IS NOT excluded.value;
+                    """, _connection, transaction);
+                var keyParameter = command.Parameters.Add("@key", System.Data.DbType.String);
+                var valueParameter = command.Parameters.Add("@value", System.Data.DbType.String);
+                command.Parameters.AddWithValue("@updatedAt", timestamp);
+
+                foreach (var (key, value) in items)
                 {
-                    readCommand.Parameters.AddWithValue("@key", key);
-                    existingValue = readCommand.ExecuteScalar() as string;
+                    keyParameter.Value = key;
+                    valueParameter.Value = value;
+                    changed += command.ExecuteNonQuery();
                 }
 
-                if (string.Equals(existingValue, value, StringComparison.Ordinal))
-                    continue;
-
-                using var writeCommand = new SQLiteCommand(
-                    $"INSERT OR REPLACE INTO {sanitizedTableName} (key, value, updated_at) VALUES (@key, @value, @updatedAt)",
-                    _connection, transaction);
-                writeCommand.Parameters.AddWithValue("@key", key);
-                writeCommand.Parameters.AddWithValue("@value", value);
-                writeCommand.Parameters.AddWithValue("@updatedAt", timestamp);
-                writeCommand.ExecuteNonQuery();
-                changed++;
+                transaction.Commit();
+                return changed;
             }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+    }
 
-            transaction.Commit();
-            return changed;
-        }
-        catch
+    private void CheckpointWal(string reason)
+    {
+        if (_connection == null || _connection.State != System.Data.ConnectionState.Open)
+            return;
+
+        try
         {
-            transaction.Rollback();
-            throw;
+            using var command = new SQLiteCommand("PRAGMA wal_checkpoint(TRUNCATE);", _connection);
+            using var reader = command.ExecuteReader();
+            if (!reader.Read())
+                return;
+
+            var busy = reader.GetInt32(0);
+            var logFrames = reader.GetInt32(1);
+            var checkpointedFrames = reader.GetInt32(2);
+            if (busy == 0)
+                Log.InfoFormat($"[DataIO] WAL检查点完成 ({reason}): {checkpointedFrames}/{logFrames} frames");
+            else
+                Log.Warn($"[DataIO] WAL检查点被活动连接阻塞 ({reason}): {checkpointedFrames}/{logFrames} frames");
         }
+        catch (Exception ex)
+        {
+            // A failed checkpoint must never prevent the connection from being disposed.
+            Log.Warn($"[DataIO] WAL检查点失败 ({reason}): {ex.Message}");
+        }
+    }
+
+    private void EnsureTextTable(string tableName, SQLiteTransaction? transaction = null)
+    {
+        if (_connection == null || _connection.State != System.Data.ConnectionState.Open)
+            throw new InvalidOperationException("SQLite connection is not open");
+        if (_initializedTextTables.Contains(tableName))
+            return;
+
+        using (var createCommand = new SQLiteCommand(
+                   $"CREATE TABLE IF NOT EXISTS {tableName} (key TEXT PRIMARY KEY, value TEXT, updated_at INTEGER DEFAULT 0)",
+                   _connection, transaction))
+        {
+            createCommand.ExecuteNonQuery();
+        }
+
+        var hasUpdatedAt = false;
+        using (var schemaCommand = new SQLiteCommand($"PRAGMA table_info({tableName})", _connection, transaction))
+        using (var reader = schemaCommand.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                if (string.Equals(reader["name"]?.ToString(), "updated_at", StringComparison.OrdinalIgnoreCase))
+                {
+                    hasUpdatedAt = true;
+                    break;
+                }
+            }
+        }
+
+        if (!hasUpdatedAt)
+        {
+            using var alterCommand = new SQLiteCommand(
+                $"ALTER TABLE {tableName} ADD COLUMN updated_at INTEGER DEFAULT 0", _connection, transaction);
+            alterCommand.ExecuteNonQuery();
+        }
+
+        _initializedTextTables.Add(tableName);
     }
 
     /// <summary>
@@ -473,21 +518,24 @@ public partial class DataIO : ObservableObject
     {
         string sanitizedTableName = SanitizeTableName(tableName);
 
-        if (_connection == null || _connection.State != System.Data.ConnectionState.Open)
+        lock (_databaseLock)
         {
-            Log.Warn("SQLite connection is not open. Cannot read data.");
-            return null;
-        }
-
-        try
-        {
-            string sql = $"SELECT value FROM {sanitizedTableName} WHERE key = @key";
-            using var command = new SQLiteCommand(sql, _connection);
-            command.Parameters.AddWithValue("@key", key);
-
-            var result = command.ExecuteScalar();
-            if (result != null)
+            if (_connection == null || _connection.State != System.Data.ConnectionState.Open)
             {
+                Log.Warn("SQLite connection is not open. Cannot read data.");
+                return null;
+            }
+
+            try
+            {
+                string sql = $"SELECT value FROM {sanitizedTableName} WHERE key = @key";
+                using var command = new SQLiteCommand(sql, _connection);
+                command.Parameters.AddWithValue("@key", key);
+
+                var result = command.ExecuteScalar();
+                if (result == null)
+                    return null;
+
                 string value = result.ToString()!;
                 
                 // 【UTF-8 验证】确保读出的值是有效的 UTF-8
@@ -510,15 +558,11 @@ public partial class DataIO : ObservableObject
                 
                 return value;
             }
-            else
+            catch (Exception ex)
             {
+                Log.Warn($"Failed to read data from table '{sanitizedTableName}': {ex.Message}");
                 return null;
             }
-        }
-        catch (Exception ex)
-        {
-            Log.Warn($"Failed to read data from table '{sanitizedTableName}': {ex.Message}");
-            return null;
         }
     }
 
@@ -529,25 +573,32 @@ public partial class DataIO : ObservableObject
     {
         string sanitizedTableName = SanitizeTableName(tableName);
 
-        if (_connection == null || _connection.State != System.Data.ConnectionState.Open)
+        lock (_databaseLock)
         {
-            Log.Error("[DataIO] SQLite connection is not open. Cannot save blob.");
-            return;
-        }
+            if (_connection == null || _connection.State != System.Data.ConnectionState.Open)
+            {
+                Log.Error("[DataIO] SQLite connection is not open. Cannot save blob.");
+                return;
+            }
 
-        EnsureBlobTable(sanitizedTableName);
+            EnsureBlobTable(sanitizedTableName);
 
-        try
-        {
-            string sql = $"INSERT OR REPLACE INTO {sanitizedTableName} (key, blob) VALUES (@key, @blob)";
-            using var command = new SQLiteCommand(sql, _connection);
-            command.Parameters.AddWithValue("@key", key);
-            command.Parameters.Add("@blob", System.Data.DbType.Binary, blob.Length).Value = blob;
-            command.ExecuteNonQuery();
-        }
-        catch (Exception ex)
-        {
-            Log.Warn($"Failed to save blob to table '{sanitizedTableName}': {ex.Message}");
+            try
+            {
+                using var command = new SQLiteCommand($"""
+                    INSERT INTO {sanitizedTableName} (key, blob)
+                    VALUES (@key, @blob)
+                    ON CONFLICT(key) DO UPDATE SET blob = excluded.blob
+                    WHERE {sanitizedTableName}.blob IS NOT excluded.blob;
+                    """, _connection);
+                command.Parameters.AddWithValue("@key", key);
+                command.Parameters.Add("@blob", System.Data.DbType.Binary, blob.Length).Value = blob;
+                command.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                Log.Warn($"Failed to save blob to table '{sanitizedTableName}': {ex.Message}");
+            }
         }
     }
 
@@ -558,24 +609,27 @@ public partial class DataIO : ObservableObject
     {
         string sanitizedTableName = SanitizeTableName(tableName);
 
-        if (_connection == null || _connection.State != System.Data.ConnectionState.Open)
+        lock (_databaseLock)
         {
-            Log.Warn("SQLite connection is not open. Cannot read blob.");
-            return null;
-        }
+            if (_connection == null || _connection.State != System.Data.ConnectionState.Open)
+            {
+                Log.Warn("SQLite connection is not open. Cannot read blob.");
+                return null;
+            }
 
-        try
-        {
-            string sql = $"SELECT blob FROM {sanitizedTableName} WHERE key = @key";
-            using var command = new SQLiteCommand(sql, _connection);
-            command.Parameters.AddWithValue("@key", key);
-            var result = command.ExecuteScalar();
-            return result as byte[];
-        }
-        catch (Exception ex)
-        {
-            Log.Warn($"Failed to read blob from table '{sanitizedTableName}': {ex.Message}");
-            return null;
+            try
+            {
+                string sql = $"SELECT blob FROM {sanitizedTableName} WHERE key = @key";
+                using var command = new SQLiteCommand(sql, _connection);
+                command.Parameters.AddWithValue("@key", key);
+                var result = command.ExecuteScalar();
+                return result as byte[];
+            }
+            catch (Exception ex)
+            {
+                Log.Warn($"Failed to read blob from table '{sanitizedTableName}': {ex.Message}");
+                return null;
+            }
         }
     }
 
@@ -587,39 +641,38 @@ public partial class DataIO : ObservableObject
         string sanitizedTableName = SanitizeTableName(tableName);
         var result = new Dictionary<string, byte[]>();
 
-        if (_connection == null || _connection.State != System.Data.ConnectionState.Open)
+        lock (_databaseLock)
         {
-            Log.Warn("SQLite connection is not open. Cannot read blobs.");
-            return result;
-        }
-
-        try
-        {
-            using var checkTableCommand = new SQLiteCommand(
-                $"SELECT name FROM sqlite_master WHERE type='table' AND name='{sanitizedTableName}'",
-                _connection);
-            var exists = checkTableCommand.ExecuteScalar();
-            if (exists == null)
+            if (_connection == null || _connection.State != System.Data.ConnectionState.Open)
             {
+                Log.Warn("SQLite connection is not open. Cannot read blobs.");
                 return result;
             }
 
-            string sql = $"SELECT key, blob FROM {sanitizedTableName}";
-            using var command = new SQLiteCommand(sql, _connection);
-            using var reader = command.ExecuteReader();
-            while (reader.Read())
+            try
             {
-                string key = reader["key"].ToString()!;
-                var blob = reader["blob"] as byte[];
-                if (blob != null)
+                using var checkTableCommand = new SQLiteCommand(
+                    $"SELECT name FROM sqlite_master WHERE type='table' AND name='{sanitizedTableName}'",
+                    _connection);
+                var exists = checkTableCommand.ExecuteScalar();
+                if (exists == null)
+                    return result;
+
+                string sql = $"SELECT key, blob FROM {sanitizedTableName}";
+                using var command = new SQLiteCommand(sql, _connection);
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
                 {
-                    result[key] = blob;
+                    string key = reader["key"].ToString()!;
+                    var blob = reader["blob"] as byte[];
+                    if (blob != null)
+                        result[key] = blob;
                 }
             }
-        }
-        catch (Exception ex)
-        {
-            Log.Warn($"Failed to read blobs from table '{sanitizedTableName}': {ex.Message}");
+            catch (Exception ex)
+            {
+                Log.Warn($"Failed to read blobs from table '{sanitizedTableName}': {ex.Message}");
+            }
         }
 
         return result;
@@ -635,41 +688,44 @@ public partial class DataIO : ObservableObject
         string sanitizedTableName = SanitizeTableName(tableName);
         var data = new Dictionary<string, string>();
 
-        if (_connection == null || _connection.State != System.Data.ConnectionState.Open)
+        lock (_databaseLock)
         {
-            Log.Warn("SQLite connection is not open. Cannot read all data.");
-            return data;
-        }
-
-        try
-        {
-            // 检查表是否存在
-            using var checkTableCommand = new SQLiteCommand(
-                $"SELECT name FROM sqlite_master WHERE type='table' AND name='{sanitizedTableName}'",
-                _connection);
-            var result = checkTableCommand.ExecuteScalar();
-            if (result == null)
+            if (_connection == null || _connection.State != System.Data.ConnectionState.Open)
             {
-                Log.InfoFormat($"Table '{sanitizedTableName}' does not exist. Returning empty dictionary.");
+                Log.Warn("SQLite connection is not open. Cannot read all data.");
                 return data;
             }
 
-            string sql = $"SELECT key, value FROM {sanitizedTableName}";
-            using var command = new SQLiteCommand(sql, _connection);
-            using var reader = command.ExecuteReader();
-
-            while (reader.Read())
+            try
             {
-                string key = reader["key"].ToString()!;
-                string value = reader["value"].ToString()!;
-                data[key] = value;
-            }
+                // 检查表是否存在
+                using var checkTableCommand = new SQLiteCommand(
+                    $"SELECT name FROM sqlite_master WHERE type='table' AND name='{sanitizedTableName}'",
+                    _connection);
+                var result = checkTableCommand.ExecuteScalar();
+                if (result == null)
+                {
+                    Log.InfoFormat($"Table '{sanitizedTableName}' does not exist. Returning empty dictionary.");
+                    return data;
+                }
 
-            Log.InfoFormat($"Read {data.Count} items from table '{sanitizedTableName}'.");
-        }
-        catch (Exception ex)
-        {
-            Log.Warn($"Failed to read all data from table '{sanitizedTableName}': {ex.Message}");
+                string sql = $"SELECT key, value FROM {sanitizedTableName}";
+                using var command = new SQLiteCommand(sql, _connection);
+                using var reader = command.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    string key = reader["key"].ToString()!;
+                    string value = reader["value"].ToString()!;
+                    data[key] = value;
+                }
+
+                Log.InfoFormat($"Read {data.Count} items from table '{sanitizedTableName}'.");
+            }
+            catch (Exception ex)
+            {
+                Log.Warn($"Failed to read all data from table '{sanitizedTableName}': {ex.Message}");
+            }
         }
 
         return data;
@@ -680,39 +736,46 @@ public partial class DataIO : ObservableObject
     /// </summary>
     public void Close()
     {
-        Log.InfoFormat("[DataIO] 开始关闭数据库连接...");
-        
-        if (_connection == null)
+        lock (_databaseLock)
         {
-            Log.InfoFormat("[DataIO] 数据库连接已经为null，无需关闭");
-            return;
-        }
+            Log.InfoFormat("[DataIO] 开始关闭数据库连接...");
+            var connection = _connection;
 
-        try
-        {
-            var state = _connection.State;
-            Log.InfoFormat($"[DataIO] 当前连接状态: {state}");
-            
-            if (state == System.Data.ConnectionState.Open)
+            if (connection == null)
             {
-                _connection.Close();
-                Log.InfoFormat("[DataIO] 数据库连接已关闭");
-                
-                _connection.Dispose();
-                Log.InfoFormat("[DataIO] 数据库连接已释放");
-                
+                Log.InfoFormat("[DataIO] 数据库连接已经为null，无需关闭");
+                return;
+            }
+
+            try
+            {
+                if (connection.State == System.Data.ConnectionState.Open)
+                    CheckpointWal("shutdown");
+            }
+            finally
+            {
+                // Dispose regardless of Open/Closed/Broken state. The previous implementation
+                // leaked every connection that had already transitioned away from Open.
                 _connection = null;
-                Log.InfoFormat("[DataIO] 数据库连接引用已清空");
-            }
-            else
-            {
-                Log.Warn($"[DataIO] 数据库连接未处于打开状态，当前状态: {state}");
+                try
+                {
+                    if (connection.State != System.Data.ConnectionState.Closed)
+                        connection.Close();
+                }
+                finally
+                {
+                    connection.Dispose();
+                    _initializedTextTables.Clear();
+                    _initializedBlobTables.Clear();
+                    Log.InfoFormat("[DataIO] 数据库连接已关闭并释放");
+                }
             }
         }
-        catch (Exception ex)
-        {
-            Log.Error($"[DataIO] 关闭数据库连接时发生错误: {ex.Message}\n{ex.StackTrace}");
-            throw;
-        }
+    }
+
+    public void Dispose()
+    {
+        Close();
+        GC.SuppressFinalize(this);
     }
 }
